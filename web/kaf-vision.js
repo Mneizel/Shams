@@ -300,7 +300,6 @@ function detectLinesCV(lm, video) {
     const conf = Math.max(0.3, Math.min(0.82, 0.3 + total * 0.35 + longest * 0.3));
     return { present: true, confidence: +conf.toFixed(2), states: uniq(states) };
   }
-  function none() { return { present: false, confidence: 0, states: [] }; }
 }
 
 function uniq(a) { return [...new Set(a)]; }
