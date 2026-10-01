@@ -23258,19 +23258,25 @@ PANELS.kaf = (main) => {
       $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; btn.hidden = false;
     };
     $("#k-camstop", main).onclick = stopAll;
+    // عند أيِّ فشلٍ قبل اكتمالِ فتحِ الكاميرا: يُعادُ زرُّ "افتحِ الكاميرا" للظهورِ (لا يبقى
+    // زرُّ "إيقاف" وحدَه ظاهرًا — فلا يُضطرُّ المستخدمُ لتخمينِ كيفيّةِ إعادةِ المحاولة).
+    const failReset = (msg) => {
+      $("#k-guide", main).textContent = msg;
+      btn.hidden = false; $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true;
+    };
     btn.onclick = async () => {
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
       $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية…";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
       try { vis = await import("./kaf-vision.js"); }
-      catch (e) { $("#k-guide", main).textContent = "تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."; return; }
+      catch (e) { failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
       try { await vis.ensureLoaded(); }
-      catch (e) { $("#k-guide", main).textContent = "تعذّرَ تجهيزُ النموذج: " + (e.message || e); return; }
+      catch (e) { failReset("تعذّرَ تجهيزُ النموذج: " + (e.message || e)); return; }
       const video = $("#k-video", main);
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } });
         video.srcObject = stream; await video.play();
-      } catch (e) { $("#k-guide", main).textContent = "لم يُسمَحْ باستخدامِ الكاميرا."; return; }
+      } catch (e) { failReset("لم يُسمَحْ باستخدامِ الكاميرا."); return; }
       stopLoop = vis.runLiveCapture({
         video,
         onGuide: (msgs, ok) => { const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)"; },
