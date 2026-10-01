@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 4 — الآلة</title>
+<style>
+  :root{
+    --bg:#101418;--panel:#171c22;--ink:#e8ecf1;--muted:#828c99;--line:#252c34;
+    --brass:#c7973f;--wire:#3f9d81;--code:#0b0f14;--code-ink:#8fe9c4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI","Noto Sans Arabic",system-ui,sans-serif;line-height:1.7;
+    display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:2rem 1rem}
+  h1{font-size:1.4rem;letter-spacing:.05em;margin:.2rem;color:var(--brass)}
+  .sub{color:var(--muted);font-size:.85rem;margin-bottom:1.6rem}
+  .machine{width:min(560px,100%);background:linear-gradient(#191f26,#12161b);
+    border:1px solid var(--line);border-radius:16px;padding:1.4rem;
+    box-shadow:0 30px 60px -30px #000, inset 0 1px 0 #2c343d}
+  .steps{display:flex;gap:.4rem;margin-bottom:1.2rem}
+  .steps div{flex:1;height:4px;border-radius:3px;background:var(--line)}
+  .steps div.on{background:var(--brass)}
+  .panel{min-height:180px}
+  .panel h2{font-size:1rem;margin:.1rem 0 .9rem}
+  label{display:block;font-size:.8rem;color:var(--muted);margin:.7rem 0 .2rem}
+  input,select{width:100%;background:#0d1116;border:1px solid var(--line);color:var(--ink);
+    padding:.55rem .75rem;border-radius:8px;font:inherit}
+  .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem}
+  .chips button{background:#0d1116;border:1px solid var(--line);color:var(--ink);
+    padding:.4rem .8rem;border-radius:20px;font:inherit;font-size:.85rem;cursor:pointer}
+  .chips button.sel{border-color:var(--brass);color:var(--brass)}
+  .readout{background:var(--code);color:var(--code-ink);border-radius:10px;padding:.9rem;
+    font-family:ui-monospace,"DejaVu Sans Mono",monospace;font-size:.8rem;line-height:1.7;
+    direction:ltr;text-align:left;white-space:pre-wrap;margin-top:1rem;min-height:90px}
+  .nav{display:flex;justify-content:space-between;margin-top:1.2rem}
+  .nav button{background:var(--brass);color:#1a1204;border:0;padding:.6rem 1.4rem;border-radius:8px;
+    font:inherit;font-weight:700;cursor:pointer}
+  .nav button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:400}
+  .result h2{color:var(--brass)}
+  .result .line{border-bottom:1px solid var(--line);padding:.55rem 0;font-size:.92rem}
+  .result .line span{color:var(--muted)}
+  .dim{color:var(--muted);font-size:.8rem;margin-top:.6rem}
+</style>
+</head>
+<body>
+  <h1>آلـة شمس المعارف</h1>
+  <div class="sub">أربع خطوات. في كل خطوة ترى العدّاد يشتغل. لا شيء خفيّ.</div>
+
+  <div class="machine">
+    <div class="steps"><div class="on"></div><div></div><div></div><div></div></div>
+
+    <div class="panel" id="panel">
+      <h2>الخطوة ١ — الاسم</h2>
+      <label>اسمك</label><input value="محمد" id="n">
+      <label>اسم أمّك</label><input value="آمنة" id="m">
+      <div class="readout" id="ro">في انتظار الإدخال…
+جُمّل الاسم = —
+جُمّل الأم  = —
+المجموع     = —</div>
+    </div>
+
+    <div class="nav">
+      <button class="ghost" onclick="go(-1)">رجوع</button>
+      <button onclick="go(1)">التالي ▸</button>
+    </div>
+  </div>
+
+<script>
+const N=4;let i=0;
+const panels=[
+ ()=>`<h2>الخطوة ١ — الاسم</h2>
+   <label>اسمك</label><input value="محمد">
+   <label>اسم أمّك</label><input value="آمنة">
+   <div class="readout">jummal("محمد") = 92
+jummal("آمنة"→"امنه") = 96
+المجموع = <b>188</b>
+188 mod 4 = 0  → تراب
+188 mod 7 = 6  → عطارد
+188 mod 12 = 8 → العقرب
+188 mod 28 = 20→ النعائم</div>`,
+ ()=>`<h2>الخطوة ٢ — الحاجة</h2>
+   <label>ما نوع العمل؟</label>
+   <div class="chips"><button class="sel">استخارة / سؤال</button><button>محبّة</button>
+   <button>رزق</button><button>حجب</button><button>تفريق</button><button>أذى</button></div>
+   <label>اكتب سؤالك</label><input value="هل أنجح في عملي الجديد؟">
+   <div class="readout">نوع العمل → يحدّد جدول العبارات والمنزلة المطلوبة
+"سؤال" → تشغيل محرّكَي الجفر والزايرجة
+jummal(السؤال) = 731 (تقديريًّا)</div>`,
+ ()=>`<h2>الخطوة ٣ — الزمان والمكان</h2>
+   <label>المكان</label><input value="عمّان (31.95, 35.93)">
+   <label>اللحظة</label><input value="الآن — الجمعة 09:12">
+   <div class="readout">astronomy-engine:
+شروق 05:41 · غروب 18:33 → ساعة نهار = 64.3د
+رب اليوم = الزهرة (الجمعة)
+الساعة الجارية = #5 نهار → عطارد
+الطالع = الميزان 12.4°  · القمر بالمنزلة 17 (الإكليل)</div>`,
+ ()=>`<div class="result"><h2>الطالع</h2>
+   <div class="line"><span>الكوكب / العنصر</span> — عطارد · تراب</div>
+   <div class="line"><span>البرج / المنزلة</span> — العقرب · النعائم (٢٠)</div>
+   <div class="line"><span>الموكَّل / الخادم</span> — ميكائيل · مَحمَططغيل</div>
+   <div class="line"><span>النبوءة</span> — «كتابٌ أو عقدُ تجارة… ما تبنيه الآن يدوم.»</div>
+   <div class="line"><span>متى</span> — بعد رفعِ مانعٍ قائم · يومك الأربعاء وساعة عطارد</div>
+   <div class="line"><span>جواب السؤال</span> — «ن» / نصر — «نعم، بعد سعيٍ ومطاولة»</div>
+   <div class="line"><span>الزايرجة</span> — «نِلتَ بها ما رُمتَ إن صحّ العزمُ ودُمْ»</div>
+   <div class="dim">⚠ بخور عطارد يُذكَر معه زئبق — سُمّ متبخِّر، لا يُحرَق. ·
+   كل سطرٍ أعلاه ناتجُ قسمةٍ وفهرسة؛ نفس المدخلات تُعطي نفس الطالع حرفيًّا.</div></div>`
+];
+function render(){
+  document.getElementById('panel').innerHTML=panels[i]();
+  document.querySelectorAll('.steps div').forEach((d,k)=>d.classList.toggle('on',k<=i));
+  document.querySelectorAll('.chips button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.chips button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+}
+function go(d){i=Math.max(0,Math.min(N-1,i+d));render();}
+render();
+</script>
+</body>
+</html>

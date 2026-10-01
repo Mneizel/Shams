@@ -1,0 +1,5 @@
+node_modules/
+text/sources/
+text/please upscale/
+*.log
+.DS_Store

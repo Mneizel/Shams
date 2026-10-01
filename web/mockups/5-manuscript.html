@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 5 — المخطوط</title>
+<style>
+  :root{
+    --wood:#2a1c10;--page:#efe4c8;--page2:#e8dcbc;--ink:#3a2c17;--red:#9c3b25;
+    --muted:#7a6647;--marg:#6b5836;--danger:#8a2f1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(circle at 50% 0%,#3a2814,#1c1208 70%);
+    color:var(--ink);font-family:"Amiri","Scheherazade New","Times New Roman",serif;
+    min-height:100vh;padding:2rem 1rem;line-height:2}
+  .book{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;
+    background:var(--wood);border-radius:8px;padding:14px;gap:14px;
+    box-shadow:0 40px 80px -30px #000}
+  .page{background:linear-gradient(#f3e9cf,#e7d9b6);border-radius:4px;padding:2rem 1.8rem;
+    position:relative;min-height:560px;
+    box-shadow:inset 0 0 60px rgba(120,90,40,.25)}
+  .page.left{background:linear-gradient(#efe4c8,#e2d3ad)}
+  h1{font-size:1.5rem;color:var(--red);text-align:center;margin:.2rem 0 1rem;
+    border-bottom:2px solid var(--red);padding-bottom:.5rem}
+  .toc{list-style:none;padding:0;margin:0}
+  .toc li{padding:.5rem .3rem;border-bottom:1px dotted #b7a072;cursor:pointer;font-size:1.05rem}
+  .toc li:hover{color:var(--red)}
+  .toc li.active{color:var(--red);font-weight:700}
+  .toc .no{color:var(--muted);font-size:.85rem;margin-inline-start:.4rem}
+  .folio-title{color:var(--red);font-size:1.2rem;margin:.2rem 0 .8rem}
+  .field{display:flex;gap:.5rem;margin:.4rem 0}
+  .field input{flex:1;background:rgba(255,255,255,.4);
+    border:1px solid #bfa878;color:var(--ink);padding:.4rem .6rem;border-radius:3px;font:inherit}
+  .drop{background:rgba(156,59,37,.08);border:1px solid #cbb18a;
+    border-radius:4px;padding:.8rem 1rem;margin:.8rem 0}
+  .drop b{color:var(--red)}
+  .diagram{display:block;margin:1rem auto;width:170px;height:170px;color:var(--ink)}
+  .hashiya{position:relative;margin-top:1.4rem;padding-inline-start:1rem;
+    border-inline-start:2px solid var(--marg);color:var(--marg);font-size:.82rem;line-height:1.7;
+    font-family:ui-monospace,"DejaVu Sans Mono",monospace;direction:ltr;text-align:left;
+    white-space:pre-wrap;display:none}
+  .hashiya.open{display:block}
+  .margin-toggle{color:var(--marg);font-size:.8rem;cursor:pointer;text-decoration:underline;
+    font-family:"Segoe UI",sans-serif}
+  .danger{color:var(--danger);border-inline-start:3px solid var(--danger);padding-inline-start:.6rem;font-size:.9rem}
+  .catch{position:absolute;bottom:.7rem;left:0;right:0;text-align:center;color:var(--muted);font-size:.8rem}
+  @media(max-width:760px){.book{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="book">
+  <section class="page left">
+    <div class="folio-title">فصلٌ في استخراج طالع الاسم وخادمه</div>
+    <div class="field"><input value="محمد"><input value="آمنة"></div>
+    <div class="field"><input value="هل أنجح في عملي الجديد؟"></div>
+
+    <div class="drop">
+      «فمن كان اسمه على هذا العدد فهو من قبيل <b>عطارد</b>، برجُه <b>العقرب</b>،
+      ومنزلتُه <b>النعائم</b>، والموكَّل به <b>ميكائيل</b>، وخادمُه <b>مَحمَططغيل</b>،
+      وطبعُه <b>ناريٌّ</b> يميل إلى التراب.»
+    </div>
+
+    <svg class="diagram" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.3">
+      <rect x="6" y="6" width="108" height="108"/>
+      <path d="M42 6V114M78 6V114M6 42H114M6 78H114"/>
+      <text x="24" y="26" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﻙ</text>
+      <text x="60" y="26" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﻡ</text>
+      <text x="96" y="26" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﺡ</text>
+      <text x="24" y="62" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﺩ</text>
+      <text x="60" y="62" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﻭ</text>
+      <text x="96" y="62" font-size="12" text-anchor="middle" stroke="none" fill="currentColor">ﺏ</text>
+    </svg>
+
+    <div class="drop">
+      «وجوابُ مسألته من الجفر حرفُ <b>«ن»</b>، ومعناه <b>نصرٌ بعد عناء</b>؛
+      وقالت الزايرجة على قافية الوَتَر: <b>نِلتَ بها ما رُمتَ إن صحّ العزمُ ودُمْ</b>.»
+    </div>
+
+    <div class="danger">وأمّا بخورُ عطارد فيُذكَر معه الزئبق — وهو سُمٌّ يتصاعد بالحرارة، فلا يُحرَق ولا يُشَمّ.</div>
+
+    <span class="margin-toggle" onclick="this.nextElementSibling.classList.toggle('open')">◀ حاشية المحقّق (كيف خرج هذا؟)</span>
+    <div class="hashiya">jummal("محمد")=92 ; jummal("امنه")=96 ; Σ=188
+188 mod 4=0 → تراب     188 mod 7=6 → عطارد
+188 mod 12=8 → العقرب  188 mod 28=20 → النعائم
+"ميكائيل": ملَك عطارد الثابت في الجدول
+"مَحمَططغيل": "محم" + لاحقة عنصر تراب "ططغيل"
+الجواب: إسقاط(Σ سؤال+786+92+96 ، 28) → ترتيب أبجد → "ن"
+الزايرجة حتمية: نفس المدخل ⇒ نفس البيت ؛ درجة الطالع +1 تقلبه.</div>
+
+    <div class="catch">۱ ⇜ شمس المعارف — الورقة المقابلة فهرسُ الأبواب</div>
+  </section>
+
+  <section class="page">
+    <h1>شمس المعارف ولطائف العوارف</h1>
+    <ul class="toc">
+      <li>البسملة وأسرار الحروف وطبائعها <span class="no">فصل ١</span></li>
+      <li>حساب الجُمّل وطرقه <span class="no">فصل ٢</span></li>
+      <li>علم الأوفاق وتركيبها <span class="no">فصل ٣</span></li>
+      <li>أسرار الأسماء الحسنى <span class="no">فصل ٤</span></li>
+      <li>خواص السور والآيات <span class="no">فصل ٥</span></li>
+      <li>الفلك والساعات والاختيارات <span class="no">فصل ٦</span></li>
+      <li>منازل القمر الثمانية والعشرون <span class="no">فصل ٧</span></li>
+      <li class="active">استخراج طالع الاسم وخادمه <span class="no">فصل ٨</span></li>
+      <li>الروحانيات: الملوك والخدّام والأعوان <span class="no">فصل ٩</span></li>
+      <li>الخواتم والطلاسم والحروف المقطّعة <span class="no">فصل ١٠</span></li>
+      <li>الجفر واستخراج الغيب من الحروف <span class="no">فصل ١١</span></li>
+      <li>زايرجة العالم <span class="no">فصل ١٢</span></li>
+      <li>أقسام الأعمال (محبة، تفريق، حجب، تسخير، أذى) <span class="no">فصل ١٣</span></li>
+      <li>ملحقات: الرمل ودلائل البروج <span class="no">فصل ١٤</span></li>
+    </ul>
+    <div class="catch">۲ ⇝ اختر بابًا يُفتَح على الورقة اليسرى</div>
+  </section>
+</div>
+<script>
+document.querySelectorAll('.toc li').forEach(li=>li.onclick=()=>{
+  document.querySelector('.toc li.active')?.classList.remove('active');li.classList.add('active');});
+</script>
+</body>
+</html>

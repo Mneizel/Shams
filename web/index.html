@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شمس المعارف الكبرى</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">شمس المعارف الكبرى</span>
+  <div class="search">
+    <input id="q" placeholder="ابحث في الكتاب وكلّ الأدوات… (وفق، الاسم الأعظم، منازل القمر، حرمل…)" autocomplete="off">
+    <div class="out" id="qout"></div>
+  </div>
+  <label class="tgl" title="يكشف كيف حُسِبت كلّ نتيجة، وأين تقع الحيلة">
+    <input type="checkbox" id="revToggle"> وضع الكشف <span class="tgl-note">(يعرض طريقة الحساب تحت كلّ نتيجة)</span>
+  </label>
+</div>
+
+<div id="mecard">
+  <div class="me-title">بطاقتي — املأها مرّةً؛ لا تعمل أدوات التحليل قبل الاسم واسم الأمّ وتاريخ الميلاد ومدينة الميلاد (بحروفٍ عربية):</div>
+  <div class="me-fields">
+    <label>الاسم<input id="ctx-name" placeholder="اكتب اسمك"></label>
+    <label>اسم الأمّ<input id="ctx-mother" placeholder="اسم أمّك"></label>
+    <label class="wide">السؤال / الحاجة
+      <select id="ctx-question"><option value="">— اختر سؤالًا —</option></select>
+    </label>
+    <div class="me-fields" id="ctx-target-wrap" hidden style="margin:0">
+      <label>اسم الشخص الآخر في سؤالك<input id="ctx-target" placeholder="اكتب اسمه/اسمها">
+        <span class="fld-note">سؤالُك يتحدّث عن شخصٍ معيَّن — اكتب اسمه ليُستعمَل فعليًّا في الحساب (توافقٌ حقيقيّ)، لا أن يبقى الجوابُ عامًّا لا يعرف عمّن يتحدّث.</span>
+      </label>
+      <label>اسم أمّه/أمّها <span class="gloss">(اختياري، يزيد الدقّة)</span><input id="ctx-target-mother" placeholder="إن عرفتَه"></label>
+    </div>
+    <label>تاريخ الميلاد<input id="ctx-date" type="date"></label>
+    <label>ساعة الميلاد<input id="ctx-time" type="time" value="12:00">
+      <span class="fld-note">لا تعرف وقت ولادتك بالضبط؟ الافتراضُ ظُهرًا، لكنّ الطالعَ الصاعد يتغيّر كلَّ ساعتين تقريبًا — فأدخِلْه إن استطعت.</span>
+    </label>
+    <label class="wide">مدينة الميلاد
+      <select id="ctx-city"><option value="">— اختر مدينة —</option></select>
+      <span class="fld-note">مدينتك غير موجودة؟ اختر أقرب مدينةٍ كبيرة، أو أدخِل إحداثيّاتٍ دقيقة أسفل.</span>
+    </label>
+  </div>
+  <details class="coords-adv">
+    <summary>مدينتي غير موجودة — أدخِل الإحداثيّات بدقّة (اختياري)</summary>
+    <div class="me-fields" style="margin-top:.4rem">
+      <label>خطّ العرض<input id="ctx-lat" type="number" step="0.0001" placeholder="مثلاً 31.9539"></label>
+      <label>خطّ الطول<input id="ctx-lon" type="number" step="0.0001" placeholder="مثلاً 35.9106"></label>
+      <label>فرقُ التوقيت عن UTC<input id="ctx-tz" type="number" step="0.5" placeholder="مثلاً 3"></label>
+    </div>
+    <div class="fld-note">إن مُلئت خطّا العرض والطول، تُستعملان بدل المدينة المختارة أعلاه.</div>
+  </details>
+  <div class="me-hint" id="me-hint"></div><button class="me-clear" id="me-clear" title="يمسح الاسم وكلّ الحقول المحفوظة في هذا المتصفّح (لا تُرسَل لأيّ مكان أصلًا)">ليست بياناتك؟ امسحها وابدأ من جديد</button>
+  <div class="me-summary" id="me-summary"></div>
+</div>
+
+<div class="layout">
+  <aside><nav class="nav" id="nav"></nav></aside>
+  <main id="main"><p class="kv">جارٍ التحميل…</p></main>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

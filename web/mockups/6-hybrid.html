@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 6 — الهجين (داشبورد + مناظرة + بحث ثابت)</title>
+<style>
+  :root{
+    --bg:#f4f5f8; --card:#fff; --ink:#1b2230; --muted:#68707f; --line:#e3e6ec;
+    --accent:#2f6f5b; --accent-ink:#fff; --code:#0f172a; --code-ink:#a7f3d0;
+    --warn:#b4442b; --claim-bg:#faf6ee; --claim-ink:#7a5a2e;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0e1116; --card:#161a22; --ink:#e6e9ef; --muted:#99a2b1; --line:#262b36;
+    --accent:#3f9d81; --code:#0a0e14; --code-ink:#8fe9c4; --warn:#e0795f;
+    --claim-bg:#1e1a12; --claim-ink:#d8bd8c;
+  }}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI","Noto Sans Arabic",system-ui,sans-serif;line-height:1.7}
+  button,input{font:inherit}
+
+  /* ── الشريط العلوي ── */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;gap:.8rem;align-items:center;
+    background:var(--card);border-bottom:1px solid var(--line);padding:.6rem 1rem}
+  .brand{font-weight:700;color:var(--accent);white-space:nowrap}
+  .search{flex:1;position:relative;max-width:560px}
+  .search input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    padding:.55rem .9rem;border-radius:999px}
+  .search .results{position:absolute;top:110%;inset-inline:0;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 40px -20px #0007;
+    max-height:60vh;overflow:auto;display:none}
+  .search .results.open{display:block}
+  .search .results a{display:block;padding:.6rem .9rem;border-bottom:1px solid var(--line);
+    color:inherit;text-decoration:none;font-size:.9rem}
+  .search .results a:hover{background:var(--bg)}
+  .search .results .tag{color:var(--muted);font-size:.75rem}
+  .toggle{display:flex;align-items:center;gap:.45rem;color:var(--muted);font-size:.85rem;white-space:nowrap;cursor:pointer}
+  .toggle input{appearance:none;width:38px;height:20px;background:var(--line);border-radius:20px;position:relative;cursor:pointer}
+  .toggle input:checked{background:var(--accent)}
+  .toggle input::after{content:"";position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;right:2px;transition:.15s}
+  .toggle input:checked::after{right:20px}
+
+  /* ── التخطيط ── */
+  .layout{display:grid;grid-template-columns:210px 1fr;min-height:calc(100% - 53px)}
+  aside{background:var(--card);border-inline-start:1px solid var(--line);padding:.8rem .6rem;overflow:auto}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav button{display:flex;gap:.55rem;align-items:center;text-align:start;background:none;border:0;
+    color:var(--muted);padding:.5rem .6rem;border-radius:9px;cursor:pointer;width:100%;font-size:.9rem}
+  .nav button.on{background:var(--accent);color:var(--accent-ink)}
+  .nav button:not(.on):hover{background:var(--bg)}
+  main{padding:1.3rem 1.6rem;overflow:auto}
+  h1{font-size:1.25rem;margin:.1rem 0 1rem}
+  .form{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem}
+  .form input{background:var(--card);border:1px solid var(--line);color:var(--ink);
+    padding:.5rem .75rem;border-radius:9px;min-width:130px}
+  .form button{background:var(--accent);color:var(--accent-ink);border:0;padding:.5rem 1.2rem;border-radius:9px;cursor:pointer}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem;position:relative}
+  .card h3{margin:0 0 .5rem;font-size:.95rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  .card h3 .k{color:var(--muted);font-weight:400;font-size:.78rem}
+  .big{font-size:1.5rem;font-weight:700;margin:.15rem 0}
+  .kv{font-size:.9rem;color:var(--muted)}
+  .kv b{color:var(--ink)}
+  .warn{color:var(--warn);font-size:.83rem;margin-top:.5rem}
+  .mono{font-family:ui-monospace,"DejaVu Sans Mono",monospace}
+
+  /* ── الكشف ── */
+  .reveal{margin-top:.7rem;background:var(--code);color:var(--code-ink);border-radius:9px;
+    padding:.75rem;font-family:ui-monospace,"DejaVu Sans Mono",monospace;font-size:.78rem;
+    line-height:1.65;white-space:pre-wrap;direction:ltr;text-align:left}
+  body:not(.reveal-on) .reveal{display:none}
+  .reveal-hint{margin-top:.5rem;font-size:.75rem;color:var(--muted)}
+  body.reveal-on .reveal-hint{display:none}
+
+  /* ── وجهًا لوجه ── */
+  .facebtn{background:none;border:1px solid var(--accent);color:var(--accent);font-size:.72rem;
+    padding:.12rem .55rem;border-radius:999px;cursor:pointer}
+  .card.debate .normal{display:none}
+  .card:not(.debate) .vs{display:none}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:.4rem}
+  .vs>div{padding:.7rem .8rem;font-size:.83rem}
+  .vs .claim{background:var(--claim-bg);color:var(--claim-ink)}
+  .vs .fact{background:var(--code);color:var(--code-ink);font-family:ui-monospace,monospace;direction:ltr;text-align:left;white-space:pre-wrap}
+  .vs .lbl{font-size:.68rem;letter-spacing:.1em;opacity:.6;display:block;margin-bottom:.3rem}
+
+  @media(max-width:760px){.layout{grid-template-columns:1fr}aside{border:0;border-bottom:1px solid var(--line)}
+    .nav{flex-direction:row;flex-wrap:wrap}.vs{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="reveal-on">
+
+<div class="topbar">
+  <span class="brand">شمس المعارف · المحرّك</span>
+  <div class="search">
+    <input id="q" placeholder="ابحث في الكتاب والمحرّكات… (جرّب: وفق، الاسم الأعظم، منازل القمر)" autocomplete="off">
+    <div class="results" id="qr"></div>
+  </div>
+  <label class="toggle"><input type="checkbox" id="rev" checked>وضع الكشف</label>
+</div>
+
+<div class="layout">
+  <aside>
+    <div class="nav" id="nav"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script>
+// ── محرّك جُمّل حقيقي مصغّر (مشرقي) ─────────────────────────────
+const KAB={ا:1,ب:2,ج:3,د:4,ه:5,و:6,ز:7,ح:8,ط:9,ي:10,ك:20,ل:30,م:40,ن:50,س:60,ع:70,ف:80,ص:90,ق:100,ر:200,ش:300,ت:400,ث:500,خ:600,ذ:700,ض:800,ظ:900,غ:1000};
+const norm=s=>(s||"").normalize("NFC").replace(/[ً-ْـ]/g,"")
+  .replace(/[أإآء]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+  .replace(/[^ء-ي ]/g,"");
+const letters=s=>[...norm(s)].filter(c=>c!==" ");
+const jummal=s=>letters(s).reduce((a,c)=>a+(KAB[c]||0),0);
+
+// ── فهرس بحث تجريبي ─────────────────────────────────────────────
+const INDEX=[
+  ["نصّ الكتاب","الفصل الثامن والثلاثون في استخدامات الحروف وخدّامها وما لها من الأسرار…"],
+  ["نصّ الكتاب","فصل في الاسم الأعظم وما ورد فيه من الآثار، وهو مركّب من حروف…"],
+  ["الفلك","منازل القمر الثمانية والعشرون وطبائعها وما يُعمل في كلّ منزلة"],
+  ["الأوفاق","الوفق المثلّث ٣×٣ ومجموعه السحريّ خمسة عشر، وهو لوح زحل"],
+  ["الأسماء الحسنى","الرزّاق — عددها ٣٠٨، تُكرَّر لجلب الرزق في ساعة المشتري"],
+  ["الأرواح","الملوك السبعة: المذهب، مُرّة، الأحمر، برقان، شمهورش، الأبيض، ميمون"],
+  ["الجفر","بابُ النصر لحرف «ن»: تُنال المسألةُ وتظفرُ بالخصم، والحقُّ معك"],
+];
+const q=document.getElementById('q'), qr=document.getElementById('qr');
+q.addEventListener('input',()=>{
+  const n=norm(q.value);
+  if(n.length<2){qr.classList.remove('open');return;}
+  const hits=INDEX.filter(([,t])=>norm(t).includes(n));
+  qr.innerHTML=hits.length?hits.map(([tag,t])=>
+    `<a href="#"><span class="tag">${tag} — </span>${t.replace(new RegExp('('+q.value.trim()+')','g'),'<mark>$1</mark>')}</a>`).join('')
+    :`<a href="#"><span class="tag">لا نتائج — </span>جرّب كلمة أخرى</a>`;
+  qr.classList.add('open');
+});
+document.addEventListener('click',e=>{ if(!q.parentElement.contains(e.target)) qr.classList.remove('open'); });
+
+// ── الكشف العامّ ───────────────────────────────────────────────
+document.getElementById('rev').addEventListener('change',e=>
+  document.body.classList.toggle('reveal-on',e.target.checked));
+
+// ── القوائم ───────────────────────────────────────────────────
+const ENGINES=[
+  ["reading","🜍 القراءة الكاملة"],["jummal","🔢 حساب الجُمّل"],["awfaq","▦ الأوفاق"],
+  ["falak","🪐 الفلك والساعات"],["asma","👤 الأسماء والخدّام"],["jafr","🜚 الجفر"],
+  ["zairja","◎ الزايرجة"],["raml","⚄ الرمل"],["talisman","✒️ الطلاسم"],["taskhir","🔥 التسخير"],
+  ["diagnosis","🩺 تشخيص الحالة"],["khawass","📿 الخواصّ"],["spirits","👁 الأرواح والملوك"],["corpus","📖 نصّ الكتاب"],
+];
+const nav=document.getElementById('nav');
+ENGINES.forEach(([id,label],i)=>{
+  const b=document.createElement('button');
+  b.textContent=label; b.dataset.id=id; if(i===0)b.className='on';
+  b.onclick=()=>{ document.querySelector('.nav .on')?.classList.remove('on'); b.classList.add('on'); render(id); };
+  nav.appendChild(b);
+});
+
+// ── اللوحات ───────────────────────────────────────────────────
+const main=document.getElementById('main');
+function card(title,k,bodyHtml,revealText,vsHtml){
+  return `<div class="card">
+    <h3><span>${title}</span><span style="display:flex;gap:.5rem;align-items:center">
+      <span class="k">${k||''}</span>${vsHtml?`<button class="facebtn" onclick="this.closest('.card').classList.toggle('debate')">وجهًا لوجه</button>`:''}</span></h3>
+    <div class="normal">${bodyHtml}
+      ${revealText?`<div class="reveal">${revealText}</div><div class="reveal-hint">فعّل «وضع الكشف» فوق لترى الحساب</div>`:''}
+    </div>
+    ${vsHtml?`<div class="vs">${vsHtml}</div>`:''}
+  </div>`;
+}
+const vs=(claim,fact)=>`<div class="claim"><span class="lbl">الدعوى</span>${claim}</div><div class="fact"><span class="lbl">ما جرى</span>${fact}</div>`;
+
+const PANES={
+  reading(){
+    return `<h1>القراءة الكاملة</h1>
+    <div class="form">
+      <input id="n" value="محمد"><input id="m" value="سميرة">
+      <input id="qq" value="هل أوفَّق في عملي القادم؟" style="min-width:220px">
+      <button onclick="doReading()">اقرأ</button>
+    </div>
+    <div class="grid" id="rcards">${readingCards("محمد","سميرة")}</div>`;
+  },
+  jummal(){
+    return `<h1>حساب الجُمّل — <span style="font-weight:400;color:var(--muted);font-size:.9rem">يشتغل فعليًا، اكتب أيّ شي</span></h1>
+    <div class="form"><input id="jt" value="بسم الله الرحمن الرحيم" style="min-width:280px" oninput="doJummal()">
+      <select id="jm" onchange="doJummal()"><option value="k">كبير</option></select></div>
+    <div class="grid" id="jout"></div>`;
+  },
+  awfaq(){ return `<h1>الأوفاق</h1><div class="grid">${card("وفق زحل ٣×٣","المجموع السحريّ ١٥",
+    `<pre class="mono" style="font-size:1rem;margin:.2rem 0">٨  ١  ٦\n٣  ٥  ٧\n٤  ٩  ٢</pre>
+     <div class="kv">كل صفٍّ وعمودٍ وقطرٍ = <b>١٥</b></div>`,
+    "baseSquare(3) = طريقة سيام:\n ابدأ من منتصف الصف العلويّ، تحرّك قطريًّا لأعلى-يمين،\n وإذا امتلأت الخانة انزل واحدة.\nثم verify(): rows=cols=diag=15 ✓")}
+    ${card("وفق الاسم «محمد» (٩٢)","رتبة ٤",
+    `<div class="kv">مربّع ٤×٤ مجموعه السحريّ <b>٩٢</b> — يُنقَش على الحرز</div>`,
+    "wafqForTarget(4, 92): 92 % 4 = 0 ⇒ a=(92-30)/4=15.5? … لا.\n92 من مضاعفات 4 ⇒ a=(92 - n(n²-1)/2)/n = (92-30)/4 = 15.5\n→ نبحث d صحيح… أو نقرّب. (التفصيل في المحرّك)")}</div>`;
+  },
+  falak(){ return `<h1>الفلك والساعات</h1><div class="grid">
+    ${card("الحال الآن","astronomy-engine · offline",
+      `<div class="kv">رب اليوم <b>الزهرة (الجمعة)</b><br>الساعة الجارية <b>#٥ نهار — عطارد</b><br>
+       الطالع <b>الميزان ١٢.٤°</b> · الوجه <b>وجه المشتري</b> · الحدّ <b>حدّ الزهرة</b><br>
+       منزلة القمر <b>١٧ الإكليل</b> · ملَكها <b>أدريال</b></div>`,
+      "sunrise 05:41  sunset 18:33 → ساعة نهار = (18:33−05:41)/12 = 64.3د\nحاكم الساعة 1 = رب اليوم، ثم ترتيب الكلدانيين: زحل، المشتري، المريخ…\nطول الشمس ← البرج = floor(lon/30) ؛ الوجه = floor(deg/10) على دور الكلدانيين")}
+    ${card("مواقع الكواكب","لحظة الآن",
+      `<div class="kv mono">الشمس ٩° العقرب · القمر ٢٢° الحمل · عطارد ١° القوس<br>
+       الزهرة ٢٥° الميزان · المريخ ١٤° العقرب · المشتري ١١° السرطان راجع · زحل ٣° الحوت</div>`,
+      "لكلّ كوكب: GeoVector → Ecliptic.elon\nالرجوع = فرق الطول على يومٍ قبل/بعد < 0")}
+  </div>`; },
+  asma(){ return `<h1>الأسماء والخدّام</h1><div class="grid">
+    ${card("هويّة «محمد / سميرة»","÷ ٤ · ٧ · ١٢ · ٢٨",
+      `<div class="big">زحل</div>
+       <div class="kv">العنصر <b>ماء</b> · البرج <b>الدلو</b> · المنزلة <b>الغَفْر</b><br>
+       المَلَك <b>كسفيائيل</b> · الخادم المُصرَّف <b>محمهيائيل</b> · اليوم <b>السبت</b> ساعة زحل</div>`,
+      "جُمّل «محمد»=92 ، «سميره»=315 ، المجموع=407\n407 % 4 = 3 → ماء\n407 % 7 = 1 → زحل\n407 % 12 = 11 → الدلو\n407 % 28 = 15 → الغَفْر\nالخادم = «محم» + لاحقة عنصر ماء «هيائيل»",
+      vs("«اسمك تحت زحل، خادمك محمهيائيل، ويومك السبت — لا تبدأ أمرًا مهمًّا فيه.»",
+         "407 = 92 + 315\n407 mod 7 = 1 → جدول[1] = «زحل»\n«السبت» = يوم زحل الثابت\n«محمهيائيل» = نصّ + لاحقة\n=> قسمة وفهرسة، لا كشف."))}
+  </div>
+  <h1 style="margin-top:1.6rem">التوافق بين شخصين — <span style="font-weight:400;color:var(--muted);font-size:.9rem">يشتغل فعليًا</span></h1>
+  <div class="form">
+    <input id="ca" value="محمد"><input id="cam" value="سميرة" placeholder="أم الأول">
+    <input id="cb" value="ليلى"><input id="cbm" value="فاطمة" placeholder="أم الثاني">
+    <button onclick="doCompat()">قِس التوافق</button>
+  </div>
+  <div class="grid" id="compat">${compatCard("محمد","سميرة","ليلى","فاطمة")}</div>`; },
+  jafr(){ return `<h1>الجفر</h1><div class="grid">${card("جواب «هل أوفَّق في عملي؟»","إسقاط ٢٨",
+    `<div class="big">حرف «ن»</div>
+     <div class="kv"><b>بابُ النصر:</b> «تُنال المسألةُ وتظفرُ بالخصم، والحقُّ معك.»<br>كلمة الجواب <b>نصر</b></div>`,
+    "Σ = جُمّل(سؤال) + 786 + 92 + 315\nisqāt(Σ,28) → باقٍ r → letterAt(r) = «ن»\nABWAB[«ن»] = «بابُ النصر…»  (جدول ثابت من ٢٨ بابًا)",
+    vs("«كشفتُ لك بالجفر: نصرٌ وظفَرٌ في عملك.»",
+       "الباقي يعتمد على جُمّل السؤال حرفيًّا.\nغيّر كلمةً في السؤال → حرفٌ آخر → بابٌ آخر.\nلا وحي، جدول."))}</div>`; },
+  zairja(){ return `<h1>الزايرجة</h1><div class="grid">${card("استخراج البيت","وصف ابن خلدون",
+    `<div class="kv">١) المخرَج الخام من الآلة:</div>
+     <div class="kv mono" style="font-size:.95rem;opacity:.7">و غ خ ب ت غ ح ص ب ع د ت ن ح د ب ب <b>ن</b></div>
+     <div class="kv" style="margin-top:.5rem">٢) بعد «تشكيل» المشغِّل (على قافية «ن»):</div>
+     <div class="big" style="font-size:1.15rem">«سَتَبلُغُ ما تَرجو إذا كُنتَ تُحسِنُ»</div>`,
+    "start = (جُمّل السؤال + درجة الطالع + 361) mod 28\nstep  = (درجة الطالع mod 12) + 1\nالمخرَج الخام = ١٧ حرفًا مبعثرًا — هذا كلّ ما تُعطيه الآلة.\n«التشكيل»: يختار المشغِّلُ شطرًا على قافية الوَتَر من بنكٍ ثابت (18 شطرًا)\n  المؤشِّر = (جُمّل الحروف الخام + بذرة) mod عدد المرشَّحين\n⇒ هنا يُدَسُّ المعنى. الآلةُ لا تُنتِج معنًى.",
+    vs("«استخرجتُ لكَ بالزايرجة بيتًا: سَتَبلُغُ ما تَرجو إذا كُنتَ تُحسِنُ.»",
+       "الآلة أخرجت: وغخبتغحصبعدتنحدببن (ضوضاء).\nأنا اخترتُ الشطرَ من قائمةٍ، ثمّ قلتُ إنّ الحروفَ دلّت عليه.\nلو غيّرتَ الطالعَ درجةً: ضوضاءٌ أخرى ⇒ قد أختارُ شطرًا آخر."))}</div>`; },
+  raml(){ return `<h1>علم الرمل</h1><div class="grid">${card("طالع «هل أوفَّق في عملي؟»","البيت العاشر — العمل",
+    `<div class="kv">شكل البيت <b>الفرح (اللحيان)</b> · القاضي <b>النصرة الداخلة</b><br>
+     الحكم: <b>الأمرُ يتمّ على خيرٍ وسرعة</b></div>`,
+    "بذرة = جُمّل(اسم|أم|سؤال|وقت) → PRNG → 16 سطرًا\n4 أمّهات → بنات (أعمدة) → منقولات (جمع) → شاهدان → قاضٍ\nالوزن = طبع البيت + طبع القاضي + ½ كلّ شاهد")}</div>`; },
+  talisman(){ return `<h1>الطلاسم</h1><div class="grid">
+    ${card("خاتم سليمان","",'<svg viewBox="0 0 120 120" width="120" height="120" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="60" cy="60" r="52" stroke-opacity=".35"/><polygon points="60,12 102,84 18,84"/><polygon points="60,108 18,36 102,36"/></svg>',"")}
+    ${card("وفق «محمد»","سيجيل",'<svg viewBox="0 0 120 120" width="120" height="120" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="8" y="8" width="104" height="104" stroke-opacity=".3"/><polyline points="20,25 95,40 30,80 85,95 25,50 70,20"/><circle cx="20" cy="25" r="4" fill="currentColor"/></svg>',"السيجيل = خطٌّ يصل خانات الوفق على ترتيب أعدادها 1..n²")}
+    ${card("طلسم الحُمّى","المتناقص",'<pre class="mono" style="font-size:.8rem;line-height:1.4">بسماللهالرحمنالرحيم\nبسماللهالرحمنالرحي\nبسماللهالرحمنالرح\nبسماللهالرحمنالر\n…</pre>',"")}
+  </div>`; },
+  taskhir(){ return `<h1>التسخير والتصريف</h1><div class="grid">${card("عمل «تسخير خادم» لمحمد/سميرة","",
+    `<div class="kv">الكوكب <b>زحل</b> · المَلِك <b>ميمون</b> · المَلَك <b>كسفيائيل</b><br>
+     اليوم <b>السبت</b> ساعة زحل · الجهة <b>الشمال الغربي</b> · اللون <b>أسود</b><br>
+     التكرار <b>٢١٨١</b> · الصيام <b>٧ أيام</b></div>
+     <div class="warn">⚠ بعض نسخ بخور زحل تذكر مكوّنًا سامًّا — موسوم في المحرّك.</div>
+     <details style="margin-top:.5rem"><summary style="cursor:pointer;color:var(--muted);font-size:.85rem">نصّ العزيمة (قالب)</summary>
+     <pre class="mono" style="font-size:.75rem;white-space:pre-wrap">أقسمتُ عليكَ أيّها الخادمُ محمهيائيل خادمَ كوكبِ زحل، وبحقّ المَلَكِ كسفيائيل… إلّا ما حضرتَ وأجبتَ… (تُكرَّر ٢١٨١ مرّة)</pre></details>`,
+    "الكوكب = طالع اسم العامل (407 mod 7 = 1 → زحل)\nالمَلِك/المَلَك/اليوم/الجهة/اللون = جداول ثابتة\nالتكرار = جُمّل نصّ الحاجة\nالصيام = (جُمّل الحاجة mod 7) + 3")}</div>`; },
+  diagnosis(){ return `<h1>تشخيص الحالة</h1>
+    <div class="kv" style="margin-bottom:.8rem">أشّر ما ينطبق (تجريبيّ):</div>
+    <div class="grid">${card("النتيجة (بأعراض مختارة مسبقًا)","تأثير فورر",
+    `<div class="big">مسّ / سكن — ٩٧٪</div>
+     <div class="kv">ثانوي: سحر، إصابة عين<br>العلاج: آيات السكينة، آية الكرسي، أواخر البقرة…</div>
+     <div class="warn">تنبيه صحّيّ حقيقيّ: هذه الأعراض تُفسَّر غالبًا بالقلق/الاكتئاب/اضطراب النوم/فقر الدم — راجِع طبيبًا.</div>`,
+    "أشّرتَ 7 أعراض.\nكلّ عرضٍ يدلّ على ≈2.8 علّة ⇒ أيُّ اختيارٍ يرفع عدّة عللٍ معًا.\nالأعلى: «مسّ» بـ6 من 7 ⇒ (6/7·100)+12 = 97% (بحدٍّ أقصى 97)\nلو أشّرتَ أعراضًا أخرى لظهرت علّةٌ أخرى بنفس «الثقة».")}</div>`; },
+  khawass(){ return `<h1>الخواصّ</h1><div class="grid">
+    ${card("الاسم الموافق لمحمد/سميرة","",`<div class="big">المؤمن — ١٦٧</div><div class="kv">للأمان من الخوف. المطابقة: (٩٢+٣١٥) mod ١٠٠ + ١</div>`,"")}
+    ${card("خواصّ آية الكرسي","",`<div class="kv">تحصينٌ من الشياطين، تُقرأ عند النوم وأدبار الصلوات؛ تدخل الحرز والطلسم.</div>`,"")}
+    ${card("تحذير: مكوّنات سامّة","",`<div class="kv warn">الحرمل (تبخير) · الكبريت · الزرنيخ · الزئبق · الداتورا · السيكران — أذًى بدنيٌّ حقيقيّ.</div>`,"")}
+  </div>`; },
+  spirits(){ return `<h1>الأرواح والملوك</h1>
+    <div class="kv" style="margin-bottom:.8rem">الخَتم SVG يظهر افتراضيًّا، ومكان الصورة جاهز لِما تُضاف.</div>
+    <div class="grid">
+    ${["المذهب/الشمس/الجاه والقبول","مُرّة/القمر/الرسائل والأسفار","الأحمر/المريخ/الحرب والتفريق","ميمون/زحل/الحبس والتعطيل"].map(s=>{
+      const [n,p,d]=s.split("/");
+      return card(n,p,`<svg viewBox="0 0 120 120" width="110" height="110" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="60" cy="60" r="50" stroke-opacity=".35"/><polyline points="30,40 90,55 45,85 80,90 35,60 70,35"/><circle cx="30" cy="40" r="4" fill="currentColor"/></svg><div class="kv">${d}</div>`,"");
+    }).join("")}</div>`; },
+  corpus(){ return `<h1>نصّ الكتاب — بحث</h1>
+    <div class="kv">اكتب في شريط البحث فوق (حاضرٌ في كلّ صفحة). ٤٤٢٣ مقطعًا من نسخة الكبرى.</div>
+    <div class="grid" style="margin-top:1rem">${card("مثال نتيجة","kubra_shamela #١٤٠٢",
+      `<div class="kv">«…الفصل الثامن والثلاثون في استخدامات الحروف وخدّامها وما لها من الأسرار…»</div>
+       <div class="reveal-hint">النصّ OCR — يجد الموضع، والحروف قد لا تكون مضبوطة ١٠٠٪ ؛ مع رابطٍ للمسح النظيف.</div>`,"")}</div>`; }
+};
+
+function readingCards(n,m){
+  const jn=jummal(n), jm=jummal(m), tot=jn+jm;
+  const el=["نار","هواء","ماء","تراب"][tot%4], pl=["القمر","زحل","المشتري","المريخ","الشمس","الزهرة","عطارد"][tot%7];
+  return card("هويّة الاسم","÷ ٤ · ٧ · ١٢ · ٢٨",
+    `<div class="big">${pl}</div><div class="kv">المجموع <b>${tot}</b> · العنصر <b>${el}</b> · (يُحسب فعليًا من جُمّل ${n}=${jn} و${m}=${jm})</div>`,
+    `جُمّل «${norm(n)}» = ${jn}\nجُمّل «${norm(m)}» = ${jm}\nالمجموع = ${tot}\n${tot} % 4 = ${tot%4} → ${el}\n${tot} % 7 = ${tot%7} → ${pl}`,
+    vs("«اسمك يحكمه "+pl+"، وطبعك "+el+".»","("+jn+" + "+jm+") mod 7 = "+(tot%7)+" → جدول → "+pl+"\nنفس المدخل ⇒ نفس الناتج دائمًا."))
+  + card("جواب السؤال","جفر + زايرجة",
+    `<div class="kv">جفر: حرف <b>ن</b> ← «بابُ النصر»<br>زايرجة: «خجدشحيرتغصلضعصعترن»</div>`,
+    "جفر: Σ(سؤال+786+اسم+أم) → إسقاط 28 → «ن» → ABWAB[ن]\nزايرجة: نفس المدخلات ⇒ نفس البيت حرفيًّا")
+  + card("النبوءة","فهرسة جداول",
+    `<div class="kv">«بطءٌ ثمّ فرَجٌ بعد شدّة… ما تبنيه الآن يدوم.» — نافذة: قُربَ نهاية العام</div>`,
+    `BY_PLANET["${pl}"] + BY_ELEMENT["${el}"] + TIMING_BY_SIGN[${tot%12}]\nكلّها نصوصٌ ثابتةٌ في جداول.`);
+}
+function compatCard(na,ma,nb,mb){
+  const ta=jummal(na)+jummal(ma), tb=jummal(nb)+jummal(mb), sum=ta+tb;
+  const ea=["نار","هواء","ماء","تراب"][ta%4], eb=["نار","هواء","ماء","تراب"][tb%4];
+  const friend={نار:"هواء",هواء:"نار",ماء:"تراب",تراب:"ماء"};
+  const harmon=friend[ea]===eb||ea===eb;
+  const verdicts=["محبّة ومودّة","خير وبركة","كلام ووساطة","نفور وخصام","سفر وفراق","زواج وعِشرة"];
+  const r12=((sum%12)+12)%12||12;
+  const verdict=verdicts[r12%verdicts.length];
+  return card(`توافق «${norm(na)}» و«${norm(nb)}»`,"÷ ١٢ و ٤",
+    `<div class="big">${verdict}</div>
+     <div class="kv">${norm(na)}: مجموع <b>${ta}</b> عنصره <b>${ea}</b><br>
+     ${norm(nb)}: مجموع <b>${tb}</b> عنصره <b>${eb}</b><br>
+     العناصر <b>${harmon?"متوافقة":"متنافرة"}</b></div>`,
+    `مجموع «${norm(na)}»+أمّه = ${ta}\nمجموع «${norm(nb)}»+أمّه = ${tb}\nمجموع الاثنين = ${sum}\n${sum} % 12 = ${r12} ⇒ الحكم[${r12%verdicts.length}] = «${verdict}»\nعنصر ${ea} مقابل ${eb} ⇒ ${harmon?"متوافقان":"متنافران"}`,
+    vs(`«${norm(na)} و${norm(nb)}: بينهما ${verdict}.»`,
+       `(${ta} + ${tb}) mod 12 = ${r12} → قائمة أحكام ثابتة\nاقلب اسم الأمّ أو أضِف لقبًا ⇒ رقمٌ آخر ⇒ حكمٌ آخر.`));
+}
+window.doCompat=()=>{
+  const g=id=>document.getElementById(id).value;
+  document.getElementById('compat').innerHTML=compatCard(g('ca'),g('cam'),g('cb'),g('cbm'));
+};
+window.doReading=()=>{
+  const n=document.getElementById('n').value, m=document.getElementById('m').value;
+  document.getElementById('rcards').innerHTML=readingCards(n,m);
+};
+window.doJummal=()=>{
+  const t=document.getElementById('jt').value;
+  const ls=letters(t);
+  const rows=ls.map(c=>`${c} = ${KAB[c]||0}`).join("\n");
+  document.getElementById('jout').innerHTML=card("النتيجة","كبير مشرقيّ",
+    `<div class="big">${jummal(t)}</div><div class="kv">${ls.length} حرفًا · «${norm(t)}»</div>`,
+    rows+"\n──────\nالمجموع = "+jummal(t));
+};
+
+function render(id){ main.innerHTML=(PANES[id]||(()=>`<h1>${id}</h1><p class="kv">لوحة تجريبية.</p>`))();
+  if(id==='jummal') doJummal(); }
+render('reading');
+</script>
+</body>
+</html>
