@@ -1646,6 +1646,15 @@ PANELS.kaf = (main) => {
         <button class="btn sec" id="k-camstop" hidden>إيقاف</button></div>
       <div id="k-camwrap" hidden style="position:relative;max-width:520px">
         <video id="k-video" playsinline muted style="width:100%;border-radius:12px;transform:scaleX(-1)"></video>
+        <svg id="k-handguide" viewBox="0 0 200 280" style="position:absolute;inset:0;margin:auto;width:48%;height:auto;pointer-events:none;opacity:.5;transition:opacity .15s,stroke .15s" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="10 7">
+          <rect x="30" y="140" width="140" height="112" rx="42"/>
+          <rect x="38" y="70" width="22" height="82" rx="11"/>
+          <rect x="64" y="38" width="24" height="114" rx="12"/>
+          <rect x="92" y="22" width="26" height="130" rx="13"/>
+          <rect x="122" y="42" width="24" height="110" rx="12"/>
+          <rect x="-4" y="-10" width="56" height="26" rx="13" transform="rotate(42 24 3) translate(0 175)"/>
+        </svg>
+        <div class="gloss" style="position:absolute;top:.4rem;right:0;left:0;text-align:center;color:#fff;text-shadow:0 1px 3px #000">طابِقْ يدَك على الرسمة</div>
         <div id="k-guide" style="position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.6);color:#fff;padding:.5rem;text-align:center;border-radius:0 0 12px 12px;font-size:1.05rem"></div>
       </div>
       <div id="k-shot"></div>
@@ -1764,7 +1773,11 @@ PANELS.kaf = (main) => {
       vis.preloadOpenCV(); // بعد نجاح فتح الكاميرا فعلًا — لا يتزامن تجميدُها مع بدء التشغيل
       stopLoop = vis.runLiveCapture({
         video,
-        onGuide: (msgs, ok) => { const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)"; },
+        onGuide: (msgs, ok) => {
+          const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)";
+          const hg = $("#k-handguide", main);
+          if (hg) { hg.style.stroke = ok ? "#3ddc6a" : "#fff"; hg.style.opacity = ok ? ".9" : ".5"; hg.style.strokeDasharray = ok ? "0" : "10 7"; }
+        },
         onShot: (feats, dataUrl) => {
           stopAll();
           // دمجٌ: الكاميرا تملأُ الشكلَ والأصابعَ والخطوط؛ الحقولُ اليدويّةُ (إن مُلئت) تُكمِّلُ التلالَ والأظافر…

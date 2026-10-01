@@ -83,10 +83,10 @@ function angle(a, b, c) {
   return Math.acos(Math.max(-1, Math.min(1, d))) * 180 / Math.PI;
 }
 
-/** حلقةٌ حيّة: تُقيِّمُ كلَّ إطارٍ وتُوجِّه، ثمّ تلتقطُ لمّا تستقرُّ الجودةُ ~نصفَ ثانية. */
+/** حلقةٌ حيّة: تُقيِّمُ كلَّ إطارٍ وتُوجِّه، ثمّ تلتقطُ بسرعةٍ فورَ مطابقةِ اليدِ لرسمِ الدليل. */
 export function runLiveCapture({ video, onGuide, onShot }) {
   let raf = 0, stableFrames = 0, lastLm = null, stopped = false;
-  const NEED_STABLE = 8;
+  const NEED_STABLE = 4;
   async function tick() {
     if (stopped) return;
     let res;
