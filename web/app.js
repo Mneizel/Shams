@@ -1761,6 +1761,7 @@ PANELS.kaf = (main) => {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } });
         video.srcObject = stream; await video.play();
       } catch (e) { failReset("لم يُسمَحْ باستخدامِ الكاميرا."); return; }
+      vis.preloadOpenCV(); // بعد نجاح فتح الكاميرا فعلًا — لا يتزامن تجميدُها مع بدء التشغيل
       stopLoop = vis.runLiveCapture({
         video,
         onGuide: (msgs, ok) => { const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)"; },
