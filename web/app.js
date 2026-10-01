@@ -296,8 +296,14 @@ function route(id) {
   $(`#nav [data-id="${id}"]`)?.classList.add("on");
   const main = $("#main");
   main.innerHTML = "";
-  (PANELS[id] || (() => (main.innerHTML = `<h1>${id}</h1><p class="kv">قيد الإنشاء.</p>`)))(main);
-  wireCards(main);
+  // حمايةٌ عامّة: خطأٌ غيرُ متوقَّعٍ داخلَ أيِّ لوحةٍ (حالةُ إدخالٍ نادرة لم تُختبَر) لا يجوزُ أن
+  // يُجمِّدَ التطبيقَ كلَّه بشاشةٍ فارغةٍ صامتة — تُعرَضُ رسالةٌ واضحةٌ وتبقى بقيّةُ اللوحاتِ قابلةً للفتح.
+  try {
+    (PANELS[id] || (() => (main.innerHTML = `<h1>${id}</h1><p class="kv">قيد الإنشاء.</p>`)))(main);
+  } catch (e) {
+    main.innerHTML = `<div class="warn">تعذّر عرضُ هذا القسم بسبب خطأٍ غيرِ متوقَّع: ${esc(e.message || String(e))}<br>جرّبِ التبديلَ لقسمٍ آخرَ ثمّ العودةَ، أو أعِدْ تحميلَ الصفحة.</div>`;
+  }
+  try { wireCards(main); } catch {}
   try { localStorage.setItem("smk-panel", id); } catch {}
   window.scrollTo(0, 0);
 }
@@ -2180,4 +2186,6 @@ $("#q").addEventListener("input", (e) => {
 });
 document.addEventListener("click", (e) => { if (!$(".search").contains(e.target)) qout.classList.remove("open"); });
 
-route(localStorage.getItem("smk-panel") || "session");
+let _startPanel = "session";
+try { _startPanel = localStorage.getItem("smk-panel") || "session"; } catch {}
+route(_startPanel);
