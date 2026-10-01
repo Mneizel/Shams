@@ -83,10 +83,21 @@ function angle(a, b, c) {
   return Math.acos(Math.max(-1, Math.min(1, d))) * 180 / Math.PI;
 }
 
-/** حلقةٌ حيّة: تُقيِّمُ كلَّ إطارٍ وتُوجِّه، ثمّ تلتقطُ بسرعةٍ فورَ مطابقةِ اليدِ لرسمِ الدليل. */
+/** حلقةٌ حيّة: تُقيِّمُ كلَّ إطارٍ وتُوجِّه، ثمّ تلتقطُ بسرعةٍ فورَ مطابقةِ اليدِ لرسمِ الدليل.
+ *  تُعيدُ {stop, capture}: capture() تُتيحُ للمستخدمِ التقاطَ الصورةِ يدويًّا في أيّ لحظة
+ *  (بآخرِ يدٍ رُصِدت، حتّى لو لم تكتملِ الشروطُ الآليّةُ بعدُ) — حتّى لا يبقى عالقًا بلا مخرجٍ
+ *  إن تعذّر الاكتشافُ التلقائيُّ لأيِّ سببٍ (إضاءة/زاوية/جهاز) لم نتوقّعْه. */
 export function runLiveCapture({ video, onGuide, onShot }) {
   let raf = 0, stableFrames = 0, lastLm = null, stopped = false;
   const NEED_STABLE = 4;
+  const doShot = (lm) => {
+    stopped = true; cancelAnimationFrame(raf);
+    const dataUrl = grab(video);
+    let feats;
+    if (!lm) { feats = baseFeatures(); feats._err = "لم تُرصَدْ يدٌ — التُقِطت الصورةُ يدويًّا بلا تحليلٍ آليّ، أكمِلِ الوضعَ اليدويّ."; }
+    else { try { feats = extractFeatures(lm, video); } catch (e) { feats = baseFeatures(); feats._err = String(e && e.message || e); } }
+    onShot(feats, dataUrl, lm);
+  };
   async function tick() {
     if (stopped) return;
     let res;
@@ -117,21 +128,16 @@ export function runLiveCapture({ video, onGuide, onShot }) {
     }
     if (ok) {
       stableFrames++;
-      if (stableFrames >= NEED_STABLE) {
-        stopped = true; cancelAnimationFrame(raf);
-        const dataUrl = grab(video);
-        let feats;
-        try { feats = extractFeatures(lm, video); }
-        catch (e) { feats = baseFeatures(); feats._err = String(e && e.message || e); }
-        onShot(feats, dataUrl, lm);
-        return;
-      }
+      if (stableFrames >= NEED_STABLE) { doShot(lm); return; }
     } else stableFrames = 0;
     onGuide(msgs.length ? msgs : ["ممتاز — أبقِ يدك ثابتة"], ok);
     raf = requestAnimationFrame(tick);
   }
   raf = requestAnimationFrame(tick);
-  return () => { stopped = true; cancelAnimationFrame(raf); };
+  return {
+    stop: () => { stopped = true; cancelAnimationFrame(raf); },
+    capture: () => { if (!stopped) doShot(lastLm); },
+  };
 }
 
 function grab(video) {

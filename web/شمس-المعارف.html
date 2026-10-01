@@ -23159,6 +23159,7 @@ PANELS.kaf = (main) => {
     <div id="kaf-cam">
       <div class="warn" id="kaf-camnote"></div>
       <div class="form"><button class="btn" id="k-camstart" hidden>افتحِ الكاميرا</button>
+        <button class="btn" id="k-camforce" hidden>التقطِ الآن</button>
         <button class="btn sec" id="k-camstop" hidden>إيقاف</button></div>
       <div id="k-camwrap" hidden style="position:relative;max-width:520px">
         <video id="k-video" playsinline muted style="width:100%;border-radius:12px;transform:scaleX(-1)"></video>
@@ -23260,18 +23261,22 @@ PANELS.kaf = (main) => {
   } else {
     note.innerHTML = `تُفتَحُ الكاميرا، توجّهُك حتى تُصبِحَ الصورةُ صحيحةً، ثمّ تلتقطُ تلقائيًّا وتُحلّلُ شكلَ اليدِ والأصابعِ والخطوطِ الرئيسيّة. الصورةُ لا تُغادِرُ جهازك. (التلالُ والأظافرُ والعلاماتُ الدقيقةُ تُكمَّلُ من الوضعِ اليدويّ.)`;
     const btn = $("#k-camstart", main); btn.hidden = false;
+    const forceBtn = $("#k-camforce", main);
     let vis = null, stream = null, stopLoop = null;
     const stopAll = () => {
-      try { stopLoop && stopLoop(); } catch {}
+      try { stopLoop && stopLoop.stop(); } catch {}
       try { stream && stream.getTracks().forEach((t) => t.stop()); } catch {}
-      $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; btn.hidden = false;
+      $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true; btn.hidden = false;
     };
     $("#k-camstop", main).onclick = stopAll;
+    // التقاطٌ يدويٌّ فوريّ: مخرجٌ دائمٌ متاحٌ إن تعذّر على الكشفِ الآليِّ تحقيقَ شروطِه لأيِّ
+    // سببٍ (إضاءة/زاوية/جهاز لم نتوقّعْه) — لا يبقى المستخدمُ عالقًا بلا حيلة.
+    forceBtn.onclick = () => { try { stopLoop && stopLoop.capture(); } catch {} };
     // عند أيِّ فشلٍ قبل اكتمالِ فتحِ الكاميرا: يُعادُ زرُّ "افتحِ الكاميرا" للظهورِ (لا يبقى
     // زرُّ "إيقاف" وحدَه ظاهرًا — فلا يُضطرُّ المستخدمُ لتخمينِ كيفيّةِ إعادةِ المحاولة).
     const failReset = (msg) => {
       $("#k-guide", main).textContent = msg;
-      btn.hidden = false; $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true;
+      btn.hidden = false; $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true;
     };
     btn.onclick = async () => {
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
@@ -23287,6 +23292,7 @@ PANELS.kaf = (main) => {
         video.srcObject = stream; await video.play();
       } catch (e) { failReset("لم يُسمَحْ باستخدامِ الكاميرا."); return; }
       vis.preloadOpenCV(); // بعد نجاح فتح الكاميرا فعلًا — لا يتزامن تجميدُها مع بدء التشغيل
+      forceBtn.hidden = false;
       stopLoop = vis.runLiveCapture({
         video,
         onGuide: (msgs, ok) => {
@@ -23314,6 +23320,7 @@ PANELS.kaf = (main) => {
           let r; try { r = kaf.read(feats); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
           try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: feats.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
           $("#k-shot", main).innerHTML = `<div class="grid wide">
+            ${feats._err ? `<div class="warn">${esc(feats._err)}</div>` : ""}
             ${card({ title: "الصورةُ الملتقطةُ تلقائيًّا", body: `<img src="${dataUrl}" style="max-width:360px;border-radius:10px">
               <div class="gloss">نوعُ اليدِ المُقدَّر: ${esc((sc.handTypes.find((h) => h.key === feats.handType) || {}).ar || "—")} · النسبة عرض/طول ${esc(String(feats._debug?.ratio ?? "—"))}</div>` })}
             ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
