@@ -86,7 +86,7 @@ function angle(a, b, c) {
 /** حلقةٌ حيّة: تُقيِّمُ كلَّ إطارٍ وتُوجِّه، ثمّ تلتقطُ لمّا تستقرُّ الجودةُ ~نصفَ ثانية. */
 export function runLiveCapture({ video, onGuide, onShot }) {
   let raf = 0, stableFrames = 0, lastLm = null, stopped = false;
-  const NEED_STABLE = 14;
+  const NEED_STABLE = 8;
   async function tick() {
     if (stopped) return;
     let res;
@@ -98,22 +98,22 @@ export function runLiveCapture({ video, onGuide, onShot }) {
       const xs = lm.map((p) => p.x), ys = lm.map((p) => p.y);
       const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
       const span = Math.max(w, h);
-      if (span < 0.45) { msgs.push("قرِّبْ يدك قليلًا"); ok = false; }
-      else if (span > 0.95) { msgs.push("أبعِدْ يدك قليلًا"); ok = false; }
+      if (span < 0.35) { msgs.push("قرِّبْ يدك قليلًا"); ok = false; }
+      else if (span > 1.05) { msgs.push("أبعِدْ يدك قليلًا"); ok = false; }
       const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-      if (Math.abs(cx - 0.5) > 0.22 || Math.abs(cy - 0.5) > 0.22) { msgs.push("اجعلْ يدك في وسطِ الإطار"); ok = false; }
+      if (Math.abs(cx - 0.5) > 0.3 || Math.abs(cy - 0.5) > 0.3) { msgs.push("اجعلْ يدك في وسطِ الإطار"); ok = false; }
       const palmZ = (lm[P.WRIST].z + lm[P.MID_MCP].z) / 2;
       const tipZ = (lm[P.MID_TIP].z + lm[P.IDX_TIP].z + lm[P.RING_TIP].z) / 3;
-      if (tipZ - palmZ > 0.06) { msgs.push("افردْ كفّك ولا تُطبِقِ الأصابع"); ok = false; }
+      if (tipZ - palmZ > 0.09) { msgs.push("افردْ كفّك ولا تُطبِقِ الأصابع"); ok = false; }
       const spread = angle(lm[P.IDX_TIP], lm[P.MID_MCP], lm[P.PINKY_TIP]);
-      if (spread < 18) { msgs.push("افتحْ أصابعك قليلًا"); ok = false; }
+      if (spread < 12) { msgs.push("افتحْ أصابعك قليلًا"); ok = false; }
       if (lastLm) {
         let mv = 0; for (let i = 0; i < 21; i++) mv += dist(lm[i], lastLm[i]); mv /= 21;
-        if (mv > 0.012) { msgs.push("ثبِّتْ يدك لحظة…"); ok = false; }
+        if (mv > 0.025) { msgs.push("ثبِّتْ يدك لحظة…"); ok = false; }
       }
       lastLm = lm;
       const bright = sampleBrightness(video, cx, cy);
-      if (bright != null && bright < 55) { msgs.push("الإضاءةُ ضعيفة — اقتربْ من نور"); ok = false; }
+      if (bright != null && bright < 40) { msgs.push("الإضاءةُ ضعيفة — اقتربْ من نور"); ok = false; }
     }
     if (ok) {
       stableFrames++;
