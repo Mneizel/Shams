@@ -7,16 +7,27 @@ const MP_BASE = "../vendor/mediapipe";
 const CV_URL = "../vendor/opencv.js";
 let HL = null, FR = null, landmarker = null, cvReady = null;
 
+function withTimeout(promise, ms, msg) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+  ]);
+}
+
 export async function ensureLoaded() {
   if (!landmarker) {
-    const mod = await import(`${MP_BASE}/vision_bundle.mjs`);
-    HL = mod.HandLandmarker; FR = mod.FilesetResolver;
-    const fileset = await FR.forVisionTasks(`${MP_BASE}`);
-    landmarker = await HL.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: `${MP_BASE}/hand_landmarker.task` },
-      numHands: 1, runningMode: "VIDEO",
-      minHandDetectionConfidence: 0.6, minTrackingConfidence: 0.6,
-    });
+    // مهلةٌ زمنيّةٌ صريحة: تحميلُ ملفِّ اليد (٧ م.ب) قد يتعطّلُ على شبكةٍ بطيئة/متقطّعة
+    // بلا أيِّ خطإٍ يُلتقَط — فتبقى الواجهةُ عالقةً على "جارٍ التحميل" إلى الأبد.
+    landmarker = await withTimeout((async () => {
+      const mod = await import(`${MP_BASE}/vision_bundle.mjs`);
+      HL = mod.HandLandmarker; FR = mod.FilesetResolver;
+      const fileset = await FR.forVisionTasks(`${MP_BASE}`);
+      return HL.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: `${MP_BASE}/hand_landmarker.task` },
+        numHands: 1, runningMode: "VIDEO",
+        minHandDetectionConfidence: 0.6, minTrackingConfidence: 0.6,
+      });
+    })(), 25000, "انتهت مهلةُ تحميلِ نموذجِ اليد (تحقّقْ من الاتّصال)");
   }
   if (!cvReady) cvReady = loadOpenCV();
   try { await cvReady; } catch { /* الخطوطُ تُترَكُ للوضعِ اليدويّ إن فشل تحميلُ OpenCV */ }
@@ -26,12 +37,17 @@ export async function ensureLoaded() {
 function loadOpenCV() {
   return new Promise((resolve, reject) => {
     if (window.cv && window.cv.Mat) return resolve(window.cv);
-    const TIMEOUT = 40000;
+    const TIMEOUT = 20000;
     const t0 = Date.now();
+    let settled = false;
+    const finish = (fn, val) => { if (settled) return; settled = true; fn(val); };
+    // تُستدعى فورًا (لا تنتظرُ onload) حتّى تُطبَّقَ المهلةُ الزمنيّةُ فعليًّا
+    // حتّى لو تعطّل تحميلُ الملفِّ أو لم يُطلَق onload/onerror أبدًا (شبكةٌ بطيئة/معطَّلة).
     const poll = () => {
-      if (window.cv && window.cv.Mat) return resolve(window.cv);
-      if (Date.now() - t0 > TIMEOUT) return reject(new Error("انتهت مهلةُ تهيئةِ OpenCV.js"));
-      setTimeout(poll, 80);
+      if (settled) return;
+      if (window.cv && window.cv.Mat) return finish(resolve, window.cv);
+      if (Date.now() - t0 > TIMEOUT) return finish(reject, new Error("انتهت مهلةُ تهيئةِ OpenCV.js"));
+      setTimeout(poll, 150);
     };
     const s = document.createElement("script");
     s.src = CV_URL; s.async = true;
@@ -39,16 +55,14 @@ function loadOpenCV() {
       // بُناتُ docs.opencv.org: قد يكونُ cv وعدًا (Promise) أو كائنَ Module فيه onRuntimeInitialized.
       const c = window.cv;
       if (c && typeof c.then === "function") {
-        c.then((m) => { window.cv = m; resolve(m); }, reject);
+        c.then((m) => { window.cv = m; finish(resolve, m); }, (e) => finish(reject, e));
       } else if (c && !c.Mat) {
-        c.onRuntimeInitialized = () => resolve(window.cv);
-        poll(); // احتياطٌ إن كانت التهيئةُ قد تمّت قبلَ ضبطِ الخطّاف
-      } else {
-        poll();
+        c.onRuntimeInitialized = () => finish(resolve, window.cv);
       }
     };
-    s.onerror = () => reject(new Error("تعذّرَ تحميلُ OpenCV.js"));
+    s.onerror = () => finish(reject, new Error("تعذّرَ تحميلُ OpenCV.js"));
     document.head.appendChild(s);
+    poll();
   });
 }
 
