@@ -987,6 +987,54 @@ import kaf from "../engines/kaf.js";
   ok(/الطوخي|نجيب|الأسطة/.test(r.sources.map((x) => x.title).join()) && r.sources[0].title.includes("نجيب"), "المصدرُ الأساسيُّ مسجَّل");
 }
 
+// ── طبقةُ رؤيةِ الكفّ (الدوالُّ الهندسيّةُ الصِّرفة؛ الكاميرا نفسُها لا تُختبَرُ هنا) ─────
+import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad } from "../web/kaf-vision.js";
+{
+  const W = 1280, H = 720;
+  const tpl = templatePx("right", W, H);
+  const fit0 = assessFit(tpl.pts, tpl, "right", 1);
+  ok(fit0.ok, "يدٌ مطابقةٌ للرسمة تُقبَل");
+  const move = (pts, dx, dy) => pts.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+  const scale = (pts, s) => { const c = pts[9]; return pts.map((p) => ({ x: c.x + (p.x - c.x) * s, y: c.y + (p.y - c.y) * s })); };
+  ok(!assessFit(move(tpl.pts, 0.25 * tpl.boxH, 0), tpl, "right", 1).ok, "يدٌ مُزاحةٌ عن الرسمة لا تُلتقَط");
+  ok(/اليسار/.test(assessFit(move(tpl.pts, 0.25 * tpl.boxH, 0), tpl, "right", 1).msg), "الإزاحةُ يمينًا ⇒ «حرّك يسارًا» (عرضٌ غيرُ معكوس)");
+  ok(/اليمين/.test(assessFit(move(tpl.pts, 0.25 * tpl.boxH, 0), tpl, "right", -1).msg), "في العرضِ المعكوسِ تنقلبُ الجهة");
+  ok(/قرِّب/.test(assessFit(scale(tpl.pts, 0.6), tpl, "right", 1).msg), "يدٌ صغيرةٌ (بعيدة) ⇒ «قرّب»");
+  ok(/أبعِد/.test(assessFit(scale(tpl.pts, 1.4), tpl, "right", 1).msg), "يدٌ كبيرةٌ (قريبة) ⇒ «أبعد»");
+  const flipped = tpl.pts.map((p) => ({ x: W - p.x, y: p.y }));
+  ok(/باطنَ/.test(assessFit(flipped, tpl, "right", 1).msg), "ظهرُ اليد/اليدُ الأخرى ⇒ طلبُ إظهارِ الباطن");
+  ok(assessFit(flipped, templatePx("left", W, H), "left", 1).ok, "اليسرى تُطابَقُ على قالبِ اليسرى");
+  const upside = tpl.pts.map((p) => ({ x: p.x, y: H - p.y }));
+  ok(/الأعلى/.test(assessFit(upside, tpl, "right", 1).msg), "أصابعُ للأسفل ⇒ «وجّهْها للأعلى»");
+
+  // النِّسَبُ لا تتغيّرُ بشكلِ الإطار (كانت تُقاسُ على إحداثيّاتٍ مُطبَّعةٍ فيمطُّها الإطار)
+  const lmA = tpl.pts.map((p) => ({ x: p.x / W, y: p.y / H, z: 0 }));
+  const W2 = 720, H2 = 1280, ox = (W2 - W) / 2, oy = (H2 - H) / 2;
+  const lmB = tpl.pts.map((p) => ({ x: (p.x + ox) / W2, y: (p.y + oy) / H2, z: 0 }));
+  const fA = kafFeat(lmA, null, W, H), fB = kafFeat(lmB, null, W2, H2);
+  eq(JSON.stringify([fA.handType, fA.fingers, fA.thumb]), JSON.stringify([fB.handType, fB.fingers, fB.thumb]), "نفسُ اليدِ في إطارٍ عريضٍ وطويل ⇒ نفسُ الملامح");
+  // الإحداثيّاتُ العالميّةُ (أمتار) تُقدَّمُ على إحداثيّاتِ الصورة
+  const wlm = tpl.pts.map((p) => ({ x: p.x / tpl.boxH * 0.19, y: p.y / tpl.boxH * 0.19, z: 0 }));
+  const fW = kafFeat(lmA.map((p) => ({ x: p.x * 0.5, y: p.y, z: 0 })), wlm, W, H);
+  eq(JSON.stringify([fW.handType, fW.fingers]), JSON.stringify([fA.handType, fA.fingers]), "مع الإحداثيّاتِ العالميّة لا يُؤثّرُ تشوّهُ الصورة");
+  ok(fW._debug.world === true, "تُستعمَلُ الإحداثيّاتُ العالميّةُ حين تتوفّر");
+  // لا ادّعاءَ لما لا تقيسُه الكاميرا
+  ok(!JSON.stringify(fA.fingers).includes("قمّتُها"), "لا يُدّعى شكلُ قمّةِ السبّابة (لا تقيسُه الكاميرا)");
+  ok(fA.thumb.angle === "" && fA.fingerSet.length === 0, "زاويةُ الإبهامِ وتباعدُ الأصابعِ لا يُستنتَجان من وضعيّةٍ مفروضة");
+  ok(!fA.thumb.firstPhalanx && !fA.thumb.secondPhalanx, "سُلامَيا الإبهامِ لا يُحكَمُ عليهما آليًّا (نقاطُ اليدِ لا تحدّدُهما بدقّة)");
+  ok(fA.handType === null && fA.handHint && fA.handHint.palmShape, "نوعُ اليدِ لا يُحكَمُ به آليًّا — يُعرَضُ وصفُ النِّسَبِ فقط");
+  const wide = tpl.pts.map((p, i) => ({ x: tpl.pts[9].x + (p.x - tpl.pts[9].x) * 1.6, y: p.y }));
+  const fWide = kafFeat(wide.map((p) => ({ x: p.x / W, y: p.y / H, z: 0 })), null, W, H);
+  ok(fWide.handHint.fits.includes("square") && fWide.handType === null, "كفٌّ عريضةٌ ⇒ «تتّسقُ مع المربّعة» اقتراحًا لا حكمًا");
+  // خنصرٌ طويلٌ يبلغُ مفصلَ البنصر ⇒ «طويلة» (كان منطقُه معكوسًا)
+  const longPinky = tpl.pts.map((p, i) => (i >= 18 ? { x: p.x, y: p.y - 0.12 * tpl.boxH, z: 0 } : { ...p, z: 0 }));
+  const fP = kafFeat(longPinky.map((p) => ({ x: p.x / W, y: p.y / H, z: 0 })), null, W, H);
+  ok(/تبلغُ مفصلَ/.test(fP.fingers.little.state) && !/لا تبلغ/.test(fP.fingers.little.state), "خنصرٌ يبلغُ مفصلَ البنصر ⇒ «طويلة»");
+  // مربّعُ الراحة: يبدأُ من جهةِ السبّابة ويمتدُّ حتى مستوى الرسغ
+  const q = palmQuad(tpl.pts);
+  ok(q[0][0] > q[1][0] && q[2][1] > tpl.pts[9].y + 0.3 * tpl.boxH, "مربّعُ الراحةِ من جهةِ السبّابة حتى الرسغ");
+}
+
 // ── النتيجة ───────────────────────────────────────────────────────────────
 console.log(fails.join("\n\n"));
 console.log(`\n${pass} ناجح، ${fail} فاشل`);

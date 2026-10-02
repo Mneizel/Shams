@@ -1657,16 +1657,9 @@ PANELS.kaf = (main) => {
         <button class="btn" id="k-camforce" hidden>التقطِ الآن</button>
         <button class="btn sec" id="k-camstop" hidden>إيقاف</button></div>
       <div id="k-camwrap" hidden style="position:relative;max-width:520px">
-        <video id="k-video" playsinline muted style="width:100%;border-radius:12px;transform:scaleX(-1)"></video>
-        <svg id="k-handguide" viewBox="0 0 200 280" style="position:absolute;inset:0;margin:auto;width:48%;height:auto;pointer-events:none;opacity:.5;transition:opacity .15s,stroke .15s" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="10 7">
-          <rect x="30" y="140" width="140" height="112" rx="42"/>
-          <rect x="38" y="70" width="22" height="82" rx="11"/>
-          <rect x="64" y="38" width="24" height="114" rx="12"/>
-          <rect x="92" y="22" width="26" height="130" rx="13"/>
-          <rect x="122" y="42" width="24" height="110" rx="12"/>
-          <rect x="-4" y="-10" width="56" height="26" rx="13" transform="rotate(42 24 3) translate(0 175)"/>
-        </svg>
-        <div class="gloss" style="position:absolute;top:.4rem;right:0;left:0;text-align:center;color:#fff;text-shadow:0 1px 3px #000">طابِقْ يدَك على الرسمة</div>
+        <video id="k-video" playsinline muted style="display:block;width:100%;border-radius:12px"></video>
+        <canvas id="k-overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border-radius:12px"></canvas>
+        <div class="gloss" style="position:absolute;top:.4rem;right:0;left:0;text-align:center;color:#fff;text-shadow:0 1px 3px #000">طابِقْ كفَّك على الرسمة — النقاطُ الزرقاءُ ما تراه الكاميرا من يدك</div>
         <div id="k-guide" style="position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.6);color:#fff;padding:.5rem;text-align:center;border-radius:0 0 12px 12px;font-size:1.05rem"></div>
       </div>
       <div id="k-shot"></div>
@@ -1693,8 +1686,8 @@ PANELS.kaf = (main) => {
     <div class="fld"><label>المثلّثُ العظيم</label><select id="k-tri"><option value="">—</option><option value="wideClear">صريحٌ واسعٌ منتظم</option><option value="narrowCrooked">ضيّقٌ معوجّ</option></select></div>
     <h3>خطوطٌ ثانويّة</h3><div class="form" style="flex-wrap:wrap">
       <label class="chip"><input type="checkbox" id="k-vg"> يظهرُ حزامُ الزهرة</label>
-      <div class="fld"><label>عددُ خطوطِ الزواجِ الواضحة</label><input id="k-marr" type="number" min="0" max="6" value="0" style="width:70px"></div>
-      <div class="fld"><label>عددُ أساورِ الرسغِ الواضحة</label><input id="k-rasc" type="number" min="0" max="4" value="0" style="width:70px"></div>
+      <div class="fld"><label>عددُ خطوطِ الزواجِ الواضحة</label><input id="k-marr" type="number" min="0" max="6" placeholder="—" style="width:70px"></div>
+      <div class="fld"><label>عددُ أساورِ الرسغِ الواضحة</label><input id="k-rasc" type="number" min="0" max="4" placeholder="—" style="width:70px"></div>
       <div class="fld"><label>المستطيل (بين القلبِ والرأس)</label><select id="k-quad"><option value="">—</option><option value="wide">واسعٌ منتظم</option><option value="narrow">ضيّقٌ مضغوط</option></select></div>
     </div>
     <div class="form"><button class="btn" id="k-go">اقرأِ الكفّ</button></div>
@@ -1715,11 +1708,14 @@ PANELS.kaf = (main) => {
        <span class="gloss">الحالات:</span>
        ${L.states.map((s, i) => `<label class="chip"><input type="checkbox" class="k-ln-state" data-k="${esc(L.key)}" value="${esc(s)}"> ${esc(s.split("(")[0].trim())}</label>`).join(" ")}</div>`).join("");
 
-  $("#k-go", main).onclick = () => {
+  // ما أدخلَه المستخدمُ يدويًّا — يُستعمَلُ وحدَه في «اقرأ الكفّ»، ويُكمِّلُ نتيجةَ الكاميرا عند الالتقاط.
+  const readManual = () => {
     const g = (id) => $("#" + id, main)?.value || "";
     const chk = (id) => !!$("#" + id, main)?.checked;
     const chips = (id) => [...main.querySelectorAll(`#${id} input:checked`)].map((c) => c.value);
-    const f = {
+    // حقلٌ عدديٌّ فارغ = «لم يُفحَص» (لا صفر): الصفرُ حكمٌ بأنّه لا يظهرُ شيء
+    const numOrNull = (id) => { const v = g(id).trim(); return v === "" ? null : Math.max(0, Math.floor(+v) || 0); };
+    return {
       hand: g("k-hand"), handType: g("k-type"), texture: g("k-texture"), palmSurface: g("k-palm"),
       fingers: Object.fromEntries(sc.fingers.map((fg) => [fg.key, { state: g("k-fg-" + fg.key) }])),
       fingerSet: chips("k-fingerset"),
@@ -1727,14 +1723,49 @@ PANELS.kaf = (main) => {
       nails: chips("k-nails"),
       mounts: Object.fromEntries(sc.mounts.map((m) => [m.key, g("k-mt-" + m.key)]).filter(([, v]) => v)),
       lines: Object.fromEntries(sc.lines.map((L) => {
-        const present = !!main.querySelector(`.k-ln-present[data-k="${L.key}"]:checked`);
         const states = [...main.querySelectorAll(`.k-ln-state[data-k="${L.key}"]:checked`)].map((c) => c.value);
+        // اختيارُ حالةٍ للخطِّ يعني أنّه ظاهر (كان يُتجاهَلُ إن لم يُعلَّمْ «ظاهر»)
+        const present = !!main.querySelector(`.k-ln-present[data-k="${L.key}"]:checked`) || states.length > 0;
         return [L.key, { present, confidence: 1, states }];
       })),
       marks: [], // العلامات تحتاجُ تكبيرًا؛ الوضعُ اليدويُّ لا يجمعُها هنا
-      secondary: { venusGirdle: chk("k-vg"), marriageCount: +g("k-marr") || 0, rascettes: +g("k-rasc") || 0, quadrangle: g("k-quad") || null },
+      secondary: { venusGirdle: chk("k-vg"), marriageCount: numOrNull("k-marr"), rascettes: numOrNull("k-rasc"), quadrangle: g("k-quad") || null },
       triangle: g("k-tri") || null,
     };
+  };
+  // دمجٌ: ما قاسته الكاميرا أوّلًا؛ وما لم تقِسْه (أو لم تتبيّنْه بثقة) يُكمَّلُ ممّا أدخلَه المستخدم.
+  const mergeManual = (feats, man) => {
+    feats.hand = man.hand;
+    if (!feats.handType && man.handType) feats.handType = man.handType;
+    if (man.texture) feats.texture = man.texture;
+    if (man.palmSurface) feats.palmSurface = man.palmSurface;
+    for (const k of ["index", "middle", "ring", "little"]) {
+      if (!feats.fingers[k]?.state && man.fingers[k]?.state) feats.fingers[k] = man.fingers[k];
+    }
+    feats.fingerSet = [...new Set([...(feats.fingerSet || []), ...man.fingerSet])];
+    for (const k of ["firstPhalanx", "secondPhalanx", "angle", "ball", "joint"]) {
+      if (!feats.thumb[k] && man.thumb[k]) feats.thumb[k] = man.thumb[k];
+    }
+    feats.mounts = { ...feats.mounts, ...man.mounts };
+    feats.nails = man.nails;
+    const floor = kaf.CONFIDENCE_FLOOR ?? 0.45;
+    for (const [k, ln] of Object.entries(man.lines)) {
+      const c = feats.lines[k];
+      if (ln.present && (!c || !c.present || (c.confidence ?? 0) < floor)) feats.lines[k] = ln;
+    }
+    feats.secondary = {
+      venusGirdle: feats.secondary.venusGirdle || man.secondary.venusGirdle,
+      marriageCount: man.secondary.marriageCount ?? feats.secondary.marriageCount,
+      rascettes: man.secondary.rascettes ?? feats.secondary.rascettes,
+      quadrangle: man.secondary.quadrangle || feats.secondary.quadrangle,
+    };
+    if (man.triangle) feats.triangle = man.triangle;
+    return feats;
+  };
+  let lastCam = null; // آخرُ ما قاسته الكاميرا في هذه اللوحة
+  $("#k-go", main).onclick = () => {
+    // «اقرأِ الكفّ» بعد التقاطٍ بالكاميرا يُكمِّلُ نتيجتَها بالحقولِ اليدويّة (لا يرميها)
+    const f = lastCam ? mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual()) : readManual();
     let r;
     try { r = kaf.read(f); } catch (e) { $("#k-out", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
     try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
@@ -1801,55 +1832,66 @@ PANELS.kaf = (main) => {
       if (cancelled()) return;
       const video = $("#k-video", main);
       let s;
-      try { s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } }); }
+      try { s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 } } }); } // بلا ارتفاعٍ مفروض: فرضُه يقصُّ الكادرَ على الهاتفِ الطوليّ
       catch (e) { if (!cancelled()) failReset(camError(e)); return; }
       // أُلغيَ أثناء انتظارِ الإذن ⇒ أطفئِ الكاميرا فورًا بدلَ تركِها شاعلةً بلا لوحة
       if (cancelled()) { try { s.getTracks().forEach((t) => t.stop()); } catch {} return; }
       stream = s;
-      // الكاميرا الخلفيّةُ لا تُعكَس (العكسُ مرآةٌ مريحةٌ للأماميّة فقط)
-      const facing = stream.getVideoTracks()[0]?.getSettings?.().facingMode;
-      video.style.transform = facing === "environment" ? "none" : "scaleX(-1)";
+      // العكسُ (مرآة) للكاميرا الأماميّةِ فقط. سفاري الآيفون قد لا يُعيدُ facingMode في getSettings،
+      // فكانت الكاميرا الخلفيّةُ تُعامَلُ أماميّةً وتظهرُ معكوسة. نستدلُّ بالاسم ثمّ بنوعِ الجهاز:
+      // طلبنا الخلفيّة، والهواتفُ تملكُها؛ والحواسيبُ عادةً بكاميرا أماميّةٍ وحيدة.
+      const track = stream.getVideoTracks()[0];
+      let facing = track?.getSettings?.().facingMode;
+      if (!facing) {
+        const label = (track?.label || "").toLowerCase();
+        if (/back|rear|environment|خلف/.test(label)) facing = "environment";
+        else if (/front|user|facetime|أمام/.test(label)) facing = "user";
+        else facing = (/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ""))) ? "environment" : "user";
+      }
+      const mirrored = facing !== "environment";
+      video.style.transform = mirrored ? "scaleX(-1)" : "none";
       try { video.srcObject = stream; await video.play(); }
       catch (e) { if (!cancelled()) { releaseStream(); failReset(camError(e)); } return; }
       if (cancelled()) return;
-      vis.preloadOpenCV(); // بعد نجاح فتح الكاميرا فعلًا — لا يتزامن تجميدُها مع بدء التشغيل
+      vis.preloadOpenCV(); // يُحمَّلُ في خيطٍ منفصل — لا يمسُّ الكاميرا ولا الصفحة
       forceBtn.hidden = false;
       stopLoop = vis.runLiveCapture({
         video,
+        overlay: $("#k-overlay", main),
+        mirrored,
+        getHand: () => $("#k-hand", main)?.value || "right",
         onGuide: (msgs, ok) => {
           const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)";
-          const hg = $("#k-handguide", main);
-          if (hg) { hg.style.stroke = ok ? "#3ddc6a" : "#fff"; hg.style.opacity = ok ? ".9" : ".5"; hg.style.strokeDasharray = ok ? "0" : "10 7"; }
         },
         onShot: (feats, dataUrl) => {
           if (cancelled()) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ تحليلِ الخطوط
           stopAll();
-          // دمجٌ: الكاميرا تملأُ الشكلَ والأصابعَ والخطوط؛ الحقولُ اليدويّةُ (إن مُلئت) تُكمِّلُ التلالَ والأظافر…
-          const g = (id) => $("#" + id, main)?.value || "";
-          const chk = (id) => !!$("#" + id, main)?.checked;
-          const chips = (id) => [...main.querySelectorAll(`#${id} input:checked`)].map((c) => c.value);
-          feats.hand = g("k-hand");
-          if (g("k-texture")) feats.texture = g("k-texture");
-          if (g("k-palm")) feats.palmSurface = g("k-palm");
-          const mMan = Object.fromEntries(sc.mounts.map((m) => [m.key, g("k-mt-" + m.key)]).filter(([, v]) => v));
-          feats.mounts = { ...feats.mounts, ...mMan };
-          feats.nails = chips("k-nails");
-          if (chk("k-vg")) feats.secondary.venusGirdle = true;
-          feats.secondary.marriageCount = +g("k-marr") || feats.secondary.marriageCount;
-          feats.secondary.rascettes = +g("k-rasc") || feats.secondary.rascettes;
-          if (g("k-quad")) feats.secondary.quadrangle = g("k-quad");
-          if (g("k-tri")) feats.triangle = g("k-tri");
+          lastCam = JSON.parse(JSON.stringify(feats)); // يُحفَظُ ليُكمَّلَ لاحقًا بالحقولِ اليدويّة
+          feats = mergeManual(feats, readManual());
           let r; try { r = kaf.read(feats); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
           try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: feats.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
+          // ما لا تقيسُه الكاميرا (نوعُ اليدِ والخطوط) يُجمَعُ في توجيهٍ واحدٍ واضح بدلَ قائمةِ «لم أتبيّنْه»
+          const lineNames = sc.lines.map((l) => l.ar);
+          const camHonesty = r.honesty.filter((h) => !lineNames.some((n) => h.startsWith(n)) && !h.startsWith("نوعُ اليدِ"));
+          const hint = feats.handHint;
+          const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
+          const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — تتّسقُ هذه النِّسَبُ مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.
+              <br><span class="gloss">نوعُ اليدِ في الكتبِ يُعرَفُ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل — والكاميرا لا تقيسُها، فاخترِ النوعَ بنفسِك من «نوعُ اليد» تحت.</span></div>` : "";
           $("#k-shot", main).innerHTML = `<div class="grid wide">
             ${feats._err ? `<div class="warn">${esc(feats._err)}</div>` : ""}
             ${feats._linesNote ? `<div class="warn">${esc(feats._linesNote)}</div>` : ""}
-            ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;border-radius:10px">
-              <div class="gloss">نوعُ اليدِ المُقدَّر: ${esc((sc.handTypes.find((h) => h.key === feats.handType) || {}).ar || "—")} · النسبة عرض/طول ${esc(String(feats._debug?.ratio ?? "—"))}</div>` })}
+            ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${hintHtml}` })}
+            ${feats._creaseImage ? card({ title: "خطوطُ كفّك مُبرَزة", body: `<img src="${feats._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
+              <div class="kv" style="margin-top:.4rem">هذه راحتُك مقوَّمةً (الأعلى عند قواعدِ الأصابع، والأسفل عند الرسغ، واليسارُ جهةُ الإبهام)، وأعمقُ تجاعيدِها بالأحمر.</div>
+              <div class="gloss">الآلةُ تُبرِزُ التجاعيدَ لكنّها لا تُسمّيها: جُرِّب ذلك على كفٍّ حقيقيّةٍ واضحة فخلطت خطَّ الرأسِ بالقلب، والحكمُ بتسميةٍ خاطئةٍ تلفيق. حدِّدْ أنت ما تراه من الخطوطِ وحالاتِها في «الوضعِ اليدويّ» تحت، ثمّ اضغطْ «اقرأِ الكفّ» — تُضافُ إلى ما قاستْه الكاميرا هنا.</div>` }) : ""}
             ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
               body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
               reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
-            ${r.honesty.length ? card({ title: "ما لم تتبيّنْه الآلة", body: `<ul class="kv">${r.honesty.map((h) => `<li>${esc(h)}</li>`).join("")}</ul><div class="gloss">أكمِلْ هذه الحقولَ في الوضعِ اليدويِّ فوقَ ثمّ أعِدِ القراءة، أو أعِدِ الالتقاطَ بإضاءةٍ أفضل.</div>` }) : ""}
+            ${card({ title: "أكمِلْ ما لا تقيسُه الكاميرا", body: `<ul class="kv">
+                ${!feats.handType ? "<li>نوعُ اليد — من شكلِ أطرافِ أصابعِك (انظرِ الملاحظةَ تحتَ الصورة).</li>" : ""}
+                <li>الخطوطُ وحالاتُها — بالاستعانةِ بصورةِ «خطوطُ كفّك مُبرَزة».</li>
+                ${camHonesty.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>
+              <div class="gloss">املأْها في «الوضعِ اليدويّ» تحتَ ثمّ اضغطْ «اقرأِ الكفّ»: تُضافُ إلى ما قاستْه الكاميرا (لا تُلغيه).</div>` })}
           </div>`;
           wireCards(main);
         },

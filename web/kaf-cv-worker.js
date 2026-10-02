@@ -1,7 +1,7 @@
 // web/kaf-cv-worker.js — OpenCV.js في خيطٍ منفصل (Web Worker).
 // opencv.js ثقيلٌ (١٠ م.ب، الـ WASM مضمَّنٌ base64)؛ تشغيلُه هنا يُبقي الصفحةَ والكاميرا
 // سلستين مهما كان الجهازُ بطيئًا.
-// الرسائل: الصفحةُ ⇐ {id, imageData, quad:[[x,y]×4]} ؛ العاملُ ⇒ {ready} أو {id, out} أو {id, error}.
+// الرسائل: الصفحةُ ⇐ {id, imageData, quad:[[x,y]×4]} ؛ العاملُ ⇒ {ready} أو {id, out:{width,height,data}} أو {id, error}.
 
 let cvReady = null, CV = null;
 
@@ -39,103 +39,85 @@ function loadCV() {
 
 loadCV().then(() => self.postMessage({ ready: true }), (e) => self.postMessage({ ready: false, error: String(e && e.message || e) }));
 
-const none = () => ({ present: false, confidence: 0, states: [] });
-const uniq = (a) => [...new Set(a)];
-
-function isLoop(cnt) {
-  const n = cnt.data32S.length / 2;
-  if (n < 8) return false;
-  const x0 = cnt.data32S[0], y0 = cnt.data32S[1];
-  const xe = cnt.data32S[(n - 1) * 2], ye = cnt.data32S[(n - 1) * 2 + 1];
-  return Math.hypot(x0 - xe, y0 - ye) < 12;
-}
-
-function buildLine(bandSegs, which) {
-  if (!bandSegs.length) return none();
-  const total = bandSegs.reduce((a, s) => a + s.len, 0);
-  const longest = Math.max(...bandSegs.map((s) => s.len));
-  const pieces = bandSegs.length;
-  const hasLoop = bandSegs.some((s) => s.closed);
-  const states = [];
-  if (which === "life") states.push(longest > 0.7 ? "طويلٌ عميقٌ واضحٌ متّصل" : "قصيرٌ");
-  else if (which === "head") states.push(longest > 0.7 ? "مستقيمٌ واضحٌ طويل" : "قصيرٌ");
-  else if (which === "heart") states.push(longest > 0.6 ? "طويلٌ عميقٌ واضح" : "قصيرٌ");
-  else if (which === "fate") states.push(longest > 0.55 ? "واضحٌ مستقيمٌ يصلُ إلى تلِّ زحل" : "متقطّعٌ");
-  if (pieces >= 3) {
-    if (which === "life") states.push("متقطّعٌ");
-    else if (which === "head") states.push("منكسرٌ / متقطّع");
-    else if (which === "heart") states.push("متقطّعٌ / به كسور");
-  }
-  if (hasLoop) {
-    if (which === "life") states.push("به جزيرةٌ");
-    else if (which === "head") states.push("به جزيرة");
-    else if (which === "heart") states.push("متقطّعٌ / به كسور");
-  }
-  const conf = Math.max(0.3, Math.min(0.82, 0.3 + total * 0.35 + longest * 0.3));
-  return { present: true, confidence: +conf.toFixed(2), states: uniq(states) };
-}
-
-function detectLines(cv, imageData, quad) {
-  const out = { life: none(), head: none(), heart: none(), fate: none(), sun: none(), health: none() };
-  const N = 320;
-  let full, roi, gray, clahe, bh, th, morphed, contours, hierarchy, se;
+// ── إبرازُ تجاعيدِ الراحة ────────────────────────────────────────────────
+// تُقوَّمُ الراحةُ (من مفاصلِ الأصابعِ إلى الرسغ) إلى مربّعٍ N×N، وتُبرَزُ أعمقُ تجاعيدِها فوقَها.
+// لا يُسمّى هنا أيُّ خطّ: جُرِّبت تسميةُ الخطوطِ آليًّا على صورةِ كفٍّ حقيقيّةٍ واضحة، فخلطت
+// خطَّ الرأسِ بالقلب، وعدّت أسفلَ خطِّ الحياةِ «خطَّ قدر» — والحكمُ بتسميةٍ خاطئةٍ تلفيق. فالآلةُ
+// تُريكَ التجاعيدَ بوضوح، وأنت تُحدِّدُ أيَّها أيٌّ في الوضعِ اليدويّ.
+// الاتّجاه: ٠ أعلى (مفاصلُ الأصابع) ⇐ أسفل (الرسغ)؛ اليسارُ جهةُ السبّابة/الإبهام.
+function enhanceCreases(cv, imageData, quad, dbg) {
+  const N = 384;
+  const mats = [];
+  const keep = (m) => (mats.push(m), m);
   try {
-    full = cv.matFromImageData(imageData);
-    const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [].concat(...quad));
-    const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, N, 0, N, N, 0, N]);
-    const M = cv.getPerspectiveTransform(srcTri, dstTri);
-    roi = new cv.Mat();
+    const full = keep(cv.matFromImageData(imageData));
+    const srcTri = keep(cv.matFromArray(4, 1, cv.CV_32FC2, [].concat(...quad)));
+    const dstTri = keep(cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, N, 0, N, N, 0, N]));
+    const M = keep(cv.getPerspectiveTransform(srcTri, dstTri));
+    const roi = keep(new cv.Mat());
     cv.warpPerspective(full, roi, M, new cv.Size(N, N), cv.INTER_LINEAR, cv.BORDER_REPLICATE, new cv.Scalar());
-    srcTri.delete(); dstTri.delete(); M.delete();
-
-    gray = new cv.Mat();
+    const gray = keep(new cv.Mat());
     cv.cvtColor(roi, gray, cv.COLOR_RGBA2GRAY);
-    clahe = new cv.Mat();
-    const cl = new cv.CLAHE(2.5, new cv.Size(8, 8));
-    cl.apply(gray, clahe); cl.delete();
-    bh = new cv.Mat();
-    se = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(9, 9));
-    cv.morphologyEx(clahe, bh, cv.MORPH_BLACKHAT, se);
-    th = new cv.Mat();
-    cv.threshold(bh, th, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-    morphed = new cv.Mat();
-    const se2 = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5, 5));
-    cv.morphologyEx(th, morphed, cv.MORPH_CLOSE, se2); se2.delete();
-
-    contours = new cv.MatVector(); hierarchy = new cv.Mat();
-    cv.findContours(morphed, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-
-    const segs = [];
+    // تنعيمٌ يمحو نقوشَ البصمةِ الدقيقة ويُبقي التجاعيدَ الأعرضَ والأعمق
+    const blur = keep(new cv.Mat());
+    cv.GaussianBlur(gray, blur, new cv.Size(7, 7), 1.8);
+    const eq = keep(new cv.Mat());
+    const cl = new cv.CLAHE(2.0, new cv.Size(8, 8)); cl.apply(blur, eq); cl.delete();
+    const bh = keep(new cv.Mat());
+    cv.morphologyEx(eq, bh, cv.MORPH_BLACKHAT, keep(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(17, 17))));
+    // الجلدُ فقط: لا حوافَّ الإطارِ ولا الخلفيّة، وتُقضَمُ حافّةُ الكفِّ (الانتقالُ إلى الخلفيّةِ يُوهِمُ بخطّ)
+    const g = blur.data, b = bh.data;
+    const median = Array.from(g).sort((a, c) => a - c)[g.length >> 1] || 1;
+    const margin = Math.round(N * 0.04);
+    const skin = keep(new cv.Mat(N, N, cv.CV_8UC1, new cv.Scalar(0)));
+    const sm = skin.data;
+    for (let y = margin; y < N - margin; y++) for (let x = margin; x < N - margin; x++) {
+      const i = y * N + x;
+      if (g[i] > median * 0.6 && g[i] < median * 1.35) sm[i] = 255;
+    }
+    cv.erode(skin, skin, keep(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(11, 11))));
+    const bv = [];
+    for (let i = 0; i < sm.length; i++) if (sm[i]) bv.push(b[i]);
+    bv.sort((a, c) => a - c);
+    const t = Math.max(8, bv[Math.floor(bv.length * 0.9)] || 255); // أعمقُ ١٠٪ من تجاعيدِ الجلد
+    const bin = keep(new cv.Mat(N, N, cv.CV_8UC1, new cv.Scalar(0)));
+    const d = bin.data;
+    for (let i = 0; i < d.length; i++) if (sm[i] && b[i] >= t) d[i] = 255;
+    cv.morphologyEx(bin, bin, cv.MORPH_CLOSE, keep(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(9, 9))));
+    cv.morphologyEx(bin, bin, cv.MORPH_OPEN, keep(cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3))));
+    // تُحذَفُ البقعُ الصغيرةُ والكتلُ العريضة: يبقى ما يشبهُ الخطوطَ فقط
+    const contours = keep(new cv.MatVector()), hier = keep(new cv.Mat());
+    cv.findContours(bin, contours, hier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+    const clean = keep(new cv.Mat(N, N, cv.CV_8UC1, new cv.Scalar(0)));
     for (let i = 0; i < contours.size(); i++) {
       const c = contours.get(i);
-      const len = cv.arcLength(c, false);
-      if (len < N * 0.28) { c.delete(); continue; }
-      const r = cv.boundingRect(c);
-      const m = cv.moments(c, false);
-      const cx = m.m00 ? m.m10 / m.m00 : r.x + r.width / 2;
-      const cy = m.m00 ? m.m01 / m.m00 : r.y + r.height / 2;
-      segs.push({ len: len / N, cx: cx / N, cy: cy / N, w: r.width / N, h: r.height / N, horiz: r.width >= r.height, closed: isLoop(c) });
+      const area = cv.contourArea(c), len = cv.arcLength(c, true) / 2;
       c.delete();
+      if (area < N * N * 0.0003 || len < N * 0.08 || area / len > N * 0.03) continue;
+      cv.drawContours(clean, contours, i, new cv.Scalar(255), -1);
     }
-
-    // نطاقاتٌ تشريحيّة (الإحداثيّات: ٠ أعلى، ١ أسفل؛ ٠ يسار=الإبهام)
-    const inBand = (s, y0, y1) => s.cy >= y0 && s.cy <= y1;
-    out.heart = buildLine(segs.filter((s) => s.horiz && inBand(s, 0.12, 0.36) && s.w > 0.35), "heart");
-    out.head = buildLine(segs.filter((s) => s.horiz && inBand(s, 0.36, 0.6) && s.w > 0.35), "head");
-    out.life = buildLine(segs.filter((s) => !s.horiz || s.h > 0.35).filter((s) => s.cx < 0.5 && s.cy > 0.25 && s.h > 0.3), "life");
-    out.fate = buildLine(segs.filter((s) => !s.horiz && s.h > 0.4 && s.cx > 0.35 && s.cx < 0.72), "fate");
+    if (dbg) { dbg("s1_roi", roi); dbg("s2_blackhat", bh); dbg("s3_binary", clean); }
+    // الصورةُ النهائيّة: الراحةُ فاتحةً وتجاعيدُها العميقةُ بالأحمرِ الداكن
+    const out = new Uint8ClampedArray(N * N * 4);
+    const rgba = roi.data, cd = clean.data;
+    let hits = 0;
+    for (let i = 0; i < N * N; i++) {
+      const o = i * 4;
+      if (cd[i]) { out[o] = 190; out[o + 1] = 20; out[o + 2] = 30; out[o + 3] = 255; hits++; }
+      else { out[o] = 140 + rgba[o] * 0.45; out[o + 1] = 140 + rgba[o + 1] * 0.45; out[o + 2] = 140 + rgba[o + 2] * 0.45; out[o + 3] = 255; }
+    }
+    return { width: N, height: N, data: out, coverage: +(hits / (N * N)).toFixed(3) };
   } finally {
-    [full, roi, gray, clahe, bh, th, morphed, hierarchy, se].forEach((m) => { try { m && m.delete && m.delete(); } catch {} });
-    try { contours && contours.delete(); } catch {}
+    mats.forEach((m) => { try { m.delete(); } catch {} });
   }
-  return out;
 }
 
 self.onmessage = async (e) => {
   const { id, imageData, quad } = e.data || {};
   try {
     await loadCV();
-    self.postMessage({ id, out: detectLines(CV, imageData, quad) });
+    const out = enhanceCreases(CV, imageData, quad);
+    self.postMessage({ id, out }, [out.data.buffer]);
   } catch (err) {
     self.postMessage({ id, error: String(err && err.message || err) });
   }

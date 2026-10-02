@@ -66,7 +66,8 @@ export function read(f = {}) {
     const st = f.fingers?.[key]?.state;
     if (!meta) continue;
     if (!st) { honesty.push(`${meta.ar} لم تتبيّنْ حالتُها.`); continue; }
-    const rule = meta.rules.find((r) => r.when === st) || meta.rules.find((r) => st.includes(r.when.slice(0, 6)));
+    // مطابقةٌ تامّةٌ فقط: مطابقةُ أوّلِ ستّةِ أحرفٍ كانت قد تربطُ الحالَ بقاعدةٍ أخرى («طويلةٌ…» بغيرِ ما قُصِد)
+    const rule = meta.rules.find((r) => r.when === st);
     fingerLines.push(`<b>${meta.ar}</b> (${meta.planet}) — ${lc(st)}: ${rule ? rule.say : "—"}`);
   }
   if (fingerLines.length) S.push(seg("الأصابع", fingerLines.join("<br>"), FINGERS.index.src));
