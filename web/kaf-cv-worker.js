@@ -11,7 +11,7 @@ let cvReady = null, CV = null;
 function loadCV() {
   if (cvReady) return cvReady;
   cvReady = new Promise((resolve, reject) => {
-    try { importScripts("../vendor/opencv.js"); }
+    try { importScripts("../vendor/opencv.js"); importScripts("./kaf-lines.js"); }
     catch (e) { reject(e); return; }
     let finished = false;
     const done = (m) => {
@@ -45,7 +45,7 @@ loadCV().then(() => self.postMessage({ ready: true }), (e) => self.postMessage({
 // خطَّ الرأسِ بالقلب، وعدّت أسفلَ خطِّ الحياةِ «خطَّ قدر» — والحكمُ بتسميةٍ خاطئةٍ تلفيق. فالآلةُ
 // تُريكَ التجاعيدَ بوضوح، وأنت تُحدِّدُ أيَّها أيٌّ في الوضعِ اليدويّ.
 // الاتّجاه: ٠ أعلى (مفاصلُ الأصابع) ⇐ أسفل (الرسغ)؛ اليسارُ جهةُ السبّابة/الإبهام.
-function enhanceCreases(cv, imageData, quad, dbg) {
+function enhanceCreases(cv, imageData, quad, dbg, wantStrength, drawPaths = true) {
   const N = 384;
   const mats = [];
   const keep = (m) => (mats.push(m), m);
@@ -97,26 +97,43 @@ function enhanceCreases(cv, imageData, quad, dbg) {
       cv.drawContours(clean, contours, i, new cv.Scalar(255), -1);
     }
     if (dbg) { dbg("s1_roi", roi); dbg("s2_blackhat", bh); dbg("s3_binary", clean); }
+    // تتبّعُ الخطوطِ الرئيسيّة (kaf-lines.js) على الرماديّةِ بعد معادلةِ الإضاءة
+    let lines = null, strength = null;
+    try {
+      const eqRaw = keep(new cv.Mat());
+      const cl2 = new cv.CLAHE(2.0, new cv.Size(8, 8)); cl2.apply(gray, eqRaw); cl2.delete();
+      lines = self.KafLines ? self.KafLines.analyze(eqRaw.data, N) : null;
+      if (wantStrength && self.KafLines) { const sm = self.KafLines.strengthMap(eqRaw.data, N); strength = Array.from(sm.S, (v) => (v === v ? Math.min(255, Math.round(v * 160)) : 0)); self.__eq = Array.from(eqRaw.data); }
+    } catch (e) { lines = { error: String(e && e.message || e) }; }
     // الصورةُ النهائيّة: الراحةُ فاتحةً وتجاعيدُها العميقةُ بالأحمرِ الداكن
     const out = new Uint8ClampedArray(N * N * 4);
     const rgba = roi.data, cd = clean.data;
     let hits = 0;
     for (let i = 0; i < N * N; i++) {
       const o = i * 4;
-      if (cd[i]) { out[o] = 190; out[o + 1] = 20; out[o + 2] = 30; out[o + 3] = 255; hits++; }
+      if (cd[i]) { out[o] = 120; out[o + 1] = 70; out[o + 2] = 70; out[o + 3] = 255; hits++; }
       else { out[o] = 140 + rgba[o] * 0.45; out[o + 1] = 140 + rgba[o + 1] * 0.45; out[o + 2] = 140 + rgba[o + 2] * 0.45; out[o + 3] = 255; }
     }
-    return { width: N, height: N, data: out, coverage: +(hits / (N * N)).toFixed(3) };
+    const COL = { heart: [235, 30, 90], head: [30, 120, 255], life: [20, 170, 60], fate: [240, 160, 0] };
+    if (drawPaths && lines && !lines.error) for (const k of Object.keys(COL)) {
+      const L = lines[k]; if (!L || !L.present || !L.path) continue;
+      for (const p of L.path) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const x = p.x + dx, y = p.y + dy; if (x < 0 || y < 0 || x >= N || y >= N) continue;
+        const o = (y * N + x) * 4; out[o] = COL[k][0]; out[o + 1] = COL[k][1]; out[o + 2] = COL[k][2];
+      }
+    }
+    if (lines && !lines.error) for (const k of Object.keys(lines)) if (lines[k] && lines[k].path) lines[k].path = lines[k].path.filter((_, i) => i % 3 === 0);
+    return { width: N, height: N, data: out, coverage: +(hits / (N * N)).toFixed(3), lines, strength, eq: wantStrength ? self.__eq : null };
   } finally {
     mats.forEach((m) => { try { m.delete(); } catch {} });
   }
 }
 
 self.onmessage = async (e) => {
-  const { id, imageData, quad } = e.data || {};
+  const { id, imageData, quad, wantStrength, drawPaths } = e.data || {};
   try {
     await loadCV();
-    const out = enhanceCreases(CV, imageData, quad);
+    const out = enhanceCreases(CV, imageData, quad, null, !!wantStrength, drawPaths !== false);
     self.postMessage({ id, out }, [out.data.buffer]);
   } catch (err) {
     self.postMessage({ id, error: String(err && err.message || err) });

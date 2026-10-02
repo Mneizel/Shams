@@ -68,7 +68,7 @@ function cvWhenReady(ms) {
   });
 }
 // يُرجِعُ {image, note}: صورةُ الراحةِ بتجاعيدِها المُبرَزة (رابطُ data:) أو نصُّ صراحةٍ إن تعذّرت.
-async function creasesViaWorker(imageData, quad) {
+async function creasesViaWorker(imageData, quad, drawPaths = true) {
   if (!cvWorker && cvState !== "failed") preloadOpenCV();
   const st = await cvWhenReady(15000);
   if (st !== "ready") return { image: null, note: st === "timeout" ? "محرّكُ إبرازِ الخطوطِ لم يجهزْ بعدُ (اتّصالٌ أو جهازٌ بطيء)." : "تعذّرَ تشغيلُ محرّكِ إبرازِ الخطوطِ على هذا الجهاز." };
@@ -76,16 +76,43 @@ async function creasesViaWorker(imageData, quad) {
   try {
     const out = await withTimeout(new Promise((resolve, reject) => {
       cvPending.set(id, { resolve, reject });
-      cvWorker.postMessage({ id, imageData, quad }, [imageData.data.buffer]);
+      cvWorker.postMessage({ id, imageData, quad, drawPaths }, [imageData.data.buffer]);
     }), 15000, "انتهت مهلةُ إبرازِ الخطوط");
-    const c = document.createElement("canvas");
-    c.width = out.width; c.height = out.height;
-    c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(out.data), out.width, out.height), 0, 0);
-    return { image: c.toDataURL("image/jpeg", 0.88), note: null };
+    const base = { width: out.width, height: out.height, data: new Uint8ClampedArray(out.data) };
+    return { image: drawPaths ? toDataUrl(base) : null, base, lines: out.lines || null, note: null };
   } catch (e) {
     cvPending.delete(id);
     return { image: null, note: "تعذّرَ إبرازُ الخطوط (" + (e.message || e) + ")." };
   }
+}
+
+function toDataUrl(base) {
+  const c = document.createElement("canvas");
+  c.width = base.width; c.height = base.height;
+  c.getContext("2d").putImageData(new ImageData(base.data, base.width, base.height), 0, 0);
+  return c.toDataURL("image/jpeg", 0.88);
+}
+// ألوانُ الخطوطِ في الصورة (تطابقُ مفتاحَ الألوانِ في الواجهة)
+export const LINE_COLORS = { heart: "#eb1e5a", head: "#1e78ff", life: "#14aa3c", fate: "#f0a000" };
+function drawLinePaths(base, paths) {
+  const c = document.createElement("canvas");
+  c.width = base.width; c.height = base.height;
+  const g = c.getContext("2d");
+  g.putImageData(new ImageData(base.data, base.width, base.height), 0, 0);
+  g.lineWidth = 4; g.lineCap = "round"; g.lineJoin = "round";
+  for (const [k, pts] of Object.entries(paths)) {
+    if (!pts || pts.length < 2) continue;
+    g.strokeStyle = LINE_COLORS[k] || "#fff";
+    g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); g.stroke();
+  }
+  return c.toDataURL("image/jpeg", 0.9);
+}
+// kaf-lines.js سكربتٌ عاديّ يُعرِّفُ self.KafLines (يُستعمَلُ هنا لدمجِ اللقطات، وفي العاملِ للتحليل)
+let _klLoading = null;
+function loadKafLines() {
+  if (self.KafLines) return Promise.resolve(self.KafLines);
+  if (!_klLoading) _klLoading = import("./kaf-lines.js").then(() => self.KafLines || null, () => null);
+  return _klLoading;
 }
 
 // نقاطُ MediaPipe الـ٢١
@@ -126,7 +153,7 @@ const mean = (arr) => arr.reduce((s, v) => s + v, 0) / (arr.length || 1);
  *  dirSign: ‎+1 إن كان العرضُ غيرَ معكوس، ‎-1 إن كان معكوسًا (لتصحيحِ «يمين/يسار» على الشاشة). */
 export function assessFit(px, tpl, hand, dirSign = 1) {
   const { pts: T, boxH } = tpl;
-  const handAr = hand === "left" ? "اليسرى" : "اليمنى", otherAr = hand === "left" ? "اليمنى" : "اليسرى";
+  const handAr = hand === "left" ? "اليسرى" : "اليمنى";
   // ١) الأصابعُ للأعلى
   if (!(px[P.MID_TIP].y < px[P.MID_MCP].y && px[P.MID_MCP].y < px[P.WRIST].y)) {
     return { ok: false, msg: "وجّهْ أصابعَك نحوَ الأعلى كما في الرسمة" };
@@ -135,7 +162,7 @@ export function assessFit(px, tpl, hand, dirSign = 1) {
   const thumbSide = Math.sign(px[P.THUMB_TIP].x - px[P.PINKY_MCP].x);
   const wantSide = Math.sign(T[P.THUMB_TIP].x - T[P.PINKY_MCP].x);
   if (thumbSide !== wantSide) {
-    return { ok: false, msg: `أرِ الكاميرا باطنَ كفّك ${handAr} (لا ظهرَها) — أو غيّرْ «اليد» تحتَ إلى ${otherAr}` };
+    return { ok: false, msg: `أرِ الكاميرا باطنَ كفّك ${handAr} (لا ظهرَها)` };
   }
   // ٣) الحجم
   const s = d2(px[P.WRIST], px[P.MID_TIP]) / (d2(T[P.WRIST], T[P.MID_TIP]) || 1);
@@ -210,9 +237,20 @@ export function palmQuad(px) {
 
 /** حلقةٌ حيّة: ترسمُ دليلَ اليدِ ونقاطَ اليدِ المرصودة، توجّهُ حتى تنطبقَ اليدُ على الدليل،
  *  ثمّ تلتقطُ وحدَها بعد ثباتٍ قصير. تُعيدُ {stop, capture}؛ capture() التقاطٌ يدويٌّ احتياطيّ. */
-export function runLiveCapture({ video, overlay, mirrored = false, getHand = () => "right", onGuide, onShot }) {
+// اليدُ تُعرَفُ آليًّا: في إطارِ الكاميرا الخامِ (غيرِ المعكوس) والباطنُ نحوَها والأصابعُ للأعلى، إبهامُ
+// اليمنى على يمينِ الصورة وإبهامُ اليسرى على يسارِها (تحقّقنا على ٤ صورٍ حقيقيّة: يدان × صورتان).
+// تصنيفُ MediaPipe نفسُه (Left/Right) يطابقُ ذلك للباطن؛ فإن خالفه فالأرجحُ أنّ الظاهرَ ظهرُ الكفّ.
+export function detectHand(px, mpLabel) {
+  const geom = px[P.THUMB_TIP].x > px[P.PINKY_MCP].x ? "right" : "left";
+  const mp = (mpLabel || "").toLowerCase();
+  const backOfHand = (mp === "left" || mp === "right") && mp !== geom;
+  return { hand: geom, backOfHand };
+}
+
+export function runLiveCapture({ video, overlay, mirrored = false, getHand = () => null, onGuide, onShot }) {
   let raf = 0, stableFrames = 0, stopped = false, aborted = false;
   let lastPx = null, lastLm = null, lastWlm = null, lastLmAt = 0;
+  let handVotes = [], curHand = "right", backVotes = [];
   // نقاطُ اليدِ في إطاراتِ الثباتِ المتتالية: تُؤخَذُ متوسّطَها عند الالتقاط، فلا يقلبُ اهتزازُ
   // إطارٍ واحدٍ حكمًا على حدٍّ فاصل (طولُ إصبعٍ مقابلَ آخر).
   let stableBuf = [];
@@ -223,7 +261,11 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
   const MIN_GAP_MS = 66;      // لا أكثرَ من ~١٥ تحليلًا بالثانية، ولا يُعادُ التحليلُ على نفسِ الإطار
   let lastVideoTime = -1, lastRun = 0, failStreak = 0;
 
-  const doShot = async (lm, wlm) => {
+  // الالتقاط: عدّةُ لقطاتٍ متتالية (≈ ثانية)، تُحلَّلُ خطوطُ كلٍّ منها، ولا يُثبَتُ من الخطوطِ إلّا ما
+  // اتّفقت عليه أغلبُها — اللقطةُ الواحدةُ قد تُطيلُ خطًّا أو تقطعُه بفعلِ ظلٍّ أو اهتزاز (جُرِّب على
+  // صورتين لليدِ نفسِها: طولُ خطِّ القلبِ ٠٫٨٩ في إحداهما و٠٫٤٦ في الأخرى قبل الإجماع).
+  const SHOTS = 4, SHOT_GAP_MS = 140;
+  const doShot = async (lm, wlm, hand) => {
     stopped = true; cancelAnimationFrame(raf);
     const W = video.videoWidth, H = video.videoHeight;
     const dataUrl = grab(video);                    // الإطارُ يُثبَّتُ لحظةَ الالتقاط
@@ -234,13 +276,43 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
     } else {
       try { feats = extractFeatures(lm, wlm, W, H); }
       catch (e) { feats = baseFeatures(); feats._err = String(e && e.message || e); }
-      const frame = frameImageData(video);
-      if (frame && !feats._err) {
-        onGuide(["تمّ الالتقاط — جارٍ إبرازُ خطوطِ كفّك…"], true);
-        const px = lm.map((p) => ({ x: p.x * W, y: p.y * H }));
-        const { image, note } = await creasesViaWorker(frame, palmQuad(px));
-        if (image) feats._creaseImage = image;
-        if (note) feats._linesNote = note;
+      feats.hand = hand || null;
+      if (!feats._err) {
+        const frames = [];
+        for (let k = 0; k < SHOTS && !aborted; k++) {
+          if (k) await new Promise((r) => setTimeout(r, SHOT_GAP_MS));
+          let flm = lm;
+          if (k) { try { const rr = landmarker.detectForVideo(video, performance.now()); flm = rr && rr.landmarks && rr.landmarks[0]; } catch { flm = null; } }
+          if (!flm) continue;
+          const img = frameImageData(video);
+          if (img) frames.push({ img, quad: palmQuad(flm.map((p) => ({ x: p.x * W, y: p.y * H }))) });
+        }
+        const results = [];
+        let shown = null;
+        for (let k = 0; k < frames.length && !aborted; k++) {
+          onGuide([`تمّ الالتقاط — جارٍ تحليلُ خطوطِ كفّك (${k + 1} من ${frames.length})…`], true);
+          const r = await creasesViaWorker(frames[k].img, frames[k].quad, false);
+          if (r.note && !feats._linesNote) feats._linesNote = r.note;
+          if (r.lines && !r.lines.error) { results.push(r.lines); if (!shown) shown = r; }
+        }
+        if (results.length >= 2) {
+          const KL = await loadKafLines();
+          const agree = results.length >= 4 ? 0.75 : 1; // ٣ من ٤، أو كلُّها إن قلَّ العدد
+          const c = KL ? KL.consensus(results, agree) : null;
+          if (c) {
+            for (const k of ["heart", "head", "life", "fate"]) {
+              const L = c[k];
+              feats.lines[k] = L.present === true
+                ? { present: true, confidence: L.confidence, states: L.states, source: "camera", unstable: L.unstable }
+                : { present: false, confidence: 0, states: [], source: "camera", unclear: L.present === null };
+            }
+            feats._linePaths = Object.fromEntries(["heart", "head", "life", "fate"].map((k) => [k, c[k].present === true ? c[k].path : null]));
+            feats._linesFrames = results.length;
+          }
+        } else if (!feats._linesNote) {
+          feats._linesNote = "لم تكفِ اللقطاتُ الواضحةُ لتحليلِ الخطوطِ بثبات (تحرّكت اليد؟) — أعِدِ المحاولة أو أكمِلْها يدويًّا.";
+        }
+        if (shown && shown.base) feats._creaseImage = drawLinePaths(shown.base, feats._linePaths || {});
       }
     }
     if (aborted) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ التحليل
@@ -255,8 +327,9 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
     }
     lastVideoTime = video.currentTime; lastRun = now;
     const W = video.videoWidth, H = video.videoHeight;
-    const hand = getHand() === "left" ? "left" : "right";
-    const tpl = templatePx(hand, W, H);
+    const forced = getHand();
+    const hand = forced === "left" || forced === "right" ? forced : curHand;
+    let tpl = templatePx(hand, W, H);
     let res, threw = false;
     try { res = landmarker.detectForVideo(video, now); } catch { res = null; threw = true; }
     failStreak = threw ? failStreak + 1 : 0;
@@ -270,7 +343,19 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
       msg = "ضعْ كفّك أمامَ الكاميرا — الباطنُ نحوَها والأصابعُ للأعلى — وطابِقْها على الرسمة";
     } else {
       px = lm.map((p) => ({ x: p.x * W, y: p.y * H }));
-      const fit = assessFit(px, tpl, hand, mirrored ? -1 : 1);
+      // اليدُ آليًّا: تصويتٌ على آخرِ ٧ إطاراتٍ كي لا يتأرجحَ القالبُ بين اليدين
+      const det = detectHand(px, res.handednesses && res.handednesses[0] && res.handednesses[0][0] && res.handednesses[0][0].categoryName);
+      handVotes.push(det.hand); if (handVotes.length > 7) handVotes.shift();
+      backVotes.push(det.backOfHand); if (backVotes.length > 7) backVotes.shift();
+      const rightN = handVotes.filter((h) => h === "right").length;
+      if (!(forced === "left" || forced === "right")) {
+        const next = rightN * 2 > handVotes.length ? "right" : "left";
+        if (next !== curHand) { curHand = next; tpl = templatePx(curHand, W, H); }
+      }
+      const handNow = forced === "left" || forced === "right" ? forced : curHand;
+      const fit = backVotes.filter(Boolean).length >= 5
+        ? { ok: false, msg: "أرِ الكاميرا باطنَ كفّك (لا ظهرَها)" }
+        : assessFit(px, tpl, handNow, mirrored ? -1 : 1);
       msg = fit.msg; ok = fit.ok;
       if (ok && lastPx) {
         const mv = mean(KEY.map((i) => d2(px[i], lastPx[i]))) / tpl.boxH;
@@ -289,7 +374,7 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
       stableBuf.push({ lm, wlm });
       if (stableFrames >= NEED_STABLE) {
         const wl = stableBuf.map((s) => s.wlm).filter((w) => w && w.length === 21);
-        doShot(avgPts(stableBuf.map((s) => s.lm)), wl.length === stableBuf.length ? avgPts(wl) : null);
+        doShot(avgPts(stableBuf.map((s) => s.lm)), wl.length === stableBuf.length ? avgPts(wl) : null, forced === "left" || forced === "right" ? forced : curHand);
         return;
       }
       msg = `ممتاز — أبقِ يدك ثابتة… ${"●".repeat(stableFrames)}${"○".repeat(NEED_STABLE - stableFrames)}`;
@@ -299,6 +384,7 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
   }
   // يُرسَمُ الدليلُ فورَ ظهورِ الفيديو، قبلَ أوّلِ تحليل
   if (video.videoWidth) drawOverlay(overlay, video, templatePx(getHand() === "left" ? "left" : "right", video.videoWidth, video.videoHeight), null, false, mirrored);
+  const handNowFor = () => { const f = getHand(); return f === "left" || f === "right" ? f : curHand; };
   raf = requestAnimationFrame(tick);
   return {
     stop: () => { stopped = true; aborted = true; cancelAnimationFrame(raf); },
@@ -307,7 +393,7 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
     capture: () => {
       if (stopped) return;
       const fresh = performance.now() - lastLmAt < 500;
-      doShot(fresh ? lastLm : null, fresh ? lastWlm : null);
+      doShot(fresh ? lastLm : null, fresh ? lastWlm : null, handNowFor());
     },
   };
 }
@@ -392,10 +478,21 @@ export function extractFeatures(lm, wlm, W = 1, H = 1) {
     : iM < 0.78 ? "قصيرةٌ (لا تبلغُ مفصلَ السلامى الطرفيّةِ للوسطى)" : null;
   if (indexState) f.fingers.index = { state: indexState };
 
-  const midBend = Math.min(ang3(pts[P.MID_MCP], pts[P.MID_PIP], pts[P.MID_DIP]), ang3(pts[P.MID_PIP], pts[P.MID_DIP], pts[P.MID_TIP]));
+  // «مقوَّسةٌ منحنية» في الكتبِ = إصبعٌ معوجٌّ يميلُ إلى جانب، لا الانثناءُ الطبيعيُّ نحوَ الراحة
+  // (كان يُقاسُ بزاويةِ المفصلِ ثلاثيّةِ الأبعاد، فتُوسَمُ كلُّ يدٍ مرتخيةٍ قليلًا «مقوّسة: استسلامٌ وعجز»).
+  // يُقاسُ هنا الميلُ الجانبيُّ في مستوى الصورة: بُعدُ مفصلَيِ الإصبعِ عن الخطِّ الواصلِ بين قاعدتِه وطرفِه.
+  const lateral = (a, b, c, d) => {
+    const A = { x: lm[a].x * W, y: lm[a].y * H }, D = { x: lm[d].x * W, y: lm[d].y * H };
+    const len = Math.hypot(D.x - A.x, D.y - A.y) || 1;
+    const off = (i) => Math.abs((D.x - A.x) * (A.y - lm[i].y * H) - (A.x - lm[i].x * W) * (D.y - A.y)) / len;
+    return Math.max(off(b), off(c)) / len;
+  };
+  const midCrook = lateral(P.MID_MCP, P.MID_PIP, P.MID_DIP, P.MID_TIP);
   f.fingers.middle = { state: fLen.middle > 1.08 ? "طويلةٌ جدًّا (أطولُ من المعتادِ بوضوح)"
-    : midBend < 150 ? "مقوَّسةٌ منحنية"
-    : fLen.middle < 0.82 ? "قصيرةٌ (أقصرُ بوضوح)" : "معتدلةُ الطولِ مستقيمة" };
+    : midCrook > 0.1 ? "مقوَّسةٌ منحنية"
+    : fLen.middle < 0.82 ? "قصيرةٌ (أقصرُ بوضوح)"
+    : midCrook < 0.05 ? "معتدلةُ الطولِ مستقيمة" : null };
+  if (!f.fingers.middle.state) delete f.fingers.middle;
 
   const rI = L.ring / L.index;
   const ringState = rI >= 1.04 ? "مساويةٌ للسبّابة أو أطول" : rI < 0.9 ? "أقصرُ من السبّابة" : null;
@@ -421,7 +518,7 @@ export function extractFeatures(lm, wlm, W = 1, H = 1) {
   const thumbRatio = d3(pts[P.THUMB_TIP], pts[P.THUMB_IP]) / (d3(pts[P.THUMB_IP], pts[P.THUMB_MCP]) || 1);
   f.thumb = { firstPhalanx: "", secondPhalanx: "", angle: "", ball: null, joint: null };
 
-  f._debug = { ratio: +ratio.toFixed(2), fLen, thumbRatio: +thumbRatio.toFixed(2), world: pts === wlm };
+  f._debug = { ratio: +ratio.toFixed(2), fLen, thumbRatio: +thumbRatio.toFixed(2), midCrook: +midCrook.toFixed(3), world: pts === wlm };
   return f;
 }
 

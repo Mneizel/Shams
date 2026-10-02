@@ -3,3 +3,4 @@ text/sources/
 text/please upscale/
 *.log
 .DS_Store
+web/__lab/

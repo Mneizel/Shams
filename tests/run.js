@@ -988,7 +988,7 @@ import kaf from "../engines/kaf.js";
 }
 
 // ── طبقةُ رؤيةِ الكفّ (الدوالُّ الهندسيّةُ الصِّرفة؛ الكاميرا نفسُها لا تُختبَرُ هنا) ─────
-import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad } from "../web/kaf-vision.js";
+import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand } from "../web/kaf-vision.js";
 {
   const W = 1280, H = 720;
   const tpl = templatePx("right", W, H);
@@ -1033,6 +1033,64 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad } from "../
   // مربّعُ الراحة: يبدأُ من جهةِ السبّابة ويمتدُّ حتى مستوى الرسغ
   const q = palmQuad(tpl.pts);
   ok(q[0][0] > q[1][0] && q[2][1] > tpl.pts[9].y + 0.3 * tpl.boxH, "مربّعُ الراحةِ من جهةِ السبّابة حتى الرسغ");
+}
+
+// ── قراءةُ الكفّ: اليدُ آليًّا، الإصبعُ المعوجّ، تتبّعُ الخطوط، وإجماعُ اللقطات ──
+{
+  const W = 720, H = 1280;
+  const R = templatePx("right", W, H).pts, Lf = templatePx("left", W, H).pts;
+  ok(detectHand(R, "Right").hand === "right" && !detectHand(R, "Right").backOfHand, "كفٌّ يمنى (الإبهامُ يمينَ الصورة) ⇒ اليمنى");
+  ok(detectHand(Lf, "Left").hand === "left", "كفٌّ يسرى ⇒ اليسرى");
+  ok(detectHand(R, "Left").backOfHand, "تعارضُ الهندسةِ مع تصنيفِ MediaPipe ⇒ ظهرُ الكفّ");
+  ok(detectHand(R, undefined).backOfHand === false, "بلا تصنيفٍ ⇒ لا يُدَّعى «ظهرُ الكفّ»");
+
+  // الانثناءُ نحوَ الراحة (عمقُ z) ليس «اعوجاجًا»؛ الميلُ الجانبيُّ في الصورة هو الاعوجاج
+  const norm = (pts) => pts.map((p) => ({ x: p.x / W, y: p.y / H, z: 0 }));
+  const flexed = norm(R).map((p, i) => (i >= 10 && i <= 12 ? { ...p, z: -0.08 * (i - 9) } : p));
+  ok(!/مقوَّسة/.test(kafFeat(flexed, null, W, H).fingers.middle?.state || ""), "إصبعٌ منثنٍ قليلًا نحوَ الراحة ⇒ ليست «مقوَّسةً»");
+  const bent = norm(R.map((p, i) => (i === 10 || i === 11 ? { x: p.x + 60, y: p.y } : p)));
+  ok(/مقوَّسة/.test(kafFeat(bent, null, W, H).fingers.middle?.state || ""), "إصبعٌ يميلُ جانبًا بوضوح ⇒ «مقوَّسةٌ منحنية»");
+
+  // تتبّعُ الخطوط على صورةٍ اصطناعيّة: جلدٌ متجانسٌ بنسيجٍ خفيف + تجاعيدُ داكنةٌ في أماكنِها التشريحيّة
+  const KL = (await import("../web/kaf-lines.js")).default || globalThis.KafLines;
+  const N = 384;
+  const mk = (draw) => {
+    const g = new Uint8Array(N * N);
+    let seed = 3; const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    for (let i = 0; i < N * N; i++) g[i] = 175 + Math.round(rnd() * 10);
+    const dot = (x, y) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < N && Y < N) g[Y * N + X] = Math.min(g[Y * N + X], 110 + 12 * Math.hypot(dx, dy)); } };
+    draw(dot);
+    return g;
+  };
+  const blank = KL.analyze(mk(() => {}), N);
+  ok(["heart", "head", "life", "fate"].every((k) => blank[k].present !== true), "جلدٌ بلا تجاعيد ⇒ لا يُخترَعُ أيُّ خطّ");
+  const img = mk((dot) => {
+    for (let x = N * 0.97; x >= N * 0.45; x -= 0.5) dot(x, N * 0.2 + (N * 0.97 - x) * 0.05);           // القلب
+    for (let x = N * 0.12; x <= N * 0.7; x += 0.5) dot(x, N * 0.3 + (x - N * 0.12) * 0.35);            // الرأسُ منحدرًا
+    for (let y = N * 0.15; y <= N * 0.95; y += 0.5) dot(N * 0.1 + Math.sin((y / N - 0.15) / 0.8 * Math.PI) * N * 0.36, y); // الحياة (يبلغُ ~٠٫٤٦ من العرض)
+  });
+  const A = KL.analyze(img, N);
+  ok(A.heart.present === true && A.life.present === true && A.head.present === true, "التجاعيدُ الثلاثُ في أماكنِها ⇒ تُرصَدُ الثلاثة");
+  ok(A.head.states.includes("منحدرٌ نحوَ تلِّ القمر"), "رأسٌ منحدرٌ بوضوح ⇒ «منحدرٌ نحوَ تلِّ القمر»");
+  ok(A.life.states.includes("يقوسُ واسعًا داخلَ الكفّ (تلُّ الزهرةِ كبير)"), "حياةٌ تقوسُ إلى ~٠٫٤٦ من العرض ⇒ «يقوسُ واسعًا»");
+  ok(A.fate.present !== true, "لا تجعّدَ عموديًّا في الوسط ⇒ لا «خطَّ مصير»");
+  // نسيجُ جلدٍ: خدوشٌ قصيرةٌ عشوائيّةُ الاتّجاه (تباينٌ عالٍ بلا خطٍّ رئيسيّ) ⇒ لا يُصنَعُ منها خطّ
+  for (const nScr of [300, 900]) {
+    const tex = mk(() => {});
+    let sd = 11; const rr = () => ((sd = (sd * 1103515245 + 12345) % 2147483648) / 2147483648);
+    for (let k = 0; k < nScr; k++) { const x0 = rr() * N, y0 = rr() * N, a = rr() * Math.PI, Ls = 8 + rr() * 22;
+      for (let t = 0; t < Ls; t += 0.5) { const x = Math.round(x0 + Math.cos(a) * t), y = Math.round(y0 + Math.sin(a) * t); for (let d = -1; d <= 1; d++) { const X = x + d; if (X >= 0 && y >= 0 && X < N && y < N) tex[y * N + X] = Math.min(tex[y * N + X], 125); } } }
+    const T2 = KL.analyze(tex, N);
+    ok(["heart", "head", "life", "fate"].every((k) => T2[k].present !== true), `نسيجُ ${nScr} خدشًا قصيرًا ⇒ لا خطَّ مُخترَعًا`);
+  }
+
+  // الإجماع: ما يتبدّلُ بين اللقطاتِ لا يُقال
+  const fr = (states, present = true) => ({ heart: { present, confidence: 0.9, states, path: [], measures: {} }, head: { present: null, confidence: 0.2, states: [], path: [], measures: {} }, life: { present: true, confidence: 0.9, states: ["قصيرٌ"], path: [], measures: {} }, fate: { present: false, confidence: 0.55, states: [], path: [], measures: {} } });
+  const c = KL.consensus([fr(["قصيرٌ"]), fr(["قصيرٌ", "متقطّعٌ / به كسور"]), fr(["قصيرٌ"]), fr(["قصيرٌ"])], 0.75);
+  ok(c.heart.present === true && c.heart.states.join() === "قصيرٌ" && c.heart.unstable.includes("متقطّعٌ / به كسور"), "حالةٌ في لقطةٍ واحدةٍ من أربع ⇒ تُسقَط، والمتّفَقُ عليها تبقى");
+  ok(c.head.present === null && c.fate.present === false, "غيرُ المتبيَّنِ يبقى «لم يتبيّنْ»، والغائبُ في كلِّها غائب");
+  const c2 = KL.consensus([fr(["قصيرٌ"]), fr([], false), fr(["قصيرٌ"]), fr([], false)], 0.75);
+  ok(c2.heart.present === null, "خطٌّ يظهرُ في نصفِ اللقطاتِ فقط ⇒ «لم يتبيّنْ» لا حضورٌ ولا غياب");
 }
 
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──

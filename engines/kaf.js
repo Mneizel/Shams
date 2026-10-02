@@ -115,9 +115,13 @@ export function read(f = {}) {
       continue;
     }
     const states = (ln.states || []).map((s) => `${s}: ${L.states[s] || "—"}`);
+    // خطٌّ رصدتْه الكاميرا بلا حالةٍ ثابتة: لا يُوصَفُ «معتدلًا بلا علامات» — فذلك حكمٌ لم يُقَسْ
+    const noStates = ln.source === "camera"
+      ? "الخطُّ ظاهرٌ في كفّك، ولم تثبتْ حالةٌ من حالاتِ الكتابِ فيه بين لقطاتِ الكاميرا — فلا يُحكَمُ على تفاصيلِه."
+      : "الخطُّ حاضرٌ معتدلٌ لا يحملُ علاماتٍ خاصّة.";
     S.push(seg(
       L.ar,
-      `<span class="gloss">${L.means}</span><br>` + (states.length ? states.join("<br>") : "الخطُّ حاضرٌ معتدلٌ لا يحملُ علاماتٍ خاصّة."),
+      `<span class="gloss">${L.means}</span><br>` + (states.length ? states.join("<br>") : noStates),
       L.src
     ));
   }

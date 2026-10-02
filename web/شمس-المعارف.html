@@ -18956,9 +18956,13 @@ function read(f = {}) {
       continue;
     }
     const states = (ln.states || []).map((s) => `${s}: ${L.states[s] || "—"}`);
+    // خطٌّ رصدتْه الكاميرا بلا حالةٍ ثابتة: لا يُوصَفُ «معتدلًا بلا علامات» — فذلك حكمٌ لم يُقَسْ
+    const noStates = ln.source === "camera"
+      ? "الخطُّ ظاهرٌ في كفّك، ولم تثبتْ حالةٌ من حالاتِ الكتابِ فيه بين لقطاتِ الكاميرا — فلا يُحكَمُ على تفاصيلِه."
+      : "الخطُّ حاضرٌ معتدلٌ لا يحملُ علاماتٍ خاصّة.";
     S.push(seg(
       L.ar,
-      `<span class="gloss">${L.means}</span><br>` + (states.length ? states.join("<br>") : "الخطُّ حاضرٌ معتدلٌ لا يحملُ علاماتٍ خاصّة."),
+      `<span class="gloss">${L.means}</span><br>` + (states.length ? states.join("<br>") : noStates),
       L.src
     ));
   }
@@ -23745,9 +23749,11 @@ PANELS.kaf = (main) => {
       </div>
       <div id="k-shot"></div>
     </div>
-    <h2>الوضعُ اليدويّ — صِفْ ما ترى في كفّك</h2>
+    <details class="intro" id="k-manual" style="margin-top:1.2rem">
+    <summary>الوضعُ اليدويّ — لِما لم تقِسْه الكاميرا، أو إن تعذّرت</summary>
+    <div class="body">
     <div class="form" style="flex-wrap:wrap">
-      <div class="fld"><label>اليد</label><select id="k-hand"><option value="right">اليمنى (المكتسَب)</option><option value="left">اليسرى (الفطرة)</option></select></div>
+      <div class="fld"><label>اليد</label><select id="k-hand"><option value="">— تعرفُها الكاميرا (أو اخترْ) —</option><option value="right">اليمنى (المكتسَب)</option><option value="left">اليسرى (الفطرة)</option></select></div>
       ${sel("k-type", sc.handTypes, "نوعُ اليد (شكلُ الأصابعِ والراحة)")}
       ${sel("k-texture", sc.textures, "ملمسُ اليد")}
       ${sel("k-palm", sc.palmSurfaces, "راحةُ اليد")}
@@ -23772,6 +23778,7 @@ PANELS.kaf = (main) => {
       <div class="fld"><label>المستطيل (بين القلبِ والرأس)</label><select id="k-quad"><option value="">—</option><option value="wide">واسعٌ منتظم</option><option value="narrow">ضيّقٌ مضغوط</option></select></div>
     </div>
     <div class="form"><button class="btn" id="k-go">اقرأِ الكفّ</button></div>
+    </div></details>
     <div id="k-out"></div>`;
 
   // fingers
@@ -23816,7 +23823,7 @@ PANELS.kaf = (main) => {
   };
   // دمجٌ: ما قاسته الكاميرا أوّلًا؛ وما لم تقِسْه (أو لم تتبيّنْه بثقة) يُكمَّلُ ممّا أدخلَه المستخدم.
   const mergeManual = (feats, man) => {
-    feats.hand = man.hand;
+    if (man.hand) feats.hand = man.hand;
     if (!feats.handType && man.handType) feats.handType = man.handType;
     if (man.texture) feats.texture = man.texture;
     if (man.palmSurface) feats.palmSurface = man.palmSurface;
@@ -23864,8 +23871,10 @@ PANELS.kaf = (main) => {
   const secure = (window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1")
     && location.protocol !== "file:";
   if (!secure) {
+    { const km = $("#k-manual", main); if (km) km.open = true; }
     note.innerHTML = `<b>التحليلُ التلقائيُّ بالكاميرا مُعطَّلٌ الآن.</b> المتصفّحُ يمنعُ الكاميرا عند فتحِ الملفِّ مباشرةً (<code>file://</code>). لتشغيلِه: أغلِقْ هذه الصفحة، ثمّ شغّلِ الملفَّ <code>افتح-قراءة-الكف.bat</code> (نافذةٌ سوداءُ صغيرةٌ تبقى مفتوحة) — سيفتحُ الموقعَ عبر عنوانٍ محلّيٍّ فتعملُ الكاميرا. حتى ذلك الحينِ استعملِ <b>الوضعَ اليدويّ</b> أدناه.`;
   } else {
+    note.className = "gloss";
     note.innerHTML = `تُفتَحُ الكاميرا، توجّهُك حتى تُصبِحَ الصورةُ صحيحةً، ثمّ تلتقطُ تلقائيًّا وتُحلّلُ شكلَ اليدِ والأصابعِ والخطوطِ الرئيسيّة. الصورةُ لا تُغادِرُ جهازك. (التلالُ والأظافرُ والعلاماتُ الدقيقةُ تُكمَّلُ من الوضعِ اليدويّ.)`;
     const btn = $("#k-camstart", main); btn.hidden = false;
     const forceBtn = $("#k-camforce", main);
@@ -23880,6 +23889,7 @@ PANELS.kaf = (main) => {
       stopLoop = null;
       releaseStream();
       $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true; btn.hidden = false;
+      btn.textContent = "التقاطٌ جديد";
     };
     panelCleanup = stopAll;
     $("#k-camstop", main).onclick = stopAll;
@@ -23890,6 +23900,8 @@ PANELS.kaf = (main) => {
     // زرُّ "إيقاف" وحدَه ظاهرًا — فلا يُضطرُّ المستخدمُ لتخمينِ كيفيّةِ إعادةِ المحاولة).
     const failReset = (msg) => {
       $("#k-guide", main).textContent = msg;
+      const kn = $("#kaf-camnote", main); if (kn) kn.innerHTML = esc(msg) + " — أكمِلْ بالوضعِ اليدويّ تحت.";
+      const km = $("#k-manual", main); if (km) km.open = true;
       btn.hidden = false; $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true;
     };
     const camError = (e) => {
@@ -23899,7 +23911,7 @@ PANELS.kaf = (main) => {
       if (n === "NotReadableError" || n === "AbortError") return "الكاميرا مشغولةٌ ببرنامجٍ آخر (Zoom/Teams/تبويبٍ آخر) — أغلِقْه ثمّ أعِدِ المحاولة.";
       return "تعذّرَ تشغيلُ الكاميرا: " + ((e && e.message) || e);
     };
-    btn.onclick = async () => {
+    const startCam = async () => {
       const my = ++attempt;
       const cancelled = () => my !== attempt;
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
@@ -23940,7 +23952,7 @@ PANELS.kaf = (main) => {
         video,
         overlay: $("#k-overlay", main),
         mirrored,
-        getHand: () => $("#k-hand", main)?.value || "right",
+        getHand: () => $("#k-hand", main)?.value || null,
         onGuide: (msgs, ok) => {
           const gEl = $("#k-guide", main); gEl.textContent = msgs.join(" · "); gEl.style.background = ok ? "rgba(20,110,40,.75)" : "rgba(0,0,0,.6)";
         },
@@ -23948,36 +23960,56 @@ PANELS.kaf = (main) => {
           if (cancelled()) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ تحليلِ الخطوط
           stopAll();
           lastCam = JSON.parse(JSON.stringify(feats)); // يُحفَظُ ليُكمَّلَ لاحقًا بالحقولِ اليدويّة
-          feats = mergeManual(feats, readManual());
-          let r; try { r = kaf.read(feats); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
-          try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: feats.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
-          // ما لا تقيسُه الكاميرا (نوعُ اليدِ والخطوط) يُجمَعُ في توجيهٍ واحدٍ واضح بدلَ قائمةِ «لم أتبيّنْه»
-          const lineNames = sc.lines.map((l) => l.ar);
-          const camHonesty = r.honesty.filter((h) => !lineNames.some((n) => h.startsWith(n)) && !h.startsWith("نوعُ اليدِ"));
-          const hint = feats.handHint;
-          const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
-          const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — تتّسقُ هذه النِّسَبُ مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.
-              <br><span class="gloss">نوعُ اليدِ في الكتبِ يُعرَفُ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل — والكاميرا لا تقيسُها، فاخترِ النوعَ بنفسِك من «نوعُ اليد» تحت.</span></div>` : "";
-          $("#k-shot", main).innerHTML = `<div class="grid wide">
-            ${feats._err ? `<div class="warn">${esc(feats._err)}</div>` : ""}
-            ${feats._linesNote ? `<div class="warn">${esc(feats._linesNote)}</div>` : ""}
-            ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${hintHtml}` })}
-            ${feats._creaseImage ? card({ title: "خطوطُ كفّك مُبرَزة", body: `<img src="${feats._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
-              <div class="kv" style="margin-top:.4rem">هذه راحتُك مقوَّمةً (الأعلى عند قواعدِ الأصابع، والأسفل عند الرسغ، واليسارُ جهةُ الإبهام)، وأعمقُ تجاعيدِها بالأحمر.</div>
-              <div class="gloss">الآلةُ تُبرِزُ التجاعيدَ لكنّها لا تُسمّيها: جُرِّب ذلك على كفٍّ حقيقيّةٍ واضحة فخلطت خطَّ الرأسِ بالقلب، والحكمُ بتسميةٍ خاطئةٍ تلفيق. حدِّدْ أنت ما تراه من الخطوطِ وحالاتِها في «الوضعِ اليدويّ» تحت، ثمّ اضغطْ «اقرأِ الكفّ» — تُضافُ إلى ما قاستْه الكاميرا هنا.</div>` }) : ""}
-            ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
-              body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
-              reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
-            ${card({ title: "أكمِلْ ما لا تقيسُه الكاميرا", body: `<ul class="kv">
-                ${!feats.handType ? "<li>نوعُ اليد — من شكلِ أطرافِ أصابعِك (انظرِ الملاحظةَ تحتَ الصورة).</li>" : ""}
-                <li>الخطوطُ وحالاتُها — بالاستعانةِ بصورةِ «خطوطُ كفّك مُبرَزة».</li>
-                ${camHonesty.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>
-              <div class="gloss">املأْها في «الوضعِ اليدويّ» تحتَ ثمّ اضغطْ «اقرأِ الكفّ»: تُضافُ إلى ما قاستْه الكاميرا (لا تُلغيه).</div>` })}
-          </div>`;
+          const LINE_KEYS = ["heart", "head", "life", "fate"];
+          const COLORS = vis.LINE_COLORS || {};
+          const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
+          const rejected = new Set(); // خطوطٌ قال المستخدمُ إنّ الآلةَ أخطأت تحديدَها
+          const render = () => {
+            const f = mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual());
+            for (const k of rejected) f.lines[k] = { present: false, confidence: 0, states: [], source: "camera" };
+            let r; try { r = kaf.read(f); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+            try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
+            const hint = f.handHint;
+            const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
+            const handLine = f.hand ? `<div class="kv"><b>اليد:</b> ${f.hand === "left" ? "اليسرى" : "اليمنى"} <span class="gloss">— عرفتْها الكاميرا من وضعِ الإبهام${$("#k-hand", main)?.value ? " (أو كما اخترتَ يدويًّا)" : ""}</span></div>` : "";
+            const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — يتّسقُ ذلك مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.</div>` : "";
+            const camLines = LINE_KEYS.filter((k) => lastCam.lines?.[k]?.source === "camera");
+            const legend = camLines.map((k) => {
+              const L = lastCam.lines[k];
+              const sw = `<span style="display:inline-block;width:14px;height:4px;border-radius:2px;background:${COLORS[k] || "#fff"};vertical-align:middle;margin-inline-end:.35rem"></span>`;
+              if (!L.present) return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b> — ${L.unclear ? "لم يتّضحْ بثباتٍ بين اللقطات" : "لم تجدْه الكاميرا"}</div>`;
+              return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b>${L.states.length ? ` — ${L.states.map(esc).join("، ")}` : ""}
+                <label class="chip" style="margin-inline-start:.4rem"><input type="checkbox" class="k-ok" data-k="${k}" ${rejected.has(k) ? "" : "checked"}> التحديدُ صحيح</label></div>`;
+            }).join("");
+            const camHonesty = r.honesty.filter((h) => !h.startsWith("نوعُ اليدِ"));
+            $("#k-shot", main).innerHTML = `<div class="grid wide">
+              ${f._err ? `<div class="warn">${esc(f._err)}</div>` : ""}
+              ${f._linesNote ? `<div class="warn">${esc(f._linesNote)}</div>` : ""}
+              ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${handLine}${hintHtml}` })}
+              ${f._creaseImage ? card({ title: "خطوطُ كفّك كما حدّدتْها الكاميرا", body: `<img src="${f._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
+                <div class="gloss" style="margin:.3rem 0 .5rem">راحتُك مقوَّمة: الأعلى قواعدُ الأصابع، والأسفلُ الرسغ، واليسارُ جهةُ الإبهام. حُلِّلت ${AR(lastCam._linesFrames || 0)} لقطات، ولا يُذكَرُ إلّا ما اتّفقت عليه.</div>
+                ${legend}
+                <div class="gloss" style="margin-top:.4rem">إن رأيتَ خطًّا ملوّنًا على تجعّدٍ غيرِ الخطِّ المقصود، أزِلْ علامةَ «صحيح» عنه فيُستبعَدُ من القراءة.</div>` }) : ""}
+              ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
+                body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
+                reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
+              ${card({ title: "ما لا تقيسُه الكاميرا — أكمِلْه إن شئت", body: `<ul class="kv">
+                  ${!f.handType ? "<li>نوعُ اليد — يُعرَفُ في الكتبِ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل.</li>" : ""}
+                  ${camHonesty.map((h) => `<li>${esc(h)}</li>`).join("")}
+                  <li>الجُزُرُ والسلاسلُ والفروعُ الدقيقةُ على الخطوط، والعلامات (نجمة/صليب/مربّع) — تحتاجُ تكبيرًا لا تكفيه صورةُ الهاتف.</li></ul>
+                <button class="btn sec" type="button" id="k-open-manual">افتحِ الوضعَ اليدويّ</button>` })}
+            </div>`;
+            main.querySelectorAll(".k-ok").forEach((cb) => (cb.onchange = () => { cb.checked ? rejected.delete(cb.dataset.k) : rejected.add(cb.dataset.k); render(); }));
+            const om = $("#k-open-manual", main); if (om) om.onclick = () => { const km = $("#k-manual", main); if (km) { km.open = true; km.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+            wireCards(main);
+          };
+          render();
           wireCards(main);
         },
       });
     };
+    btn.onclick = startCam;
+    startCam();
   }
 };
 
