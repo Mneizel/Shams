@@ -21757,6 +21757,9 @@ function taskhirOpFullHTML(op) {
 // ── القوائم ──────────────────────────────────────────────────────────
 const PANELS = {}; // id -> render(main)
 let CURRENT = "session"; // اللوحة الحالية (لإعادة البناء عند تغيير البطاقة)
+// تنظيفُ اللوحةِ السابقة قبل عرضِ غيرها (مثلًا: إطفاءُ الكاميرا وإيقافُ حلقةِ التحليل
+// عند مغادرةِ قراءةِ الكفّ — وإلّا تبقى الكاميرا شغّالةً بالخلفيّةِ وتستهلكُ المعالج).
+let panelCleanup = null;
 // ترتيبُ القائمة يتّبع ترتيبَ جلسةِ الروحانيّ الفعليّة: استقبالٌ وقراءةٌ شاملة ⇐ قراءةٌ حسّيّةٌ
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
@@ -21798,6 +21801,8 @@ function renderWelcome(main) {
   $("#welcome-go", main).onclick = () => route("session");
 }
 function route(id) {
+  try { panelCleanup && panelCleanup(); } catch {}
+  panelCleanup = null;
   const ready = ctx().ready;
   document.body.classList.toggle("pre-intake", !ready);
   if (!ready) {
@@ -23269,11 +23274,18 @@ PANELS.kaf = (main) => {
     const btn = $("#k-camstart", main); btn.hidden = false;
     const forceBtn = $("#k-camforce", main);
     let vis = null, stream = null, stopLoop = null;
+    // رقمُ المحاولةِ الجارية: أيُّ إيقافٍ (زرُّ إيقاف/مغادرةُ اللوحة) يرفعُه، فكلُّ خطوةٍ
+    // غيرِ متزامنةٍ تنتهي بعدَه تعرفُ أنّها أُلغيت ولا تفتحُ الكاميرا على لوحةٍ لم تعُد ظاهرة.
+    let attempt = 0;
+    const releaseStream = () => { try { stream && stream.getTracks().forEach((t) => t.stop()); } catch {} stream = null; };
     const stopAll = () => {
+      attempt++;
       try { stopLoop && stopLoop.stop(); } catch {}
-      try { stream && stream.getTracks().forEach((t) => t.stop()); } catch {}
+      stopLoop = null;
+      releaseStream();
       $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true; btn.hidden = false;
     };
+    panelCleanup = stopAll;
     $("#k-camstop", main).onclick = stopAll;
     // التقاطٌ يدويٌّ فوريّ: مخرجٌ دائمٌ متاحٌ إن تعذّر على الكشفِ الآليِّ تحقيقَ شروطِه لأيِّ
     // سببٍ (إضاءة/زاوية/جهاز لم نتوقّعْه) — لا يبقى المستخدمُ عالقًا بلا حيلة.
@@ -23284,19 +23296,38 @@ PANELS.kaf = (main) => {
       $("#k-guide", main).textContent = msg;
       btn.hidden = false; $("#k-camwrap", main).hidden = true; $("#k-camstop", main).hidden = true; forceBtn.hidden = true;
     };
+    const camError = (e) => {
+      const n = e && e.name;
+      if (n === "NotAllowedError" || n === "SecurityError") return "لم يُسمَحْ باستخدامِ الكاميرا — اسمحْ بها من أيقونةِ الكاميرا بجانبِ العنوان ثمّ أعِدِ المحاولة.";
+      if (n === "NotFoundError" || n === "OverconstrainedError") return "لم تُوجَدْ كاميرا في هذا الجهاز.";
+      if (n === "NotReadableError" || n === "AbortError") return "الكاميرا مشغولةٌ ببرنامجٍ آخر (Zoom/Teams/تبويبٍ آخر) — أغلِقْه ثمّ أعِدِ المحاولة.";
+      return "تعذّرَ تشغيلُ الكاميرا: " + ((e && e.message) || e);
+    };
     btn.onclick = async () => {
+      const my = ++attempt;
+      const cancelled = () => my !== attempt;
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
-      $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية…";
+      $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية… (أوّلَ مرّةٍ قد يستغرقُ حتى دقيقةٍ على اتّصالٍ بطيء)";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
       try { vis = await import("./kaf-vision.js"); }
-      catch (e) { failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
+      catch (e) { if (!cancelled()) failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
+      if (cancelled()) return;
       try { await vis.ensureLoaded(); }
-      catch (e) { failReset("تعذّرَ تجهيزُ النموذج: " + (e.message || e)); return; }
+      catch (e) { if (!cancelled()) failReset("تعذّرَ تجهيزُ النموذج: " + (e.message || e)); return; }
+      if (cancelled()) return;
       const video = $("#k-video", main);
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } });
-        video.srcObject = stream; await video.play();
-      } catch (e) { failReset("لم يُسمَحْ باستخدامِ الكاميرا."); return; }
+      let s;
+      try { s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } } }); }
+      catch (e) { if (!cancelled()) failReset(camError(e)); return; }
+      // أُلغيَ أثناء انتظارِ الإذن ⇒ أطفئِ الكاميرا فورًا بدلَ تركِها شاعلةً بلا لوحة
+      if (cancelled()) { try { s.getTracks().forEach((t) => t.stop()); } catch {} return; }
+      stream = s;
+      // الكاميرا الخلفيّةُ لا تُعكَس (العكسُ مرآةٌ مريحةٌ للأماميّة فقط)
+      const facing = stream.getVideoTracks()[0]?.getSettings?.().facingMode;
+      video.style.transform = facing === "environment" ? "none" : "scaleX(-1)";
+      try { video.srcObject = stream; await video.play(); }
+      catch (e) { if (!cancelled()) { releaseStream(); failReset(camError(e)); } return; }
+      if (cancelled()) return;
       vis.preloadOpenCV(); // بعد نجاح فتح الكاميرا فعلًا — لا يتزامن تجميدُها مع بدء التشغيل
       forceBtn.hidden = false;
       stopLoop = vis.runLiveCapture({
@@ -23307,6 +23338,7 @@ PANELS.kaf = (main) => {
           if (hg) { hg.style.stroke = ok ? "#3ddc6a" : "#fff"; hg.style.opacity = ok ? ".9" : ".5"; hg.style.strokeDasharray = ok ? "0" : "10 7"; }
         },
         onShot: (feats, dataUrl) => {
+          if (cancelled()) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ تحليلِ الخطوط
           stopAll();
           // دمجٌ: الكاميرا تملأُ الشكلَ والأصابعَ والخطوط؛ الحقولُ اليدويّةُ (إن مُلئت) تُكمِّلُ التلالَ والأظافر…
           const g = (id) => $("#" + id, main)?.value || "";
@@ -23327,7 +23359,8 @@ PANELS.kaf = (main) => {
           try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: feats.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
           $("#k-shot", main).innerHTML = `<div class="grid wide">
             ${feats._err ? `<div class="warn">${esc(feats._err)}</div>` : ""}
-            ${card({ title: "الصورةُ الملتقطةُ تلقائيًّا", body: `<img src="${dataUrl}" style="max-width:360px;border-radius:10px">
+            ${feats._linesNote ? `<div class="warn">${esc(feats._linesNote)}</div>` : ""}
+            ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;border-radius:10px">
               <div class="gloss">نوعُ اليدِ المُقدَّر: ${esc((sc.handTypes.find((h) => h.key === feats.handType) || {}).ar || "—")} · النسبة عرض/طول ${esc(String(feats._debug?.ratio ?? "—"))}</div>` })}
             ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
               body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
