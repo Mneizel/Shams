@@ -23953,7 +23953,10 @@ PANELS.kaf = (main) => {
             const hint = f.handHint;
             const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
             const handLine = f.hand ? `<div class="kv"><b>اليد:</b> ${f.hand === "left" ? "اليسرى" : "اليمنى"} <span class="gloss">— عرفتْها الكاميرا من وضعِ الإبهام${$("#k-hand", main)?.value ? " (أو كما اخترتَ يدويًّا)" : ""}</span></div>` : "";
-            const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — يتّسقُ ذلك مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.</div>` : "";
+            const TIPS = (vis && vis.TIP_AR) || {}, FAR = (vis && vis.FINGER_AR) || {};
+            const tipsHtml = hint && hint.tips ? `<div class="kv" style="margin-top:.3rem"><b>أطرافُ الأصابع:</b> ${Object.entries(hint.tips).map(([k, v]) => `${esc(FAR[k] || k)} ${v ? esc(TIPS[v] || v) : "<span class=\"gloss\">لم تُحسَم</span>"}`).join(" · ")}</div>` : "";
+            const typeHtml = f._handTypeWhy ? `<div class="kv" style="margin-top:.3rem"><b>نوعُ اليد:</b> ${f.handType ? esc(typeAr(f.handType)) : "لم يُحسَم"} <span class="gloss">— ${esc(f._handTypeWhy)}</span></div>` : "";
+            const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}${hint.palmRatio ? ` (عرضُها ${AR(Math.round(hint.palmRatio * 100))}٪ من طولِها)` : ""}، والأصابعُ ${esc(hint.fingerLen)}.</div>${tipsHtml}${typeHtml}` : "";
             const camLines = LINE_KEYS.filter((k) => lastCam.lines?.[k]?.source === "camera");
             const legend = camLines.map((k) => {
               const L = lastCam.lines[k];
@@ -23966,7 +23969,8 @@ PANELS.kaf = (main) => {
             $("#k-shot", main).innerHTML = `<div class="grid wide">
               ${f._err ? `<div class="warn">${esc(f._err)}</div>` : ""}
               ${f._linesNote ? `<div class="warn">${esc(f._linesNote)}</div>` : ""}
-              ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${handLine}${hintHtml}` })}
+              ${f._shapeNote ? `<div class="warn">${esc(f._shapeNote)}</div>` : ""}
+              ${card({ title: "يدُك كما رأتْها الكاميرا", body: `<img src="${f._maskImage || dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${f._maskImage ? `<div class="gloss">الخطُّ الأخضرُ حدودُ يدِك كما حدّدها النموذج — منها يُقاسُ شكلُ الأطرافِ وعرضُ الراحة. إن لم يطابقْ يدَك فأعِدِ التصوير.</div>` : ""}${handLine}${hintHtml}` })}
               ${f._creaseImage ? card({ title: "خطوطُ كفّك كما حدّدتْها الكاميرا", body: `<img src="${f._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
                 <div class="gloss" style="margin:.3rem 0 .5rem">راحتُك مقوَّمة: الأعلى قواعدُ الأصابع، والأسفلُ الرسغ، واليسارُ جهةُ الإبهام. حُلِّلت ${AR(lastCam._linesFrames || 0)} لقطات، ولا يُذكَرُ إلّا ما اتّفقت عليه.</div>
                 ${legend}
@@ -23996,7 +24000,7 @@ PANELS.kaf = (main) => {
       $("#k-photo-btn", main).disabled = true; $("#k-photo2-btn", main).disabled = true;
       $("#k-shot", main).innerHTML = "";
       try {
-        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02c");
+        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02d");
         const out = await vis.analyzePhotos(photos, (m) => (pStatus.textContent = m));
         if (out.error) { pStatus.innerHTML = `<span style="color:var(--warn)">${esc(out.error)}</span>`; photos = photos.slice(0, -1); }
         else {
@@ -24021,7 +24025,7 @@ PANELS.kaf = (main) => {
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
       $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية… (أوّلَ مرّةٍ قد يستغرقُ حتى دقيقةٍ على اتّصالٍ بطيء)";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
-      try { vis = await import("./kaf-vision.js?v=2026-10-02c"); }
+      try { vis = await import("./kaf-vision.js?v=2026-10-02d"); }
       catch (e) { if (!cancelled()) failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
       if (cancelled()) return;
       try { await vis.ensureLoaded(); }

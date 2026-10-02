@@ -1093,6 +1093,41 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(c2.heart.present === null, "خطٌّ يظهرُ في نصفِ اللقطاتِ فقط ⇒ «لم يتبيّنْ» لا حضورٌ ولا غياب");
 }
 
+// ── شكلُ اليدِ من قناعِها: أطرافُ الأصابع، والحدودُ الغامضة، والإبهامُ الملاصق ──
+{
+  const S = await import("../web/kaf-shape.js");
+  const W = 400, H = 900;
+  const finger = (halfW) => { const m = new Uint8Array(W * H); for (let y = 0; y < H; y++) { const hw = halfW(y); if (!(hw > 0)) continue; for (let x = Math.round(200 - hw); x <= Math.round(200 + hw); x++) m[y * W + x] = 1; } return m; };
+  const px = Array.from({ length: 21 }, () => ({ x: 200, y: 850 }));
+  px[9] = { x: 200, y: 800 }; px[10] = { x: 200, y: 620 }; px[11] = { x: 200, y: 470 }; px[12] = { x: 200, y: 345 };
+  const top = 330, dip = 470, Lr = dip - top, frac = (y) => (dip - y) / Lr;
+  const cap = (y, w, r) => { const d = y - top; return d >= r ? w : Math.sqrt(Math.max(0, r * r - (r - d) ** 2)) * (w / r); };
+  const shapes = {
+    square: (y) => (y < top ? 0 : y > dip ? 22 : cap(y, 21, 6)),
+    conic: (y) => (y < top ? 0 : y > dip ? 22 : cap(y, 21 - Math.max(0, frac(y) - 0.4) * 9, 14)), // تدقيقٌ واضحٌ بعيدٌ عن الحدود
+    pointed: (y) => (y < top ? 0 : y > dip ? 22 : cap(y, 21 - Math.max(0, frac(y) - 0.3) * 22, 12)),
+    spatulate: (y) => (y < top ? 0 : y > dip ? 22 : cap(y, 20 + Math.max(0, frac(y) - 0.4) * 9, 5)),
+  };
+  for (const [name, f] of Object.entries(shapes)) ok(S.tipShape(S.fingerProfile(finger(f), W, H, px, [9, 10, 11, 12])).shape === name, `طرفُ إصبعٍ ${name} يُعرَفُ ${name}`);
+  ok(S.tipShape({ w30: 80, w45: 80, w75: 74.5, w85: 70 }).shape === null, "قياسٌ على الحدِّ بين المربّعِ والمخروطيّ ⇒ لا يُحكَم");
+  ok(S.tipShape({ w30: NaN, w45: 80, w75: 70, w85: 60 }).shape === null, "إصبعٌ ملتصقٌ بجارِه ⇒ لا يُحكَم");
+  const four = (sh) => ({ fingers: { index: { shape: sh[0], knot: 1.05 }, middle: { shape: sh[1], knot: 1.05 }, ring: { shape: sh[2], knot: 1.05 }, little: { shape: sh[3], knot: 1.05 } }, palmRatio: 0.93 });
+  ok(S.handTypeFrom(four(["conic", "conic", null, "conic"])).type === "conic", "ثلاثةُ أطرافٍ مخروطيّة ⇒ يدٌ مخروطيّة");
+  ok(S.handTypeFrom(four(["square", "conic", "pointed", "spatulate"])).type === "mixed", "أطرافٌ مختلفة ⇒ يدٌ خليطة");
+  ok(S.handTypeFrom(four(["conic", null, null, "conic"])).type === null, "أقلُّ من ثلاثةِ أطرافٍ مقيسة ⇒ لا حكمَ بالنوع");
+  ok(S.handTypeFrom({ ...four(["conic", "conic", "conic", "conic"]), fingers: Object.fromEntries(["index", "middle", "ring", "little"].map((k) => [k, { shape: "conic", knot: 1.1 }])) }).type === "conic", "مفاصلُ طبيعيّةٌ (١٫١) ليست «عقديّة»");
+  // راحةٌ مع إبهامٍ ملاصقٍ لها: لا يُقاسُ العرض
+  const pw = new Uint8Array(W * H);
+  for (let y = 300; y < 800; y++) for (let x = 60; x < 340; x++) pw[y * W + x] = 1;          // الراحة
+  for (let y = 420; y < 800; y++) for (let x = 340; x < 395; x++) pw[y * W + x] = 1;         // إبهامٌ ملاصق
+  const hp = Array.from({ length: 21 }, () => ({ x: 200, y: 500 }));
+  hp[0] = { x: 200, y: 790 }; hp[5] = { x: 300, y: 310 }; hp[9] = { x: 220, y: 305 }; hp[17] = { x: 90, y: 320 }; hp[2] = { x: 370, y: 520 };
+  ok(S.palmWidth(pw, W, H, hp) === null, "إبهامٌ ملاصقٌ للراحة ⇒ لا يُقاسُ عرضُها (كان يُضخِّمُه)");
+  const pw2 = new Uint8Array(W * H); for (let y = 300; y < 800; y++) for (let x = 60; x < 340; x++) pw2[y * W + x] = 1;
+  const wv = S.palmWidth(pw2, W, H, hp);
+  ok(wv && Math.abs(wv - 280) <= 4, "راحةٌ مستقلّةٌ عن الإبهام ⇒ عرضُها الحقيقيّ");
+}
+
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
 {
   const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");

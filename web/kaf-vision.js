@@ -3,9 +3,10 @@
 //   • OpenCV.js (vendor/opencv.js) داخل kaf-cv-worker.js (خيطٌ منفصل): إبرازُ تجاعيدِ الراحةِ في صورة.
 //   لا يعملُ على file:// — يلزمُ خادمٌ محلّيّ (افتح-قراءة-الكف.bat).
 
+import { measureShape, handTypeFrom, TIP_AR, FINGER_AR } from "./kaf-shape.js?v=2026-10-02d";
 const MP_BASE = "../vendor/mediapipe";
-export const KAF_VER = "2026-10-02c";
-let HL = null, FR = null, landmarker = null, landmarkerLoading = null;
+export const KAF_VER = "2026-10-02d";
+let HL = null, FR = null, IS = null, landmarker = null, landmarkerLoading = null;
 
 function withTimeout(promise, ms, msg) {
   return Promise.race([
@@ -21,7 +22,7 @@ export async function ensureLoaded() {
   if (!landmarkerLoading) {
     landmarkerLoading = (async () => {
       const mod = await import(`${MP_BASE}/vision_bundle.mjs`);
-      HL = mod.HandLandmarker; FR = mod.FilesetResolver;
+      HL = mod.HandLandmarker; FR = mod.FilesetResolver; IS = mod.InteractiveSegmenter;
       const fileset = await FR.forVisionTasks(`${MP_BASE}`);
       return HL.createFromOptions(fileset, {
         baseOptions: { modelAssetPath: `${MP_BASE}/hand_landmarker.task` },
@@ -94,6 +95,7 @@ function toDataUrl(base) {
   return c.toDataURL("image/jpeg", 0.88);
 }
 // ألوانُ الخطوطِ في الصورة (تطابقُ مفتاحَ الألوانِ في الواجهة)
+export { TIP_AR, FINGER_AR };
 export const LINE_COLORS = { heart: "#eb1e5a", head: "#1e78ff", life: "#14aa3c", fate: "#f0a000" };
 function drawLinePaths(base, paths) {
   const c = document.createElement("canvas");
@@ -161,6 +163,74 @@ async function linesFromFrames(frames, feats, onProgress, isAborted = () => fals
   if (shown && shown.base) feats._creaseImage = drawLinePaths(shown.base, feats._linePaths || {});
 }
 
+// ── حدودُ اليد (قناعٌ بالبكسل) من نموذج Magic Touch ───────────────────
+// يُعطى نقطةً في وسطِ الراحة فيُرجِعُ حدودَ اليدِ بأصابعِها؛ منها يُقاسُ شكلُ أطرافِ الأصابعِ (نوعُ اليد
+// في الكتب) وعرضُ الراحةِ الحقيقيّ. الحكمُ نفسُه هندسةٌ في kaf-shape.js.
+let segmenter = null, segLoading = null;
+async function ensureSegmenter() {
+  await ensureLoaded();
+  if (segmenter) return segmenter;
+  if (!IS) throw new Error("مكتبةُ الرؤيةِ لا تدعمُ تحديدَ حدودِ اليد");
+  if (!segLoading) {
+    segLoading = (async () => {
+      const fileset = await FR.forVisionTasks(`${MP_BASE}`);
+      return IS.createFromOptions(fileset, { baseOptions: { modelAssetPath: `${MP_BASE}/magic_touch.tflite` }, outputCategoryMask: false, outputConfidenceMasks: true });
+    })().then((x) => (segmenter = x), (e) => { segLoading = null; throw e; });
+  }
+  return withTimeout(segLoading, 60000, "انتهت مهلةُ تجهيزِ نموذجِ حدودِ اليد");
+}
+async function segmentHand(source, px, W, H) {
+  const seg = await ensureSegmenter();
+  const ids = [0, 5, 9, 13, 17];
+  const c = { x: ids.reduce((a, i) => a + px[i].x, 0) / ids.length / W, y: ids.reduce((a, i) => a + px[i].y, 0) / ids.length / H };
+  return withTimeout(new Promise((resolve) => {
+    seg.segment(source, { keypoint: { x: c.x, y: c.y } }, (r) => {
+      const cm = r.confidenceMasks && r.confidenceMasks[r.confidenceMasks.length - 1];
+      if (!cm) { resolve(null); return; }
+      const f = cm.getAsFloat32Array(), out = new Uint8Array(f.length);
+      for (let i = 0; i < f.length; i++) out[i] = f[i] > 0.5 ? 1 : 0;
+      resolve({ data: out, w: cm.width, h: cm.height }); // يُنسَخُ داخلَ الاستدعاء: القناعُ لا يبقى بعده
+    });
+  }), 20000, "انتهت مهلةُ تحديدِ حدودِ اليد");
+}
+/** يقيسُ شكلَ اليدِ من القناع ويكتبُه في feats (نوعُ اليد، شكلُ الأطراف، العُقد، عرضُ الراحة). */
+function shapeFromMask(mask, px, W, H) {
+  const sx = mask.w / W, sy = mask.h / H;
+  return measureShape(mask.data, mask.w, mask.h, px.map((p) => ({ x: p.x * sx, y: p.y * sy })));
+}
+function applyShape(feats, shape) {
+  const ht = handTypeFrom(shape, feats._debug && feats._debug.fLen);
+  feats._shape = shape;
+  const merged = Object.values(shape.fingers).filter((f) => /ملتصق/.test(f.why || "")).length;
+  if (merged >= 2) feats._shapeNote = "أصابعُك متلاصقةٌ في الصورة فلم يُقَسْ شكلُ أطرافِها (نوعُ اليد) — صوِّرْ والأصابعُ مفرودةٌ متباعدةٌ قليلًا.";
+  feats._handTypeWhy = ht.why;
+  if (ht.type) feats.handType = ht.type;
+  if (shape.palmRatio) {
+    feats.handHint = feats.handHint || { fits: [] };
+    feats.handHint.palmShape = shape.palmRatio >= 0.98 ? "عريضةٌ تقاربُ المربّع" : shape.palmRatio < 0.8 ? "متطاولةٌ نحيلة" : "معتدلةُ العرض";
+    feats.handHint.palmRatio = shape.palmRatio;
+  }
+  feats.handHint = feats.handHint || { fits: [] };
+  feats.handHint.tips = Object.fromEntries(Object.entries(shape.fingers).map(([k, f]) => [k, f.shape]));
+  const kn = Object.values(shape.fingers).map((f) => f.knot).filter((v) => v != null);
+  if (kn.length >= 3 && kn.filter((k) => k >= 1.15).length >= 3) feats.fingerSet = [...new Set([...(feats.fingerSet || []), "knotty"])];
+}
+// صورةُ التحقّق: حدودُ اليدِ كما رآها النموذج، مرسومةً على الصورة
+function maskOutline(source, mask, W, H, maxSide = 700) {
+  const s = Math.min(1, maxSide / Math.max(W, H));
+  const c = document.createElement("canvas"); c.width = Math.round(W * s); c.height = Math.round(H * s);
+  const g = c.getContext("2d"); g.drawImage(source, 0, 0, c.width, c.height);
+  const id = g.getImageData(0, 0, c.width, c.height), d = id.data;
+  const at = (x, y) => { const mx = Math.min(mask.w - 1, Math.floor(x / c.width * mask.w)), my = Math.min(mask.h - 1, Math.floor(y / c.height * mask.h)); return mask.data[my * mask.w + mx]; };
+  for (let y = 1; y < c.height - 1; y++) for (let x = 1; x < c.width - 1; x++) {
+    const o = (y * c.width + x) * 4, v = at(x, y);
+    if (!v) { d[o] *= 0.4; d[o + 1] *= 0.4; d[o + 2] *= 0.4; continue; }
+    if (!at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1)) { d[o] = 40; d[o + 1] = 230; d[o + 2] = 120; }
+  }
+  g.putImageData(id, 0, 0);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
 // ── صورةُ كاميرا الجهاز (الطريقةُ الأدقّ) ───────────────────────────
 // صورةُ تطبيقِ الكاميرا نفسِه: دقّةٌ كاملة، تركيزٌ تلقائيٌّ على الكفّ، ومعالجةٌ أنظف من إطارِ بثِّ
 // الفيديو المضغوط. هي نفسُ نوعِ الصورِ التي ضُبِطَت عليها قراءةُ الخطوط (صورُ كفٍّ حقيقيّة).
@@ -215,6 +285,22 @@ export async function analyzePhotos(files, onProgress = () => {}) {
   const s0 = shots[0];
   const feats = extractFeatures(s0.lm, s0.wlm, s0.W, s0.H);
   feats.hand = s0.hand;
+  // حدودُ اليدِ وشكلُها
+  try {
+    onProgress("جارٍ تحديدُ حدودِ يدِك…");
+    let merged = null;
+    for (let i = 0; i < shots.length; i++) {
+      const mask = await segmentHand(shots[i].c, shots[i].px, shots[i].W, shots[i].H);
+      if (!mask) continue;
+      if (i === 0) feats._maskImage = maskOutline(shots[0].c, mask, shots[0].W, shots[0].H);
+      const sh = shapeFromMask(mask, shots[i].px, shots[i].W, shots[i].H);
+      if (!merged) merged = sh;
+      else for (const k of Object.keys(merged.fingers)) {
+        if (merged.fingers[k].shape !== sh.fingers[k].shape) merged.fingers[k] = { ...merged.fingers[k], shape: null, why: "اختلفَ شكلُه بين الصورتين" };
+      }
+    }
+    if (merged) applyShape(feats, merged);
+  } catch (e) { feats._shapeNote = "تعذّرَ تحديدُ حدودِ اليد: " + (e.message || e); }
   // صورتان: حالةُ الإصبعِ تُثبَتُ فقط إن اتّفقت فيهما
   for (let i = 1; i < shots.length; i++) {
     const f2 = extractFeatures(shots[i].lm, shots[i].wlm, shots[i].W, shots[i].H);
@@ -406,6 +492,13 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
       catch (e) { feats = baseFeatures(); feats._err = String(e && e.message || e); }
       feats.hand = hand || null;
       if (!feats._err) {
+        try {
+          const fc = document.createElement("canvas"); fc.width = W; fc.height = H; fc.getContext("2d").drawImage(video, 0, 0);
+          const lpx = lm.map((p) => ({ x: p.x * W, y: p.y * H }));
+          onGuide(["تمّ الالتقاط — جارٍ تحديدُ حدودِ يدِك…"], true);
+          const mask = await segmentHand(fc, lpx, W, H);
+          if (mask) { feats._maskImage = maskOutline(fc, mask, W, H); applyShape(feats, shapeFromMask(mask, lpx, W, H)); }
+        } catch (e) { feats._shapeNote = "تعذّرَ تحديدُ حدودِ اليد: " + (e.message || e); }
         const frames = [];
         for (let k = 0; k < SHOTS && !aborted; k++) {
           if (k) await new Promise((r) => setTimeout(r, SHOT_GAP_MS));
