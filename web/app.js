@@ -1853,7 +1853,9 @@ PANELS.kaf = (main) => {
       </div></div>
       <input type="file" id="k-photo" accept="image/*" capture="environment" hidden>
       <input type="file" id="k-photo2" accept="image/*" capture="environment" hidden>
+      <input type="file" id="k-photo-pick" accept="image/*" hidden>
       <div class="form" style="margin:0"><button class="btn" type="button" id="k-photo-btn">📷 صوِّرْ كفّك</button>
+        <button class="btn sec" type="button" id="k-photo-pick-btn">🖼 اخترْ صورةً من الصور</button>
         <button class="btn sec" type="button" id="k-photo2-btn" hidden>أضِفْ صورةً ثانيةً للكفِّ نفسِها (تزيدُ الثقة)</button></div>
       <div class="gloss" id="k-photo-status" style="margin-top:.5rem"></div>
     </div>
@@ -2037,7 +2039,7 @@ PANELS.kaf = (main) => {
     const diagHtml = (d) => {
       if (!d) return "";
       const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
-      const none = !["heart", "head", "life", "fate"].some((k) => lastCam?.lines?.[k]?.present);
+      const none = !["heart", "head", "life", "fate"].some((k) => lastCam?.lines?.[k]?.present && !lastCam.lines[k].weak);
       const rows = [
         `اللقطاتُ المحلَّلة: ${AR(d.analysed)} من ${AR(d.frames)}`,
         d.contrast.length ? `تباينُ التجاعيد: ${d.contrast.map((c) => AR(c.toFixed(1))).join("، ")} (يُشترَطُ ٦ فأكثر)` : "",
@@ -2052,9 +2054,11 @@ PANELS.kaf = (main) => {
           const COLORS = (vis && vis.LINE_COLORS) || {};
           const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
           const rejected = new Set(); // خطوطٌ قال المستخدمُ إنّ الآلةَ أخطأت تحديدَها
+          const confirmed = new Set(); // مرشَّحاتٌ ضعيفةٌ أكّد المستخدمُ بعينِه أنّها على الخطّ
           const render = () => {
             const f = mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual());
             for (const k of rejected) f.lines[k] = { present: false, confidence: 0, states: [], source: "camera" };
+            for (const k of confirmed) if (f.lines[k] && f.lines[k].present) f.lines[k] = { ...f.lines[k], confidence: 0.8, weak: false };
             let r; try { r = kaf.read(f); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
             try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
             const hint = f.handHint;
@@ -2069,11 +2073,15 @@ PANELS.kaf = (main) => {
               const L = lastCam.lines[k];
               const sw = `<span style="display:inline-block;width:14px;height:4px;border-radius:2px;background:${COLORS[k] || "#fff"};vertical-align:middle;margin-inline-end:.35rem"></span>`;
               if (!L.present) return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b> — ${L.unclear ? "لم يتّضحْ بثباتٍ بين اللقطات" : "لم تجدْه الكاميرا"}</div>`;
+              if (L.weak) return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b> — <span class="gloss">مرشَّحٌ غيرُ مؤكَّد: انظرْ إلى الخطِّ الملوّنِ في الصورة</span>
+                <label class="chip" style="margin-inline-start:.4rem"><input type="checkbox" class="k-confirm" data-k="${k}" ${confirmed.has(k) ? "checked" : ""}> نعم، هذا هو ${esc(lineAr(k))}</label></div>`;
               return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b>${L.states.length ? ` — ${L.states.map(esc).join("، ")}` : ""}
                 <label class="chip" style="margin-inline-start:.4rem"><input type="checkbox" class="k-ok" data-k="${k}" ${rejected.has(k) ? "" : "checked"}> التحديدُ صحيح</label></div>`;
             }).join("");
             const camHonesty = r.honesty.filter((h) => !h.startsWith("نوعُ اليدِ"));
+            const noLines = !LINE_KEYS.some((k) => lastCam.lines?.[k]?.present && !lastCam.lines[k].weak);
             $("#k-shot", main).innerHTML = `<div class="grid wide">
+              ${noLines ? diagHtml(f._linesDiag) : ""}
               ${f._err ? `<div class="warn">${esc(f._err)}</div>` : ""}
               ${f._linesNote ? `<div class="warn">${esc(f._linesNote)}</div>` : ""}
               ${f._shapeNote ? `<div class="warn">${esc(f._shapeNote)}</div>` : ""}
@@ -2082,7 +2090,7 @@ PANELS.kaf = (main) => {
                 <div class="gloss" style="margin:.3rem 0 .5rem">راحتُك مقوَّمة: الأعلى قواعدُ الأصابع، والأسفلُ الرسغ، واليسارُ جهةُ الإبهام. حُلِّلت ${AR(lastCam._linesFrames || 0)} لقطات، ولا يُذكَرُ إلّا ما اتّفقت عليه.</div>
                 ${legend}
                 <div class="gloss" style="margin-top:.4rem">إن رأيتَ خطًّا ملوّنًا على تجعّدٍ غيرِ الخطِّ المقصود، أزِلْ علامةَ «صحيح» عنه فيُستبعَدُ من القراءة.</div>` }) : ""}
-              ${diagHtml(f._linesDiag)}
+              ${noLines ? "" : diagHtml(f._linesDiag)}
               ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
                 body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
                 reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
@@ -2093,6 +2101,7 @@ PANELS.kaf = (main) => {
                 <button class="btn sec" type="button" id="k-open-manual">افتحِ الوضعَ اليدويّ</button>` })}
             </div>`;
             main.querySelectorAll(".k-ok").forEach((cb) => (cb.onchange = () => { cb.checked ? rejected.delete(cb.dataset.k) : rejected.add(cb.dataset.k); render(); }));
+            main.querySelectorAll(".k-confirm").forEach((cb) => (cb.onchange = () => { cb.checked ? confirmed.add(cb.dataset.k) : confirmed.delete(cb.dataset.k); render(); }));
             const om = $("#k-open-manual", main); if (om) om.onclick = () => { const km = $("#k-manual", main); if (km) { km.open = true; km.scrollIntoView({ behavior: "smooth", block: "start" }); } };
             wireCards(main);
           };
@@ -2107,7 +2116,7 @@ PANELS.kaf = (main) => {
       $("#k-photo-btn", main).disabled = true; $("#k-photo2-btn", main).disabled = true;
       $("#k-shot", main).innerHTML = "";
       try {
-        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02d");
+        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02e");
         const out = await vis.analyzePhotos(photos, (m) => (pStatus.textContent = m));
         if (out.error) { pStatus.innerHTML = `<span style="color:var(--warn)">${esc(out.error)}</span>`; photos = photos.slice(0, -1); }
         else {
@@ -2122,6 +2131,8 @@ PANELS.kaf = (main) => {
       } finally { $("#k-photo-btn", main).disabled = false; $("#k-photo2-btn", main).disabled = false; }
     };
     $("#k-photo-btn", main).onclick = () => $("#k-photo", main).click();
+    $("#k-photo-pick-btn", main).onclick = () => $("#k-photo-pick", main).click();
+    $("#k-photo-pick", main).onchange = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; photos = [f]; runPhotos(); };
     $("#k-photo2-btn", main).onclick = () => $("#k-photo2", main).click();
     $("#k-photo", main).onchange = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; photos = [f]; runPhotos(); };
     $("#k-photo2", main).onchange = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; photos = [photos[0], f].filter(Boolean); runPhotos(); };
@@ -2132,7 +2143,7 @@ PANELS.kaf = (main) => {
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
       $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية… (أوّلَ مرّةٍ قد يستغرقُ حتى دقيقةٍ على اتّصالٍ بطيء)";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
-      try { vis = await import("./kaf-vision.js?v=2026-10-02d"); }
+      try { vis = await import("./kaf-vision.js?v=2026-10-02e"); }
       catch (e) { if (!cancelled()) failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
       if (cancelled()) return;
       try { await vis.ensureLoaded(); }

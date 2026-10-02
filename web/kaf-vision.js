@@ -3,9 +3,9 @@
 //   • OpenCV.js (vendor/opencv.js) داخل kaf-cv-worker.js (خيطٌ منفصل): إبرازُ تجاعيدِ الراحةِ في صورة.
 //   لا يعملُ على file:// — يلزمُ خادمٌ محلّيّ (افتح-قراءة-الكف.bat).
 
-import { measureShape, handTypeFrom, TIP_AR, FINGER_AR } from "./kaf-shape.js?v=2026-10-02d";
+import { measureShape, handTypeFrom, TIP_AR, FINGER_AR } from "./kaf-shape.js?v=2026-10-02e";
 const MP_BASE = "../vendor/mediapipe";
-export const KAF_VER = "2026-10-02d";
+export const KAF_VER = "2026-10-02e";
 let HL = null, FR = null, IS = null, landmarker = null, landmarkerLoading = null;
 
 function withTimeout(promise, ms, msg) {
@@ -135,7 +135,7 @@ async function linesFromFrames(frames, feats, onProgress, isAborted = () => fals
       const q = r.lines.quality || {};
       if (q.contrast != null) diag.contrast.push(q.contrast);
       if (q.tooFlat) diag.flat++;
-      for (const lk of LINE_KEYS) { const why = r.lines[lk] && r.lines[lk].measures && r.lines[lk].measures.rejected; if (why) (diag.rejected[lk] = diag.rejected[lk] || []).push(why); }
+      for (const lk of LINE_KEYS) { const ms = r.lines[lk] && r.lines[lk].measures; const why = ms && (ms.rejected || ms.weakWhy); if (why) (diag.rejected[lk] = diag.rejected[lk] || []).push(why); }
       if (!shown) shown = r;
     } else if (!r.note) diag.worker = "لم يُرجِعْ محلّلُ الخطوطِ نتيجة (ملفٌّ قديمٌ مخزَّن؟ أعِدْ تحميلَ الصفحة).";
   }
@@ -147,7 +147,7 @@ async function linesFromFrames(frames, feats, onProgress, isAborted = () => fals
       for (const lk of LINE_KEYS) {
         const L = c[lk];
         feats.lines[lk] = L.present === true
-          ? { present: true, confidence: L.confidence, states: L.states, source: "camera", unstable: L.unstable }
+          ? { present: true, confidence: L.confidence, states: L.states, source: "camera", unstable: L.unstable, weak: !!L.weak }
           : { present: false, confidence: 0, states: [], source: "camera", unclear: L.present === null };
       }
       feats._linePaths = Object.fromEntries(LINE_KEYS.map((lk) => [lk, c[lk].present === true ? c[lk].path : null]));

@@ -227,7 +227,9 @@
       L.measures.piece = +pieceRatio(L.path, comp, N).toFixed(2);
       if (c < COH_MIN) { out[k] = { present: null, confidence: 0.2, states: [], path: L.path, measures: { ...L.measures, rejected: "اتّجاهٌ غيرُ متماسك" } }; continue; }
       // كفوفٌ حقيقيّة: القلبُ والرأسُ والحياةُ ٠٫٣٩–١٫٠ على تجعّدٍ واحد؛ سلاسلُ خدوشٍ اصطناعيّة: ٠٫١٤–٠٫٣١
-      if (L.measures.piece < PIECE_MIN) out[k] = { present: null, confidence: 0.2, states: [], path: L.path, measures: { ...L.measures, rejected: "قطعٌ متفرّقةٌ لا تجعّدٌ واحد" } };
+      // على الحدّ: لا يُرمى ولا يُعتمَد — «مرشَّحٌ ضعيف» يُرسَمُ ويُؤكِّدُه المستخدمُ بعينِه (الخدوشُ العشوائيّةُ
+      // لا تصلُ إلى هنا: يرفضُها فحصُ الاتّجاه، والصورةُ المسطّحةُ ترفضُها بوّابةُ التباين)
+      if (L.measures.piece < PIECE_MIN) out[k] = { ...L, confidence: 0.3, weak: true, measures: { ...L.measures, weakWhy: "قطعٌ متفرّقة — قد يكونُ خطًّا باهتًا أو تجاعيدَ متجاورة" } };
     }
     return out;
   }
@@ -397,7 +399,8 @@
         const states = Object.keys(cnt).filter((st) => cnt[st] / pres.length >= agree);
         const unstable = Object.keys(cnt).filter((st) => cnt[st] / pres.length < agree);
         const best = pres.reduce((a, b) => (b.confidence > a.confidence ? b : a));
-        out[k] = { present: true, confidence: +Math.min(...pres.map((r) => r.confidence)).toFixed(2), states, unstable, path: best.path, measures: best.measures };
+        const weak = pres.filter((r) => r.weak).length * 2 > pres.length;
+        out[k] = { present: true, confidence: weak ? 0.3 : +Math.min(...pres.filter((r) => !r.weak).map((r) => r.confidence)).toFixed(2), weak, states, unstable, path: best.path, measures: best.measures };
       } else if (abs.length / (rs.length || 1) >= agree) {
         out[k] = { present: false, confidence: 0.55, states: [], unstable: [], path: [], measures: {} };
       } else {

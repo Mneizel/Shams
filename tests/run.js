@@ -1064,6 +1064,10 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   };
   const blank = KL.analyze(mk(() => {}), N);
   ok(["heart", "head", "life", "fate"].every((k) => blank[k].present !== true), "جلدٌ بلا تجاعيد ⇒ لا يُخترَعُ أيُّ خطّ");
+  // المرشَّحُ الضعيفُ لا يُقرأُ في المحرّك (تحتَ عتبةِ الثقة) إلّا بعد تأكيد
+  const kafEng = (await import("../engines/kaf.js")).default;
+  const weakRead = kafEng.read({ hand: "right", fingers: {}, thumb: {}, mounts: {}, lines: { life: { present: true, confidence: 0.3, weak: true, states: ["قصيرٌ"], source: "camera" } }, secondary: {} });
+  ok(!weakRead.sections.some((x) => x.title.includes("الحياة")) && weakRead.honesty.some((h) => h.includes("مرشَّحًا")), "مرشَّحٌ ضعيفٌ غيرُ مؤكَّد ⇒ لا يُقرأُ ويُطلَبُ تأكيدُه");
   const img = mk((dot) => {
     for (let x = N * 0.97; x >= N * 0.45; x -= 0.5) dot(x, N * 0.2 + (N * 0.97 - x) * 0.05);           // القلب
     for (let x = N * 0.12; x <= N * 0.7; x += 0.5) dot(x, N * 0.3 + (x - N * 0.12) * 0.35);            // الرأسُ منحدرًا
@@ -1081,7 +1085,8 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
     for (let k = 0; k < nScr; k++) { const x0 = rr() * N, y0 = rr() * N, a = rr() * Math.PI, Ls = 8 + rr() * 22;
       for (let t = 0; t < Ls; t += 0.5) { const x = Math.round(x0 + Math.cos(a) * t), y = Math.round(y0 + Math.sin(a) * t); for (let d = -1; d <= 1; d++) { const X = x + d; if (X >= 0 && y >= 0 && X < N && y < N) tex[y * N + X] = Math.min(tex[y * N + X], 125); } } }
     const T2 = KL.analyze(tex, N);
-    ok(["heart", "head", "life", "fate"].every((k) => T2[k].present !== true), `نسيجُ ${nScr} خدشًا قصيرًا ⇒ لا خطَّ مُخترَعًا`);
+    // قد يظهرُ «مرشَّحٌ ضعيف» على الخدوش، لكنّه لا يدخلُ القراءةَ إلّا إن أكّده المستخدمُ بعينِه
+    ok(["heart", "head", "life", "fate"].every((k) => !(T2[k].present === true && !T2[k].weak && T2[k].confidence >= 0.45)), `نسيجُ ${nScr} خدشًا قصيرًا ⇒ لا خطَّ مُعتمَدًا مُخترَعًا`);
   }
 
   // الإجماع: ما يتبدّلُ بين اللقطاتِ لا يُقال

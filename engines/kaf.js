@@ -111,7 +111,9 @@ export function read(f = {}) {
     const ln = f.lines?.[k];
     if (!ln || !ln.present) { honesty.push(`${L.ar}: لم أتبيّنْه في الصورة.`); continue; }
     if ((ln.confidence ?? 1) < CONFIDENCE_FLOOR) {
-      honesty.push(`${L.ar}: رأيتُه لكنْ لم يتّضحْ بثقةٍ كافيةٍ لقراءةِ حالتِه.`);
+      honesty.push(ln.weak
+        ? `${L.ar}: رسمتْ الكاميرا موضعًا مرشَّحًا له لكنّه غيرُ مؤكَّد — أكِّدْه في صورةِ الخطوطِ إن كان على الخطِّ فعلًا.`
+        : `${L.ar}: رأيتُه لكنْ لم يتّضحْ بثقةٍ كافيةٍ لقراءةِ حالتِه.`);
       continue;
     }
     const states = (ln.states || []).map((s) => `${s}: ${L.states[s] || "—"}`);
