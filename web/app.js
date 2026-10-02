@@ -167,7 +167,8 @@ function head(id, title) {
       <div class="row"><span class="tag">قراءة الناتج</span> ${esc(m.output)}</div>
       ${m.debunk ? `<div class="row reveal" style="margin:0"><span class="tag">ملاحظةٌ نقديّة</span> ${esc(m.debunk)}</div>` : ""}
     </div></details>` : "";
-  return `<h1>${esc(title)}</h1>${intro}`;
+  const grp = NAV.find(([, items]) => items.some(([i]) => i === id))?.[0];
+  return `${grp ? `<div class="crumb">${esc(grp)}</div>` : ""}<h1>${esc(title)}</h1>${intro}`;
 }
 function wireCards(root) {
   root.querySelectorAll("[data-vs]").forEach((b) => (b.onclick = () => b.closest(".card").classList.toggle("debate")));
@@ -257,60 +258,236 @@ const NAV = [
   ["المرجع", [["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
 ];
 
+// ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──
+const ICON = { home: "home", tools: "grid", card: "user", session: "candle", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
+const BRIEF = {
+  session: "الأداةُ الأولى لأيّ سؤال: إجماعُ الجفر والزايرجة والفلك، وشاهدٌ من الرمل، وتوصيةُ عمل، ودعمٌ من الخواصّ.",
+  reading: "كلُّ المحرّكات في «طالعٍ» واحد: هويّةُ الاسم، والكوكب، والمنزلة، والحالُ الفلكيّة.",
+  compat: "يقيس التوافقَ بين شخصين من اسمَيهما واسمَي أمّيهما.",
+  diagnosis: "يحاكي جلسةَ الراقي: أعراضٌ تختارها، وتشخيصٌ يُذكَر معه التفسيرُ العاديّ.",
+  kaf: "قراءةُ شكلِ اليد والأصابع وخطوطِ الراحة — بالكاميرا أو يدويًّا — من كتب الكفّ.",
+  qura: "قرعةُ الإمام جعفر الصادق: ثلاثُ رمياتٍ تفتح بابًا من أبوابها.",
+  jummal: "قيمةُ أيّ نصٍّ عربيّ بحساب الجُمّل وطرقِه، وطبائعُ حروفه وكواكبُها.",
+  jafr: "استخراجُ جوابِ سؤالٍ من حروفه بالبسط والتكسير ودوائر الحروف.",
+  zairja: "آلةُ ابن خلدون والزايرجةُ الهندسيّة: من حروف السؤال إلى بيتٍ من الشعر.",
+  raml: "يبني الطالعَ الرمليّ: الأمّهات والبنات والشهود والقاضي، ويحكم على البيت المسؤول عنه.",
+  awfaq: "المربّعاتُ العدديّة وأوفاقُ الكواكب، ووفقُ الاسم بالتعمير.",
+  falak: "الحالُ الفلكيّة لحظةَ الميلاد والآن: الطالع، والكواكب، والساعات، والأسهم.",
+  asma: "من اسمك واسم أمّك: الملَك والروحانيّ والخادم ورتبةُ ما بك.",
+  talismans: "الطلاسمُ المسمّاة، كلٌّ بشكله ووقته ومادّته من الكتاب.",
+  spirits: "فهرسُ الملوك ورؤساء الملائكة وملائكة الكواكب، مع وصفٍ وختمٍ لكلٍّ.",
+  taskhir: "يركّب «عملًا» كاملًا لغايةٍ ما: الخادم والوقت والبخور والعزيمة.",
+  khawass: "كتالوجُ الأسماء الحسنى والآيات والأدعية والموادّ وخواصِّها.",
+  debunk: "شرحٌ صريحٌ لحيلٍ شائعةٍ عند بعض العرّافين — طبقةٌ توعويّةٌ منفصلة.",
+  corpus: "بحثٌ داخل نصّ «شمس المعارف الكبرى».",
+  manual: "دليلُ استخدامِ كلّ أداة: ما هي، وماذا تُدخِل، وكيف تقرأ الناتج.",
+  infoOnly: "معلوماتٌ للاطّلاع فقط لا تدخل في الحساب.",
+};
+const SHELL_PAGES = ["home", "tools", "card"];
+const svgI = (n, cls = "") => `<svg class="${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const plainLabel = (label) => String(label).replace(/^[^\u0600-\u06FF]+/, "").trim();
+const toolLabel = (id) => { for (const [, items] of NAV) for (const [i, l] of items) if (i === id) return plainLabel(l); return ""; };
+const isAppMode = () => (window.innerWidth || 1200) <= 1024;
+const appEl = () => $("#app");
+
 function buildNav() {
   const nav = $("#nav");
   nav.innerHTML = "";
+  const add = (id, label) => {
+    const b = elem(`<button type="button" data-id="${id}">${svgI(ICON[id] || "info")}<span>${esc(label)}</span></button>`);
+    b.onclick = () => route(id);
+    nav.appendChild(b);
+  };
+  add("home", "الرئيسية"); add("tools", "كلّ الأدوات"); add("card", "بطاقتي");
   for (const [group, items] of NAV) {
     nav.insertAdjacentHTML("beforeend", `<div class="nav-group">${group}</div>`);
-    for (const [id, label] of items) {
-      const b = elem(`<button data-id="${id}">${label}</button>`);
-      b.onclick = () => { meEditing = false; refreshMeHint(); route(id); };
-      nav.appendChild(b);
-    }
+    for (const [id, label] of items) add(id, plainLabel(label));
   }
 }
-// شاشةُ الاستقبال: أوّلُ ما يُرى قبل اكتمال «بطاقتي» — نموذجٌ واحدٌ وزرٌّ واحد؛
-// القائمةُ الجانبيّةُ (الرمل، الجفر، ...) تبقى مخفيّةً حتى لا يبدو كلُّ شيءٍ
-// معروضًا ويتكلَّم دفعةً واحدة. تُفتَح تلقائيًّا بعد اكتمال البطاقة.
+// شاشةُ «أكمِلْ بطاقتك»: تظهر بدل أيّ أداةٍ تحسب قبل اكتمال «بطاقتي».
 function renderWelcome(main) {
   const c = ctx();
   const missing = [!c.name && "الاسم", !c.mother && "اسم الأمّ", !c.date && "تاريخ الميلاد", !c.city && "مدينة الميلاد"].filter(Boolean);
+  const badLetters = c.filled && (!c.nameOk || !c.motherOk);
   main.innerHTML = `<div class="welcome">
-    <h1>ابدأ استشارتك</h1>
-    <p class="kv">املأ «بطاقتي» فوق (الاسم، اسم الأمّ، تاريخ الميلاد، مدينة الميلاد)، ثمّ اضغط الزرّ لتبدأ قراءتك الشاملة.
-      بعدها تنفتح بقيّةُ الأدوات (الرمل، الجفر، التسخير، وغيرها) بجانبك — تفتحُ كلَّ واحدةٍ إذا احتجت تفصيلًا إضافيًّا، لا تُفرَض عليك دفعةً واحدة.</p>
+    <svg class="bigseal" style="width:84px;height:84px" aria-hidden="true"><use href="#i-seal"/></svg>
+    <h1>أكمِلْ بطاقتك أوّلًا</h1>
+    <p class="kv">هذه الأداة تحسب من بياناتك: الاسم، واسم الأمّ، وتاريخ الميلاد، ومدينة الميلاد — بحروفٍ عربيّة. املأها مرّةً واحدة، ثمّ تعمل كلُّ الأدوات.</p>
     ${missing.length ? `<div class="warn">لا يزال ناقصًا: ${missing.join("، ")}.</div>` : ""}
-    <button class="btn" id="welcome-go" style="font-size:1.05rem;padding:.75rem 2rem">ابدأ التحليل</button>
+    ${badLetters ? `<div class="warn">اكتبِ الاسمَ واسمَ الأمّ بحروفٍ عربيّة — الحسابُ حرفيٌّ عربيّ.</div>` : ""}
+    <button class="btn" id="welcome-go" type="button">${svgI("edit")}أكمِلْ بطاقتي</button>
   </div>`;
-  $("#welcome-go", main).onclick = () => route("session");
+  $("#welcome-go", main).onclick = () => route("card");
 }
+function toolTile(id) {
+  return `<button type="button" class="tile" data-go="${id}"><div class="ti"><span>${svgI(ICON[id] || "info")}</span><h3>${esc(toolLabel(id))}</h3></div>
+    <p>${esc(BRIEF[id] || "")}</p><div class="go">افتح الأداة ${svgI("arrow")}</div></button>`;
+}
+function wireTiles(root) { root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => route(b.dataset.go))); }
+function drawStars(canvas) {
+  if (!canvas || !canvas.getContext) return;
+  const r = canvas.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  if (!r.width) return;
+  canvas.width = r.width * d; canvas.height = r.height * d;
+  const g = canvas.getContext("2d"); if (!g) return; g.scale(d, d);
+  let s = 7; const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  for (let i = 0; i < 110; i++) { const x = rnd() * r.width, y = rnd() * r.height, a = .15 + rnd() * .55, z = rnd() < .08 ? 1.4 : .7; g.fillStyle = `rgba(232,198,127,${a})`; g.beginPath(); g.arc(x, y, z, 0, 7); g.fill(); }
+}
+const SHELL = {
+  home(main) {
+    const c = ctx();
+    const have = [c.name, c.mother, c.date, c.city || (c.filled ? "x" : "")].filter(Boolean).length;
+    const missing = [!c.name && "الاسم", !c.mother && "اسم الأمّ", !c.date && "تاريخ الميلاد", !c.city && "مدينة الميلاد"].filter(Boolean);
+    const d = c.date ? new Date(c.date + "T00:00:00") : null;
+    main.innerHTML = `
+    <section class="hero"><canvas></canvas>
+      <svg class="heroseal" aria-hidden="true"><use href="#i-seal"/></svg>
+      <div><h1>شمس المعارف الكبرى</h1><div class="tagline">معرفةٌ قديمة… بأدواتٍ عصريّة</div>
+        <p class="lead">اكتبْ بياناتك مرّةً في «بطاقتي»، واخترْ سؤالك، ثمّ افتحْ أيَّ أداةٍ من أدوات الكتاب — كلُّها تقرأ من بطاقتك.</p></div>
+    </section>
+    ${c.ready ? `<section class="card">
+      <h3><span>بطاقتي مكتملة</span><span class="k">كلُّ الأدوات تحسب لهذا الشخص</span></h3>
+      <div class="sum"><div class="who">${esc(c.name)} <span class="kv" style="font-size:.95rem">ابن/ة ${esc(c.mother)}</span></div>
+        <div class="meta"><span>${svgI("cal")}${d ? `${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}` : ""}</span><span>${svgI("clock")}${AR(c.time)}</span><span>${svgI("pin")}${esc(c.city || "إحداثيّاتٌ يدويّة")}</span>
+        <span>${svgI("q")}${c.question ? esc(c.question) : "لم يُختَر سؤال"}</span></div></div>
+      <div class="form-foot"><button class="btn" type="button" data-go="session">${svgI("candle")}ابدأ الجلسة الكاملة</button><button class="btn ghost" type="button" data-go="card">${svgI("edit")}تعديل البطاقة</button></div>
+    </section>` : `<section class="card">
+      <h3><span>الخطوة الأولى: أكمِلْ بطاقتك</span><span class="k">${AR(have)} من ${AR(4)}</span></h3>
+      <div class="progress" aria-hidden="true"><i style="width:${(have / 4) * 100}%"></i></div>
+      <p class="kv" style="margin:.8rem 0 0">ناقص: ${missing.join("، ") || "اكتبِ الأسماء بحروفٍ عربيّة"}. تقدر تتصفّح الأدوات قبلها، لكنّ الحساب يحتاجها.</p>
+      <div class="form-foot"><button class="btn" type="button" data-go="card">${svgI("edit")}أكمِلْ بطاقتي</button><button class="btn ghost" type="button" data-go="tools">تصفّحِ الأدوات</button></div>
+    </section>`}
+    <div class="sec-h"><h2>أدواتٌ تبدأ بها</h2><button type="button" data-go="tools">كلُّ الأدوات ←</button></div>
+    <div class="tiles">${["session", "reading", "kaf", "jummal", "raml", "khawass"].map(toolTile).join("")}</div>`;
+    wireTiles(main);
+    const cv = main.querySelector("canvas");
+    if (window.requestAnimationFrame) requestAnimationFrame(() => drawStars(cv));
+  },
+  tools(main) {
+    const count = NAV.reduce((n, [, items]) => n + items.length, 0);
+    main.innerHTML = `<div class="ph"><h1>كلُّ الأدوات</h1><p class="lead">${AR(count)} أداةً في ${AR(NAV.length)} مجموعات، مرتّبةً كما تسير الجلسة.</p></div>
+      <div class="filter">${svgI("search")}<input id="tools-filter" type="search" placeholder="صفِّ الأدوات… (رمل، اسم، طلسم)" aria-label="تصفية الأدوات" autocomplete="off"></div>
+      <div id="tools-list">${NAV.map(([g, items]) => `<section class="tgroup"><h2>${esc(g)}</h2><div class="tiles">${items.map(([id]) => toolTile(id)).join("")}</div></section>`).join("")}</div>
+      <div id="tools-empty" class="state" hidden><svg class="bigseal" aria-hidden="true"><use href="#i-seal"/></svg><h3>لا أداةَ بهذا الاسم</h3><p>جرّبْ كلمةً أقصر، أو تصفّحِ المجموعات.</p></div>`;
+    wireTiles(main);
+    const f = $("#tools-filter", main);
+    if (f) f.oninput = () => {
+      const v = f.value.trim(); let any = 0;
+      main.querySelectorAll("#tools-list .tgroup").forEach((g) => {
+        let n = 0;
+        g.querySelectorAll(".tile").forEach((el) => { const ok = !v || el.textContent.includes(v); el.hidden = !ok; n += ok ? 1 : 0; });
+        g.hidden = !n; any += n;
+      });
+      const e = $("#tools-empty", main); if (e) e.hidden = !!any;
+    };
+  },
+};
+function pageTitle(id) {
+  if (id === "home") return "شمس المعارف الكبرى";
+  if (id === "tools") return "كلُّ الأدوات";
+  if (id === "card") return "بطاقتي";
+  return toolLabel(id) || "شمس المعارف الكبرى";
+}
+function updateChrome(id) {
+  const t = $("#apptitle"); if (t) t.textContent = pageTitle(id);
+  const app = appEl(); if (app) app.classList.toggle("inner", !SHELL_PAGES.includes(id));
+  const tab = id === "home" || id === "card" ? id : "tools";
+  document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.dataset.tab === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
+}
+
+// ── لوحةُ السياق (سطحُ المكتب العريض): تتبدّل حسب الأداة، وكلُّ ما فيها محسوبٌ من بطاقتك ──
+let _readingCache = { key: null, r: null };
+function cachedReading(c) {
+  const key = [c.name, c.mother, c.question, c.date, c.time, c.lat, c.lon].join("|");
+  if (_readingCache.key !== key) {
+    let r = null;
+    try { r = prediction.reading({ name: c.name, mother: c.mother, question: c.question, when: c.birth, now: c.now, lat: c.lat, lon: c.lon }); } catch {}
+    _readingCache = { key, r };
+  }
+  return _readingCache.r;
+}
+function decoBlock({ eb, glyph, name, small, desc, rows = [], src }) {
+  return `<div class="eb">${esc(eb)}</div>
+    <div class="sealbox"><svg aria-hidden="true"><use href="#i-seal"/></svg>${glyph ? `<span class="glyph">${esc(glyph)}</span>` : ""}</div>
+    <div class="nm${small ? " sm" : ""}">${esc(name)}</div>
+    ${desc ? `<p class="ds">${esc(desc)}</p>` : ""}
+    ${rows.length ? `<dl class="rows">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
+    ${src ? `<div class="src">${svgI("book")} ${esc(src)}</div>` : ""}`;
+}
+function renderDeco() {
+  const box = $("#deco");
+  if (!box || !window.matchMedia || !window.matchMedia("(min-width:1280px)").matches) return;
+  const id = CURRENT, c = ctx();
+  const generic = () => decoBlock({ eb: NAV.find(([, items]) => items.some(([i]) => i === id))?.[0] || "شمس المعارف الكبرى", name: pageTitle(id), small: 1, desc: BRIEF[id] || "اخترْ أداةً لتظهر هنا تفاصيلُها." });
+  if (!c.ready) {
+    box.innerHTML = ["tools", "manual", "debunk", "corpus", "infoOnly"].includes(id) ? generic()
+      : decoBlock({ eb: "لوحة السياق", name: "تظهر هنا روحانيّتُك", small: 1, desc: "بعد أن تُكمل «بطاقتي» تعرض هذه اللوحة ملَكَك وروحانيَّك وخادمَك وكوكبَك — وتتبدّل حسب الأداة المفتوحة." });
+    return;
+  }
+  const r = cachedReading(c), I = r?.identity;
+  if (!I) { box.innerHTML = generic(); return; }
+  const who = `${c.name} ابن/ة ${c.mother}`;
+  const f = r.fortune || {};
+  let h;
+  if (["home", "card", "asma", "spirits", "taskhir"].includes(id)) {
+    h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
+  } else if (id === "session" || id === "compat" || id === "diagnosis") {
+    h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["البرج", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
+  } else if (id === "falak" || id === "reading") {
+    h = decoBlock({ eb: "الكوكبُ الحاكم", name: I.planet, desc: I.planetDisposition || "", rows: [["البرج", I.sign], ["المنزلة", I.mansion && `${I.mansion.name} (${AR(I.mansion.number)})`], ["طبعُ المنزلة", I.mansion?.nature], ["يصلح فيها", I.mansion?.work]], src: "من الاسم واسم الأمّ" });
+  } else if (id === "khawass") {
+    const gt = GOAL_BY_TOPIC[r.answer?.topic] || GOAL_BY_TOPIC["عام"];
+    let names = [];
+    try { names = khawass.search(gt?.search || "").names.slice(0, 3); } catch {}
+    h = names.length
+      ? decoBlock({ eb: "اسمٌ يناسب سؤالك", name: names[0].name, desc: names[0].khassa, rows: names.slice(1).map((n) => [n.name, n.khassa]), src: `من كتب الخواصّ — موضوعُ سؤالك: ${r.answer?.topic || "عامّ"}` })
+      : generic();
+  } else if (id === "jummal" || id === "jafr" || id === "awfaq") {
+    h = decoBlock({ eb: "قيمةُ اسمك", glyph: AR(I.nameValue), name: c.name, rows: [["اسم الأمّ", AR(I.motherValue)], ["المجموع", AR(I.total)], ["الطبعُ الغالب", I.dominantLetterNature], ["الكوكب", I.planet]], src: "بالجُمّل الكبير" });
+  } else {
+    h = generic();
+  }
+  box.innerHTML = h;
+}
+
+// ── الدرج والبحث (وضع التطبيق) ──
+function closeDrawer() { appEl()?.classList.remove("drawer"); }
 function route(id) {
   try { panelCleanup && panelCleanup(); } catch {}
   panelCleanup = null;
+  try { closeSearch(); closeDrawer(); } catch {}
+  const changed = id !== CURRENT;
   const ready = ctx().ready;
   document.body.classList.toggle("pre-intake", !ready);
-  if (!ready) {
-    CURRENT = id;
-    $("#nav .on")?.classList.remove("on");
-    renderWelcome($("#main"));
-    window.scrollTo(0, 0);
-    return;
-  }
   CURRENT = id;
   $("#nav .on")?.classList.remove("on");
   $(`#nav [data-id="${id}"]`)?.classList.add("on");
+  try { updateChrome(id); } catch {}
   const main = $("#main");
+  const mc = $("#mecard");
+  if (mc) mc.hidden = id !== "card";
+  const done = () => {
+    try { renderDeco(); } catch {}
+    if (changed) window.scrollTo(0, 0);
+  };
+  if (id === "card") {
+    main.innerHTML = "";
+    refreshMeHint();
+    try { localStorage.setItem("smk-panel", id); } catch {}
+    return done();
+  }
+  if (!ready && !SHELL_PAGES.includes(id)) { renderWelcome(main); return done(); }
   main.innerHTML = "";
   // حمايةٌ عامّة: خطأٌ غيرُ متوقَّعٍ داخلَ أيِّ لوحةٍ (حالةُ إدخالٍ نادرة لم تُختبَر) لا يجوزُ أن
   // يُجمِّدَ التطبيقَ كلَّه بشاشةٍ فارغةٍ صامتة — تُعرَضُ رسالةٌ واضحةٌ وتبقى بقيّةُ اللوحاتِ قابلةً للفتح.
   try {
-    (PANELS[id] || (() => (main.innerHTML = `<h1>${id}</h1><p class="kv">قيد الإنشاء.</p>`)))(main);
+    (SHELL[id] || PANELS[id] || (() => (main.innerHTML = `<h1>${id}</h1><p class="kv">قيد الإنشاء.</p>`)))(main);
   } catch (e) {
     main.innerHTML = `<div class="warn">تعذّر عرضُ هذا القسم بسبب خطأٍ غيرِ متوقَّع: ${esc(e.message || String(e))}<br>جرّبِ التبديلَ لقسمٍ آخرَ ثمّ العودةَ، أو أعِدْ تحميلَ الصفحة.</div>`;
   }
   try { wireCards(main); } catch {}
   try { localStorage.setItem("smk-panel", id); } catch {}
-  window.scrollTo(0, 0);
+  done();
 }
 // رابطٌ فعليٌّ ينقلك للوحةٍ أخرى (بدل جملة "افتح كذا" النصّيّة التي لا تُكبَس) —
 // id من مفاتيح NAV (session, taskhir, diagnosis...)، label النصّ الظاهر.
@@ -2161,37 +2338,32 @@ function fillSelect(sel, groups) {
     sel.appendChild(og);
   }
 }
-let meEditing = false; // يبقى مفتوحًا وقت التعديل الفعليّ، وينطوي بعد الانتقال لأداةٍ من القائمة
 function refreshMeHint() {
   const c = ctx();
   const el = $("#me-hint");
   if (!el) return;
+  const missing = [!c.name && "الاسم", !c.mother && "اسم الأمّ", !c.date && "تاريخ الميلاد", !c.city && !c.filled && "مدينة الميلاد"].filter(Boolean);
+  const badLetters = c.filled && (!c.nameOk || !c.motherOk);
   let summaryText = "";
   if (!c.ready) {
-    el.textContent = "أكمِل: " + [!c.name && "الاسم", !c.mother && "اسم الأمّ", !c.date && "تاريخ الميلاد", !c.city && "مدينة الميلاد"].filter(Boolean).join("، ") + " — ثمّ تعمل كلّ أدوات التحليل.";
+    el.className = "me-hint" + (badLetters ? " bad" : "");
+    el.textContent = badLetters
+      ? "اكتبِ الاسمَ واسمَ الأمّ بحروفٍ عربيّة — الحسابُ حرفيٌّ عربيّ، واسمٌ بلا حرفٍ عربيٍّ يعطي قراءةً وهميّة."
+      : "أكمِل: " + missing.join("، ") + " — ثمّ تعمل كلّ أدوات التحليل.";
   } else {
     const hh = +c.time.split(":")[0];
     const per = hh < 5 ? "فجرًا" : hh < 12 ? "صباحًا" : hh < 17 ? "ظهرًا" : hh < 20 ? "مساءً" : "ليلًا";
     const d = new Date(c.date + "T00:00:00");
     summaryText =
-      `${c.name} — مواليد ${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}، الساعة ${AR(c.time)} ${per} في ${c.city}` +
+      `${c.name} — مواليد ${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}، الساعة ${AR(c.time)} ${per} في ${c.city || "إحداثيّاتٍ يدويّة"}` +
       ` · السؤال: ${c.question ? "«" + c.question + "»" : "لم يُختَر"}`;
-    el.textContent = summaryText;
+    el.className = "me-hint ok";
+    el.textContent = "البطاقة مكتملة — تُحفَظ تلقائيًّا في متصفّحك.";
   }
   const wrap = $("#ctx-target-wrap");
   if (wrap) wrap.hidden = !c.needsTarget;
-  const mc = $("#mecard");
-  if (mc) {
-    mc.classList.toggle("collapsed", c.ready && !meEditing);
-    const sum = $("#me-summary");
-    if (sum) {
-      sum.innerHTML = `<span>${esc(summaryText)}</span>`;
-      const editBtn = elem(`<button class="me-edit" type="button">عدِّل بطاقتي</button>`);
-      editBtn.onclick = () => { meEditing = true; refreshMeHint(); };
-      sum.appendChild(editBtn);
-    }
-    document.documentElement.style.setProperty("--mh", mc.offsetHeight + "px");
-  }
+  const sum = $("#me-summary");
+  if (sum) sum.innerHTML = summaryText ? `${svgI("check")}<span>${esc(summaryText)}</span>` : "";
 }
 document.addEventListener("click", (e) => {
   const pb = e.target.closest(".printbtn");
@@ -2225,42 +2397,119 @@ CTX_IDS.forEach((id) => {
   // عند تغيير أيّ حقلٍ فعليًّا: أعِد بناء اللوحة الحالية لتظهر النتيجة فورًا
   el.addEventListener("change", () => { saveCtx(); refreshMeHint(); route(CURRENT); });
 });
-$("#me-clear").addEventListener("click", () => {
-  CTX_IDS.forEach((id) => { const el = $("#" + id); if (el) el.value = ""; });
+const meConfirm = $("#me-confirm");
+$("#me-clear").addEventListener("click", () => { if (meConfirm) meConfirm.hidden = false; $("#me-confirm-no")?.focus(); });
+$("#me-confirm-no")?.addEventListener("click", () => { if (meConfirm) meConfirm.hidden = true; });
+$("#me-confirm-yes")?.addEventListener("click", () => {
+  CTX_IDS.forEach((id) => { const el = $("#" + id); if (el) { el.value = ""; el.classList.remove("err"); } });
   const t = $("#ctx-time"); if (t) t.value = "12:00";
   try { localStorage.removeItem("smk-ctx"); } catch {}
+  if (meConfirm) meConfirm.hidden = true;
   refreshMeHint();
   route(CURRENT);
+  $("#ctx-name")?.focus();
 });
-$("#revToggle").addEventListener("change", (e) => document.body.classList.toggle("reveal-on", e.target.checked));
-window.addEventListener("resize", refreshMeHint);
+// «تمّ»: يتحقّق ويُعلِّم الناقص، أو يفتح الجلسة الكاملة
+$("#me-done")?.addEventListener("click", () => {
+  const c = ctx();
+  const marks = { "ctx-name": !c.name || !c.nameOk, "ctx-mother": !c.mother || !c.motherOk, "ctx-date": !c.date, "ctx-city": !c.filled && !c.city };
+  let first = null;
+  for (const [id, bad] of Object.entries(marks)) { const el = $("#" + id); if (!el) continue; el.classList.toggle("err", bad); if (bad && !first) first = el; }
+  refreshMeHint();
+  if (c.ready) route("session"); else { first?.focus(); $("#me-hint")?.scrollIntoView({ block: "center", behavior: "smooth" }); }
+});
+CTX_IDS.forEach((id) => $("#" + id)?.addEventListener("input", (e) => e.target.classList.remove("err")));
+
+const revToggle = $("#revToggle"), revBtn = $("#revbtn");
+revToggle.addEventListener("change", (e) => { document.body.classList.toggle("reveal-on", e.target.checked); revBtn?.setAttribute("aria-pressed", String(e.target.checked)); });
+revBtn?.addEventListener("click", () => { revToggle.checked = !revToggle.checked; revToggle.dispatchEvent(new Event("change")); });
+window.addEventListener("resize", () => {
+  refreshMeHint();
+  if (!isAppMode() && appEl()?.classList.contains("searching")) closeSearch();
+  closeDrawerIfDesktop();
+  clearTimeout(window.__decoT); window.__decoT = setTimeout(() => { try { renderDeco(); } catch {} }, 150);
+});
+function closeDrawerIfDesktop() { if (!isAppMode()) closeDrawer(); }
 refreshMeHint();
 
-// بحث علويّ
-const qout = $("#qout");
-$("#q").addEventListener("input", (e) => {
-  const term = e.target.value.trim();
-  if (term.length < 2) { qout.classList.remove("open"); return; }
-  const rows = [];
-  // أدوات مطابقة
-  for (const [, items] of NAV) for (const [id, label] of items)
-    if (label.includes(term)) rows.push({ src: "أداة", text: label, go: id });
-  // خواصّ
-  const kw = khawass.search(term);
-  kw.names.slice(0, 4).forEach((n) => rows.push({ src: "اسم حسنى", text: `${n.name} — ${n.khassa}`, go: "khawass" }));
-  kw.adiya.slice(0, 3).forEach((a) => rows.push({ src: "دعاء", text: `${a.name} — ${a.purpose}`, go: "khawass" }));
-  kw.surahs.slice(0, 3).forEach((s) => rows.push({ src: "خواصّ", text: `${s.ref} — ${s.uses}`, go: "khawass" }));
-  // نصّ الكتاب
-  const cr = corpus.search(term, { limit: 6 });
-  cr.hits.forEach((h) => rows.push({ src: h.src, text: h.snippet, go: "corpus" }));
-  qout.innerHTML = rows.length
-    ? rows.map((r) => `<div class="row" data-go="${r.go}"><span class="src">${esc(r.src)} — </span>${esc(r.text)}</div>`).join("")
-    : `<div class="row"><span class="src">لا نتائج</span></div>`;
-  qout.querySelectorAll("[data-go]").forEach((el) => (el.onclick = () => { qout.classList.remove("open"); route(el.dataset.go); }));
-  qout.classList.add("open");
-});
-document.addEventListener("click", (e) => { if (!$(".search").contains(e.target)) qout.classList.remove("open"); });
+// الدرج + الشريط العلويّ + التبويبات السفليّة
+$("#burger")?.addEventListener("click", () => appEl()?.classList.add("drawer"));
+$("#scrim")?.addEventListener("click", closeDrawer);
+$("#backbtn")?.addEventListener("click", () => route("tools"));
+$("#helpbtn")?.addEventListener("click", () => route("manual"));
+document.querySelectorAll("#bnav [data-tab]").forEach((b) => b.addEventListener("click", () => (b.dataset.tab === "search" ? openSearch() : route(b.dataset.tab))));
 
-let _startPanel = "session";
-try { _startPanel = localStorage.getItem("smk-panel") || "session"; } catch {}
+// ── البحث العامّ: تبويباتٌ بالفئات، تنقّلٌ بالأسهم، وصفحةٌ كاملة على الموبايل ──
+const qout = $("#qout"), qIn = $("#q");
+const SP = { tab: "all", sel: 0, shown: [] };
+const SP_TABS = [["all", "الكلّ"], ["tools", "الأدوات"], ["names", "الأسماء والأدعية"], ["khawass", "الخواصّ"], ["corpus", "نصّ الكتاب"]];
+function searchRows(term) {
+  const rows = [];
+  for (const [, items] of NAV) for (const [id, label] of items)
+    if (label.includes(term) || (BRIEF[id] || "").includes(term)) rows.push({ type: "tools", src: "أداة", text: plainLabel(label), go: id });
+  try {
+    const kw = khawass.search(term);
+    kw.names.slice(0, 6).forEach((n) => rows.push({ type: "names", src: "اسم حسنى", text: `${n.name} — ${n.khassa}`, go: "khawass" }));
+    kw.adiya.slice(0, 4).forEach((a) => rows.push({ type: "names", src: "دعاء", text: `${a.name} — ${a.purpose}`, go: "khawass" }));
+    kw.surahs.slice(0, 5).forEach((s) => rows.push({ type: "khawass", src: "خواصّ", text: `${s.ref} — ${s.uses}`, go: "khawass" }));
+  } catch {}
+  try { corpus.search(term, { limit: 8 }).hits.forEach((h) => rows.push({ type: "corpus", src: "نصّ الكتاب", text: h.snippet, go: "corpus" })); } catch {}
+  return rows;
+}
+const markTerm = (text, term) => esc(text).split(esc(term)).join(`<mark>${esc(term)}</mark>`);
+function renderSearch() {
+  const term = qIn.value.trim();
+  const app = appEl();
+  if (term.length < 2 && !app?.classList.contains("searching")) { qout.classList.remove("open"); qIn.setAttribute("aria-expanded", "false"); return; }
+  const all = term.length < 2 ? [] : searchRows(term);
+  const count = (k) => (k === "all" ? all.length : all.filter((r) => r.type === k).length);
+  SP.shown = SP.tab === "all" ? all : all.filter((r) => r.type === SP.tab);
+  SP.sel = Math.min(SP.sel, Math.max(0, SP.shown.length - 1));
+  qout.innerHTML = `<div class="sp-tabs" role="tablist">${SP_TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${SP.tab === k}">${l}<span class="c">${AR(count(k))}</span></button>`).join("")}</div>
+    <div class="sp-list">${term.length < 2 ? `<div class="sp-empty">اكتبْ حرفين على الأقلّ للبحث في الأدوات والأسماء والخواصّ ونصّ الكتاب.</div>`
+      : SP.shown.length ? SP.shown.map((r, i) => `<div class="row" role="option" data-i="${i}" aria-selected="${i === SP.sel}"><span class="src chip${r.type === "tools" ? " gold" : ""}">${esc(r.src)}</span><span class="txt">${markTerm(r.text, term)}</span></div>`).join("")
+      : `<div class="sp-empty">لا نتائجَ لـ «${esc(term)}» في هذا التبويب. جرّبْ كلمةً أقصر، أو تبويبَ «الكلّ».</div>`}</div>
+    <div class="sp-foot"><span>↑↓ للتنقّل</span><span>Enter للفتح</span><span>Esc للإغلاق</span></div>`;
+  qout.classList.add("open");
+  qIn.setAttribute("aria-expanded", "true");
+}
+function openSearch() {
+  closeDrawer();
+  if (isAppMode()) appEl()?.classList.add("searching");
+  document.querySelectorAll("#bnav [data-tab]").forEach((b) => (b.dataset.tab === "search" ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
+  renderSearch();
+  qIn.focus();
+}
+function closeSearch() {
+  qout.classList.remove("open");
+  qIn.setAttribute("aria-expanded", "false");
+  const app = appEl();
+  if (app?.classList.contains("searching")) { app.classList.remove("searching"); try { updateChrome(CURRENT); } catch {} }
+}
+function pickSearch(i) { const r = SP.shown[i]; if (!r) return; qIn.blur(); route(r.go); }
+qIn.addEventListener("input", () => { SP.sel = 0; renderSearch(); });
+qIn.addEventListener("focus", () => { if (qIn.value.trim().length >= 2) renderSearch(); });
+qIn.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeSearch(); qIn.blur(); return; }
+  if (!qout.classList.contains("open")) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); SP.sel = Math.max(0, Math.min(SP.shown.length - 1, SP.sel + (e.key === "ArrowDown" ? 1 : -1))); renderSearch(); qout.querySelector('[aria-selected="true"].row')?.scrollIntoView({ block: "nearest" }); }
+  if (e.key === "Enter") { e.preventDefault(); pickSearch(SP.sel); }
+});
+qout.addEventListener("mousedown", (e) => { const tb = e.target.closest("[data-tab]"); if (tb) { e.preventDefault(); SP.tab = tb.dataset.tab; SP.sel = 0; renderSearch(); } });
+qout.addEventListener("click", (e) => { const row = e.target.closest(".row[data-i]"); if (row) pickSearch(+row.dataset.i); });
+$("#searchbtn")?.addEventListener("click", openSearch);
+$("#scancel")?.addEventListener("click", () => { qIn.value = ""; closeSearch(); });
+document.addEventListener("click", (e) => {
+  if (appEl()?.classList.contains("searching")) return;
+  if (!e.target.closest(".search") && !e.target.closest("#searchbtn") && !e.target.closest('#bnav [data-tab="search"]')) closeSearch();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDrawer();
+  const tag = document.activeElement?.tagName;
+  if (e.key === "/" && tag !== "INPUT" && tag !== "SELECT" && tag !== "TEXTAREA" && !isAppMode()) { e.preventDefault(); qIn.focus(); }
+});
+
+let _startPanel = "home";
+try { _startPanel = localStorage.getItem("smk-panel") || "home"; } catch {}
+if (!SHELL_PAGES.includes(_startPanel) && !PANELS[_startPanel]) _startPanel = "home";
 route(_startPanel);
