@@ -24,7 +24,7 @@ import kaf from "../engines/kaf.js";
 import spirits from "../data/spirits.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
-import { CITY_GROUPS, CITY_INDEX } from "./cities.data.js";
+import { CITY_GROUPS, CITY_INDEX, tzOffsetAt } from "./cities.data.js";
 
 // ── أدوات مساعدة ──────────────────────────────────────────────────────
 const $ = (s, r = document) => r.querySelector(s);
@@ -44,7 +44,7 @@ function ctx() {
   // إحداثيّاتٌ يدويّة (لمدينةٍ غير مُدرَجة): تَغلِب على المدينة المختارة إن مُلئت.
   const manualLat = parseFloat(g("ctx-lat")), manualLon = parseFloat(g("ctx-lon")), manualTz = parseFloat(g("ctx-tz"));
   const hasManualCoords = Number.isFinite(manualLat) && Number.isFinite(manualLon);
-  const loc = hasManualCoords
+  let loc = hasManualCoords
     ? { lat: manualLat, lon: manualLon, tz: Number.isFinite(manualTz) ? manualTz : (CITY_INDEX[city]?.tz ?? 3) }
     : (CITY_INDEX[city] || { lat: 31.9539, lon: 35.9106, tz: 3 });
   // حساب الجُمّل مبنيٌّ على الحروف العربية فقط؛ اسمٌ بلا حرفٍ عربيٍّ واحد (لاتينيّ/أرقام/
@@ -61,6 +61,11 @@ function ctx() {
   if (date) {
     const [y, mo, d] = date.split("-").map(Number);
     const [hh, mm] = time.split(":").map(Number);
+    // فرقُ التوقيت الصحيح يومَ الميلاد (صيفيّ/شتويّ وتغييرات الدول)، إلّا إن أدخل المستخدمُ فرقًا يدويًّا
+    if (!(hasManualCoords && Number.isFinite(manualTz)) && CITY_INDEX[city]?.zone) {
+      const histTz = tzOffsetAt(CITY_INDEX[city].zone, y, mo, d, hh, mm);
+      if (histTz !== null) loc = { ...loc, tz: histTz };
+    }
     birth = new Date(Date.UTC(y, mo - 1, d, hh - Math.trunc(loc.tz), mm - Math.round((loc.tz % 1) * 60)));
   }
   const now = new Date();
@@ -72,6 +77,8 @@ function ctx() {
 }
 
 // شريط «عن مَن ومتى» يتصدّر كلّ نتيجة
+// البرجُ الشمسيّ الفعليّ (برجُ الميلاد المعروف) من موقع الشمس في طالع المولد
+function sunSign(sky) { try { return sky?.planets?.["الشمس"]?.sign || ""; } catch { return ""; } }
 function subjectBar(c) {
   return `<div class="subject">${esc(c.subject)}</div>`;
 }
@@ -432,9 +439,9 @@ function renderDeco() {
   if (["home", "card", "asma", "spirits", "taskhir"].includes(id)) {
     h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
   } else if (id === "session" || id === "compat" || id === "diagnosis") {
-    h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["البرج", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
+    h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
   } else if (id === "falak" || id === "reading") {
-    h = decoBlock({ eb: "الكوكبُ الحاكم", name: I.planet, desc: I.planetDisposition || "", rows: [["البرج", I.sign], ["المنزلة", I.mansion && `${I.mansion.name} (${AR(I.mansion.number)})`], ["طبعُ المنزلة", I.mansion?.nature], ["يصلح فيها", I.mansion?.work]], src: "من الاسم واسم الأمّ" });
+    h = decoBlock({ eb: "الكوكبُ الحاكم", name: I.planet, desc: I.planetDisposition || "", rows: [["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion && `${I.mansion.name} (${AR(I.mansion.number)})`], ["طبعُ المنزلة", I.mansion?.nature], ["يصلح فيها", I.mansion?.work]], src: "من الاسم واسم الأمّ" });
   } else if (id === "khawass") {
     const gt = GOAL_BY_TOPIC[r.answer?.topic] || GOAL_BY_TOPIC["عام"];
     let names = [];
@@ -718,7 +725,7 @@ PANELS.reading = (main) => {
       ${card({
         title: "هويّةُ الاسم", k: `${esc(id.planet)} · ${esc(id.element)}`,
         body: `<div class="big">${esc(id.planet)}</div>
-          <div class="kv">اسمُك واسمُ أمّك يقعان تحت حُكمِ <b>${esc(id.planet)}</b>، وطبعُك <b>${esc(id.element)}</b>، وبرجُك <b>${esc(id.sign)}</b>، ومنزلتُك من منازل القمر <b>${esc(mansionName)}</b>.<br>
+          <div class="kv">اسمُك واسمُ أمّك يقعان تحت حُكمِ <b>${esc(id.planet)}</b>، وطبعُك <b>${esc(id.element)}</b>، وبرجُ اسمِك (بالحساب، لا برجُ ميلادك) <b>${esc(id.sign)}</b>${sunSign(sky) ? ` — أمّا برجُ ميلادك الفلكيّ (موقعُ الشمس يومَ ولدت) فهو <b>${esc(sunSign(sky))}</b>` : ""}، ومنزلتُك من منازل القمر <b>${esc(mansionName)}</b>.<br>
           مَلَكُ اسمِك <b>${esc(id.angel || "—")}</b>، وخادمُك المُوكَّل <b>${esc(id.servantName)}</b>.</div>
           <div class="kv" style="margin-top:.4rem"><b>ما فائدة هذا؟</b> هذه هويّتُك التي تُبنى عليها بقيّةُ البطاقاتِ أدناه (التوقيتُ المناسب، النبوءة، طلسمُ اسمك).</div>`,
         basis: `جُمّل «${esc(c.name)}» + جُمّل «${esc(c.mother)}» = ${AR(id.total)}؛ ثمّ إسقاطٌ بـ٧ (الكوكب) و٤ (العنصر) و١٢ (البرج) و٢٨ (المنزلة).`,
@@ -1474,7 +1481,7 @@ PANELS.asma = (main) => {
     $("#aout", main).innerHTML = `<div class="grid wide">${card({
       title: `«${esc(r.input.name)} / ${esc(r.input.mother)}»`, k: "÷ ٤ · ٧ · ١٢ · ٢٨",
       body: `<div class="big">${esc(r.planet.name)}</div>
-        <div class="kv">المجموع <b>${AR(r.values.total)}</b> · العنصر <b>${esc(r.element)}</b> · البرج <b>${esc(r.sign.name)}</b> · المنزلة <b>${esc(r.mansion.name)}</b><br>
+        <div class="kv">المجموع <b>${AR(r.values.total)}</b> · العنصر <b>${esc(r.element)}</b> · برجُ الاسم <b>${esc(r.sign.name)}</b> · المنزلة <b>${esc(r.mansion.name)}</b><br>
         طبع الحروف الغالب: <b>${esc(r.dominantLetterNature)}</b><br>
         المَلَك: <b>${esc(r.servant.angelOfPlanet)}</b> · روح الكوكب: <b>${esc(r.servant.spiritOfPlanet)}</b> · الخادم المُصرَّف: <b>${esc(r.servant.derivedServantName)}</b><br>
         اليوم المختار: <b>${esc(r.timing.day)}</b> ساعة <b>${esc(r.timing.hourRuler)}</b></div>

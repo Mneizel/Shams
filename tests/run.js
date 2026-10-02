@@ -1035,6 +1035,19 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad } from "../
   ok(q[0][0] > q[1][0] && q[2][1] > tpl.pts[9].y + 0.3 * tpl.boxH, "مربّعُ الراحةِ من جهةِ السبّابة حتى الرسغ");
 }
 
+// ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
+{
+  const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");
+  ok(tzOffsetAt("Asia/Amman", 1991, 11, 9, 4, 35) === 2, "عمّان ٩ تشرين الثاني ١٩٩١ ⇒ +2 (شتويّ، قبل التوقيت الدائم)");
+  ok(tzOffsetAt("Asia/Amman", 1991, 7, 1, 12, 0) === 3, "عمّان صيف ١٩٩١ ⇒ +3");
+  ok(tzOffsetAt("Asia/Amman", 2024, 1, 15, 12, 0) === 3, "عمّان شتاء ٢٠٢٤ ⇒ +3 (التوقيت الدائم)");
+  ok(tzOffsetAt("Europe/London", 2020, 7, 1, 12, 0) === 1 && tzOffsetAt("Europe/London", 2020, 1, 1, 12, 0) === 0, "لندن صيفًا +1 وشتاءً 0");
+  ok(tzOffsetAt("Asia/Tehran", 2015, 6, 1, 12, 0) === 4.5, "طهران صيف ٢٠١٥ ⇒ +4.5");
+  ok(tzOffsetAt("Not/AZone", 2000, 1, 1) === null, "منطقةٌ غير صحيحة ⇒ null (يُستعمَل الاحتياط)");
+  const all = CITY_GROUPS.flatMap(([, cs]) => cs.map((c) => c[0]));
+  ok(all.every((n) => CITY_INDEX[n].zone && tzOffsetAt(CITY_INDEX[n].zone, 2000, 1, 1) !== null), "لكلّ مدينةٍ منطقةٌ صالحة");
+}
+
 // ── النتيجة ───────────────────────────────────────────────────────────────
 console.log(fails.join("\n\n"));
 console.log(`\n${pass} ناجح، ${fail} فاشل`);

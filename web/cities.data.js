@@ -1,5 +1,7 @@
 // web/cities.data.js — مدن للاختيار بدل إدخال خط العرض/الطول.
-// tz = فرق التوقيت عن UTC بالساعات (توقيت قياسيّ؛ يُهمَل التوقيت الصيفيّ للتبسيط).
+// tz = فرق التوقيت الحاليّ عن UTC (احتياطٌ فقط). الحسابُ الفعليّ يستعمل منطقة IANA للمدينة
+// (CITY_ZONES) ليأخذ فرقَ التوقيت الصحيحَ يومَ الميلاد نفسَه — بما فيه التوقيتُ الصيفيّ
+// والتغييراتُ التاريخيّة (مثلًا: الأردن كان +2 شتاءً حتى 2022، ثمّ صار +3 دائمًا).
 export const CITY_GROUPS = [
   ["الأردن وفلسطين", [
     ["عمّان", 31.9539, 35.9106, 3], ["إربد", 32.5556, 35.85, 3], ["الزرقاء", 32.0728, 36.0876, 3],
@@ -49,6 +51,113 @@ export const CITY_GROUPS = [
   ]]
 ];
 
+export const CITY_ZONES = {
+  "عمّان": "Asia/Amman",
+  "إربد": "Asia/Amman",
+  "الزرقاء": "Asia/Amman",
+  "العقبة": "Asia/Amman",
+  "القدس": "Asia/Hebron",
+  "غزة": "Asia/Gaza",
+  "نابلس": "Asia/Hebron",
+  "الخليل": "Asia/Hebron",
+  "رام الله": "Asia/Hebron",
+  "الرياض": "Asia/Riyadh",
+  "جدّة": "Asia/Riyadh",
+  "مكّة": "Asia/Riyadh",
+  "المدينة المنوّرة": "Asia/Riyadh",
+  "الدمّام": "Asia/Riyadh",
+  "الكويت": "Asia/Kuwait",
+  "الدوحة": "Asia/Qatar",
+  "أبو ظبي": "Asia/Dubai",
+  "دبي": "Asia/Dubai",
+  "الشارقة": "Asia/Dubai",
+  "المنامة": "Asia/Bahrain",
+  "مسقط": "Asia/Muscat",
+  "دمشق": "Asia/Damascus",
+  "حلب": "Asia/Damascus",
+  "حمص": "Asia/Damascus",
+  "بيروت": "Asia/Beirut",
+  "طرابلس (لبنان)": "Asia/Beirut",
+  "صيدا": "Asia/Beirut",
+  "بغداد": "Asia/Baghdad",
+  "البصرة": "Asia/Baghdad",
+  "الموصل": "Asia/Baghdad",
+  "أربيل": "Asia/Baghdad",
+  "النجف": "Asia/Baghdad",
+  "كربلاء": "Asia/Baghdad",
+  "القاهرة": "Africa/Cairo",
+  "الإسكندرية": "Africa/Cairo",
+  "الجيزة": "Africa/Cairo",
+  "أسيوط": "Africa/Cairo",
+  "الأقصر": "Africa/Cairo",
+  "أسوان": "Africa/Cairo",
+  "بورسعيد": "Africa/Cairo",
+  "المنصورة": "Africa/Cairo",
+  "الخرطوم": "Africa/Khartoum",
+  "أم درمان": "Africa/Khartoum",
+  "بورتسودان": "Africa/Khartoum",
+  "الرباط": "Africa/Casablanca",
+  "الدار البيضاء": "Africa/Casablanca",
+  "مرّاكش": "Africa/Casablanca",
+  "فاس": "Africa/Casablanca",
+  "طنجة": "Africa/Casablanca",
+  "أكادير": "Africa/Casablanca",
+  "الجزائر": "Africa/Algiers",
+  "وهران": "Africa/Algiers",
+  "قسنطينة": "Africa/Algiers",
+  "تونس": "Africa/Tunis",
+  "صفاقس": "Africa/Tunis",
+  "طرابلس (ليبيا)": "Africa/Tripoli",
+  "بنغازي": "Africa/Tripoli",
+  "نواكشوط": "Africa/Nouakchott",
+  "صنعاء": "Asia/Aden",
+  "عدن": "Asia/Aden",
+  "تعز": "Asia/Aden",
+  "الحديدة": "Asia/Aden",
+  "المكلّا": "Asia/Aden",
+  "مقديشو": "Africa/Mogadishu",
+  "جيبوتي": "Africa/Djibouti",
+  "مورّني (جزر القمر)": "Indian/Comoro",
+  "إسطنبول": "Europe/Istanbul",
+  "أنقرة": "Europe/Istanbul",
+  "إزمير": "Europe/Istanbul",
+  "طهران": "Asia/Tehran",
+  "مشهد": "Asia/Tehran",
+  "أصفهان": "Asia/Tehran",
+  "لندن": "Europe/London",
+  "باريس": "Europe/Paris",
+  "برلين": "Europe/Berlin",
+  "روما": "Europe/Rome",
+  "مدريد": "Europe/Madrid",
+  "ستوكهولم": "Europe/Stockholm",
+  "موسكو": "Europe/Moscow",
+  "نيويورك": "America/New_York",
+  "تورونتو": "America/Toronto",
+  "شيكاغو": "America/Chicago",
+  "لوس أنجلوس": "America/Los_Angeles",
+  "كوالالمبور": "Asia/Kuala_Lumpur",
+  "جاكرتا": "Asia/Jakarta",
+  "سيدني": "Australia/Sydney"
+};
+
 export const CITY_INDEX = Object.fromEntries(
-  CITY_GROUPS.flatMap(([, cs]) => cs.map(([n, lat, lon, tz]) => [n, { lat, lon, tz }]))
+  CITY_GROUPS.flatMap(([, cs]) => cs.map(([n, lat, lon, tz]) => [n, { lat, lon, tz, zone: CITY_ZONES[n] }]))
 );
+
+// فرقُ توقيتِ منطقةٍ (بالساعات) عند ساعةٍ محلّيّةٍ معيّنة، من قاعدة بيانات المناطق في المتصفّح نفسه.
+// يعيد null إن تعذّر (متصفّحٌ بلا دعم) فيُستعمَل الفرقُ الاحتياطيّ.
+export function tzOffsetAt(zone, y, mo, d, hh = 12, mm = 0) {
+  if (!zone || typeof Intl === "undefined") return null;
+  try {
+    const fmt = new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const offAt = (t) => {
+      const p = fmt.formatToParts(new Date(t));
+      const g = (k) => +p.find((x) => x.type === k).value;
+      return (Date.UTC(g("year"), g("month") - 1, g("day"), g("hour") % 24, g("minute")) - t) / 3600000;
+    };
+    const wall = Date.UTC(y, mo - 1, d, hh, mm);
+    const o1 = offAt(wall);
+    const o2 = offAt(wall - o1 * 3600000);
+    return Number.isFinite(o2) ? o2 : null;
+  } catch { return null; }
+}
