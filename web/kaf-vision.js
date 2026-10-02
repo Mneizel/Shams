@@ -4,6 +4,7 @@
 //   لا يعملُ على file:// — يلزمُ خادمٌ محلّيّ (افتح-قراءة-الكف.bat).
 
 const MP_BASE = "../vendor/mediapipe";
+export const KAF_VER = "2026-10-02c";
 let HL = null, FR = null, landmarker = null, landmarkerLoading = null;
 
 function withTimeout(promise, ms, msg) {
@@ -46,7 +47,7 @@ function cvSettle(state) {
 }
 export function preloadOpenCV() {
   if (cvWorker || cvState === "failed") return;
-  try { cvWorker = new Worker(new URL("./kaf-cv-worker.js", import.meta.url)); }
+  try { cvWorker = new Worker(new URL("./kaf-cv-worker.js?v=" + KAF_VER, import.meta.url)); }
   catch { cvSettle("failed"); return; }
   cvState = "loading";
   cvWorker.onmessage = (e) => {
@@ -111,8 +112,135 @@ function drawLinePaths(base, paths) {
 let _klLoading = null;
 function loadKafLines() {
   if (self.KafLines) return Promise.resolve(self.KafLines);
-  if (!_klLoading) _klLoading = import("./kaf-lines.js").then(() => self.KafLines || null, () => null);
+  if (!_klLoading) _klLoading = import("./kaf-lines.js?v=" + KAF_VER).then(() => self.KafLines || null, () => null);
   return _klLoading;
+}
+
+const LINE_KEYS = ["heart", "head", "life", "fate"];
+/** يحلّلُ خطوطَ عدّةِ إطاراتٍ لليدِ نفسِها ويدمجُها بالإجماع، ويكتبُ في feats: lines و_linePaths
+ *  و_creaseImage و_linesDiag (لماذا قُرِئ ما قُرِئ، ولماذا رُفِض ما رُفِض) و_linesNote عند التعذّر. */
+async function linesFromFrames(frames, feats, onProgress, isAborted = () => false) {
+  const results = [];
+  const diag = { frames: frames.length, analysed: 0, contrast: [], flat: 0, worker: null, rejected: {} };
+  let shown = null;
+  for (let k = 0; k < frames.length && !isAborted(); k++) {
+    onProgress && onProgress(k, frames.length);
+    const r = await creasesViaWorker(frames[k].img, frames[k].quad, false);
+    if (r.note) { diag.worker = r.note; if (!feats._linesNote) feats._linesNote = r.note; }
+    if (r.lines && r.lines.error) { diag.worker = "خطأٌ في محلّلِ الخطوط: " + r.lines.error; continue; }
+    if (r.lines) {
+      results.push(r.lines); diag.analysed++;
+      const q = r.lines.quality || {};
+      if (q.contrast != null) diag.contrast.push(q.contrast);
+      if (q.tooFlat) diag.flat++;
+      for (const lk of LINE_KEYS) { const why = r.lines[lk] && r.lines[lk].measures && r.lines[lk].measures.rejected; if (why) (diag.rejected[lk] = diag.rejected[lk] || []).push(why); }
+      if (!shown) shown = r;
+    } else if (!r.note) diag.worker = "لم يُرجِعْ محلّلُ الخطوطِ نتيجة (ملفٌّ قديمٌ مخزَّن؟ أعِدْ تحميلَ الصفحة).";
+  }
+  if (results.length >= 2) {
+    const KL = await loadKafLines();
+    const agree = results.length >= 4 ? 0.75 : 1; // ٣ من ٤ فأكثر، أو كلُّها إن قلَّ العدد
+    const c = KL ? KL.consensus(results, agree) : null;
+    if (c) {
+      for (const lk of LINE_KEYS) {
+        const L = c[lk];
+        feats.lines[lk] = L.present === true
+          ? { present: true, confidence: L.confidence, states: L.states, source: "camera", unstable: L.unstable }
+          : { present: false, confidence: 0, states: [], source: "camera", unclear: L.present === null };
+      }
+      feats._linePaths = Object.fromEntries(LINE_KEYS.map((lk) => [lk, c[lk].present === true ? c[lk].path : null]));
+      feats._linesFrames = results.length;
+    } else diag.worker = diag.worker || "تعذّرَ تحميلُ دمجِ اللقطات.";
+  } else if (!feats._linesNote) {
+    feats._linesNote = diag.worker || "لم تكفِ اللقطاتُ الواضحةُ لتحليلِ الخطوطِ بثبات — أعِدِ المحاولة أو أكمِلْها يدويًّا.";
+  }
+  if (diag.analysed && diag.flat === diag.analysed) {
+    feats._linesNote = `الصورةُ لا تُظهِرُ تجاعيدَ الكفِّ بوضوحٍ كافٍ (تباينُ التجاعيد ${Math.max(...diag.contrast).toFixed(1)}، والمطلوبُ ٦ فأكثر) — صوِّرْ بكاميرا الجهاز، والكفُّ تملأُ الصورة، بضوءٍ قريبٍ من جانبِ اليد.`;
+  }
+  feats._linesDiag = diag;
+  if (shown && shown.base) feats._creaseImage = drawLinePaths(shown.base, feats._linePaths || {});
+}
+
+// ── صورةُ كاميرا الجهاز (الطريقةُ الأدقّ) ───────────────────────────
+// صورةُ تطبيقِ الكاميرا نفسِه: دقّةٌ كاملة، تركيزٌ تلقائيٌّ على الكفّ، ومعالجةٌ أنظف من إطارِ بثِّ
+// الفيديو المضغوط. هي نفسُ نوعِ الصورِ التي ضُبِطَت عليها قراءةُ الخطوط (صورُ كفٍّ حقيقيّة).
+let imgLandmarker = null, imgLoading = null;
+async function ensureImageLandmarker() {
+  await ensureLoaded(); // يجهّزُ مكتبةَ MediaPipe نفسَها
+  if (imgLandmarker) return imgLandmarker;
+  if (!imgLoading) {
+    imgLoading = (async () => {
+      const fileset = await FR.forVisionTasks(`${MP_BASE}`);
+      return HL.createFromOptions(fileset, { baseOptions: { modelAssetPath: `${MP_BASE}/hand_landmarker.task` }, numHands: 1, runningMode: "IMAGE", minHandDetectionConfidence: 0.5 });
+    })().then((l) => (imgLandmarker = l), (e) => { imgLoading = null; throw e; });
+  }
+  return withTimeout(imgLoading, 60000, "انتهت مهلةُ تجهيزِ نموذجِ اليدِ للصور");
+}
+async function loadPhoto(file, maxSide = 1600) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const sc = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); // المتصفّحُ يطبّقُ اتّجاهَ الصورة (EXIF)
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+/** يحلّلُ صورةً أو صورتين لكفٍّ واحدة. يُعيدُ {feats, dataUrl, problems} أو {error}. */
+export async function analyzePhotos(files, onProgress = () => {}) {
+  onProgress("جارٍ تجهيزُ محرّكِ الرؤية…");
+  await ensureImageLandmarker();
+  preloadOpenCV();
+  const shots = [], problems = [];
+  for (let i = 0; i < files.length; i++) {
+    const tag = files.length > 1 ? ` (الصورة ${i + 1})` : "";
+    onProgress(`جارٍ قراءةُ الصورة${tag}…`);
+    let c; try { c = await loadPhoto(files[i]); } catch { problems.push("تعذّرَ فتحُ الصورة" + tag); continue; }
+    const W = c.width, H = c.height;
+    let res; try { res = imgLandmarker.detect(c); } catch (e) { problems.push("تعذّرَ تحليلُ الصورة" + tag); continue; }
+    const lm = res.landmarks && res.landmarks[0];
+    if (!lm) { problems.push("لم أجدْ كفًّا في الصورة" + tag + " — صوِّرْ باطنَ الكفِّ كاملًا والأصابعُ ظاهرة."); continue; }
+    const px = lm.map((p) => ({ x: p.x * W, y: p.y * H }));
+    if (!(px[P.MID_TIP].y < px[P.MID_MCP].y && px[P.MID_MCP].y < px[P.WRIST].y)) { problems.push("اجعلِ الأصابعَ نحوَ أعلى الصورة" + tag + "."); continue; }
+    const det = detectHand(px, res.handednesses && res.handednesses[0] && res.handednesses[0][0] && res.handednesses[0][0].categoryName);
+    if (det.backOfHand) { problems.push("الصورةُ" + tag + " تُظهِرُ ظهرَ الكفّ — صوِّرْ باطنَها."); continue; }
+    if (d2(px[P.WRIST], px[P.MID_MCP]) / Math.max(W, H) < 0.16) { problems.push("الكفُّ صغيرةٌ في الصورة" + tag + " — قرِّبِ الهاتفَ حتى تملأَ الكفُّ معظمَ الصورة."); continue; }
+    if (shots.length && shots[0].hand !== det.hand) { problems.push("الصورةُ" + tag + " ليدٍ غيرِ يدِ الصورةِ الأولى — أُهمِلَت."); continue; }
+    shots.push({ c, lm, wlm: res.worldLandmarks && res.worldLandmarks[0], px, W, H, hand: det.hand });
+  }
+  if (!shots.length) return { error: problems.join(" · ") || "لم تصلحْ أيُّ صورةٍ للتحليل." };
+  const s0 = shots[0];
+  const feats = extractFeatures(s0.lm, s0.wlm, s0.W, s0.H);
+  feats.hand = s0.hand;
+  // صورتان: حالةُ الإصبعِ تُثبَتُ فقط إن اتّفقت فيهما
+  for (let i = 1; i < shots.length; i++) {
+    const f2 = extractFeatures(shots[i].lm, shots[i].wlm, shots[i].W, shots[i].H);
+    for (const k of ["index", "middle", "ring", "little"]) {
+      if (feats.fingers[k] && (!f2.fingers[k] || f2.fingers[k].state !== feats.fingers[k].state)) delete feats.fingers[k];
+    }
+  }
+  // لكلِّ صورة: المربّعُ الأصليّ + ٣ إزاحاتٍ صغيرة (خطأُ موضعِ النقاطِ نفسِه بضعةُ بكسلات) —
+  // ما لا يثبتُ أمامَ إزاحةٍ بقدرِ خطأِ القياس لا يُقال.
+  const JIT = [[1, 0, 0], [1.03, 0.015, 0], [0.97, -0.015, 0.015], [1, 0, -0.02]];
+  const frames = [];
+  for (const sh of shots) {
+    const q = palmQuad(sh.px);
+    const cx = q.reduce((a, p) => a + p[0], 0) / 4, cy = q.reduce((a, p) => a + p[1], 0) / 4;
+    const qw = Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]);
+    for (const [sc, dx, dy] of JIT) {
+      const img = sh.c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, sh.W, sh.H);
+      frames.push({ img, quad: q.map(([x, y]) => [cx + (x - cx) * sc + dx * qw, cy + (y - cy) * sc + dy * qw]) });
+    }
+  }
+  await linesFromFrames(frames, feats, (k, n) => onProgress(`جارٍ تحليلُ خطوطِ كفّك (${k + 1} من ${n})…`));
+  const prev = document.createElement("canvas");
+  const ps = Math.min(1, 900 / Math.max(s0.W, s0.H));
+  prev.width = Math.round(s0.W * ps); prev.height = Math.round(s0.H * ps);
+  prev.getContext("2d").drawImage(s0.c, 0, 0, prev.width, prev.height);
+  return { feats, dataUrl: prev.toDataURL("image/jpeg", 0.85), problems };
 }
 
 // نقاطُ MediaPipe الـ٢١
@@ -287,32 +415,7 @@ export function runLiveCapture({ video, overlay, mirrored = false, getHand = () 
           const img = frameImageData(video);
           if (img) frames.push({ img, quad: palmQuad(flm.map((p) => ({ x: p.x * W, y: p.y * H }))) });
         }
-        const results = [];
-        let shown = null;
-        for (let k = 0; k < frames.length && !aborted; k++) {
-          onGuide([`تمّ الالتقاط — جارٍ تحليلُ خطوطِ كفّك (${k + 1} من ${frames.length})…`], true);
-          const r = await creasesViaWorker(frames[k].img, frames[k].quad, false);
-          if (r.note && !feats._linesNote) feats._linesNote = r.note;
-          if (r.lines && !r.lines.error) { results.push(r.lines); if (!shown) shown = r; }
-        }
-        if (results.length >= 2) {
-          const KL = await loadKafLines();
-          const agree = results.length >= 4 ? 0.75 : 1; // ٣ من ٤، أو كلُّها إن قلَّ العدد
-          const c = KL ? KL.consensus(results, agree) : null;
-          if (c) {
-            for (const k of ["heart", "head", "life", "fate"]) {
-              const L = c[k];
-              feats.lines[k] = L.present === true
-                ? { present: true, confidence: L.confidence, states: L.states, source: "camera", unstable: L.unstable }
-                : { present: false, confidence: 0, states: [], source: "camera", unclear: L.present === null };
-            }
-            feats._linePaths = Object.fromEntries(["heart", "head", "life", "fate"].map((k) => [k, c[k].present === true ? c[k].path : null]));
-            feats._linesFrames = results.length;
-          }
-        } else if (!feats._linesNote) {
-          feats._linesNote = "لم تكفِ اللقطاتُ الواضحةُ لتحليلِ الخطوطِ بثبات (تحرّكت اليد؟) — أعِدِ المحاولة أو أكمِلْها يدويًّا.";
-        }
-        if (shown && shown.base) feats._creaseImage = drawLinePaths(shown.base, feats._linePaths || {});
+        await linesFromFrames(frames, feats, (k, n) => onGuide([`تمّ الالتقاط — جارٍ تحليلُ خطوطِ كفّك (${k + 1} من ${n})…`], true), () => aborted);
       }
     }
     if (aborted) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ التحليل

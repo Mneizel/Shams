@@ -22381,7 +22381,7 @@ function route(id) {
   if (id === "card") {
     main.innerHTML = "";
     refreshMeHint();
-    try { localStorage.setItem("smk-panel", id); } catch {}
+    try { sessionStorage.setItem("smk-panel", id); } catch {}
     return done();
   }
   if (!ready && !SHELL_PAGES.includes(id)) { renderWelcome(main); return done(); }
@@ -22394,7 +22394,7 @@ function route(id) {
     main.innerHTML = `<div class="warn">تعذّر عرضُ هذا القسم بسبب خطأٍ غيرِ متوقَّع: ${esc(e.message || String(e))}<br>جرّبِ التبديلَ لقسمٍ آخرَ ثمّ العودةَ، أو أعِدْ تحميلَ الصفحة.</div>`;
   }
   try { wireCards(main); } catch {}
-  try { localStorage.setItem("smk-panel", id); } catch {}
+  try { sessionStorage.setItem("smk-panel", id); } catch {}
   done();
 }
 // رابطٌ فعليٌّ ينقلك للوحةٍ أخرى (بدل جملة "افتح كذا" النصّيّة التي لا تُكبَس) —
@@ -23735,10 +23735,25 @@ PANELS.kaf = (main) => {
 
   main.innerHTML = `${head('kaf', 'قراءة الكفّ')}
     <p class="kv">المصدر: «علم قراءة اليد» — نجيب أفندي (مطبعة الهلال، ١٩٠٤، ملكيّة عامّة) + «أسرار علم الكف» — برنارد الأسطة. القراءةُ حتميّةٌ وكلُّ سطرٍ مربوطٌ بفصلِ الكتابِ وفقرتِه.</p>
-    <h2>الوضعُ التلقائيّ — الكاميرا الحيّة</h2>
+    <h2>صوِّرْ كفّك</h2>
+    <div class="card" id="k-photo-card">
+      <div class="kv">صورةٌ بكاميرا جهازِك نفسِها هي الأدقّ (دقّةٌ كاملةٌ وتركيزٌ على الكفّ). قبل أن تصوِّر:</div>
+      <ul class="kv" style="margin:.4rem 0 .8rem">
+        <li>باطنُ الكفّ نحو الكاميرا، والأصابعُ مفرودةٌ نحوَ أعلى الصورة.</li>
+        <li>الكفُّ تملأُ معظمَ الصورة، والرسغُ ظاهر.</li>
+        <li>ضوءٌ قريبٌ من <b>جانبِ</b> اليد (لا من خلفِك ولا فلاش) — يُظهِرُ التجاعيد.</li>
+        <li>المسْ الكفَّ على الشاشة ليركّزَ عليها، وثبِّتِ الهاتف.</li>
+      </ul>
+      <input type="file" id="k-photo" accept="image/*" capture="environment" hidden>
+      <input type="file" id="k-photo2" accept="image/*" capture="environment" hidden>
+      <div class="form" style="margin:0"><button class="btn" type="button" id="k-photo-btn">📷 صوِّرْ كفّك</button>
+        <button class="btn sec" type="button" id="k-photo2-btn" hidden>أضِفْ صورةً ثانيةً للكفِّ نفسِها (تزيدُ الثقة)</button></div>
+      <div class="gloss" id="k-photo-status" style="margin-top:.5rem"></div>
+    </div>
+    <h2>أو: الكاميرا الحيّة مع دليلِ اليد</h2>
     <div id="kaf-cam">
       <div class="warn" id="kaf-camnote"></div>
-      <div class="form"><button class="btn" id="k-camstart" hidden>افتحِ الكاميرا</button>
+      <div class="form"><button class="btn sec" id="k-camstart" hidden>افتحِ الكاميرا الحيّة</button>
         <button class="btn" id="k-camforce" hidden>التقطِ الآن</button>
         <button class="btn sec" id="k-camstop" hidden>إيقاف</button></div>
       <div id="k-camwrap" hidden style="position:relative;max-width:520px">
@@ -23911,13 +23926,102 @@ PANELS.kaf = (main) => {
       if (n === "NotReadableError" || n === "AbortError") return "الكاميرا مشغولةٌ ببرنامجٍ آخر (Zoom/Teams/تبويبٍ آخر) — أغلِقْه ثمّ أعِدِ المحاولة.";
       return "تعذّرَ تشغيلُ الكاميرا: " + ((e && e.message) || e);
     };
+    // تفاصيلُ فنّيّةٌ تشرحُ لماذا قُرِئ خطٌّ أو لم يُقرَأ (تظهرُ مفتوحةً حين لا يُقرَأُ أيُّ خطّ)
+    const diagHtml = (d) => {
+      if (!d) return "";
+      const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
+      const none = !["heart", "head", "life", "fate"].some((k) => lastCam?.lines?.[k]?.present);
+      const rows = [
+        `اللقطاتُ المحلَّلة: ${AR(d.analysed)} من ${AR(d.frames)}`,
+        d.contrast.length ? `تباينُ التجاعيد: ${d.contrast.map((c) => AR(c.toFixed(1))).join("، ")} (يُشترَطُ ٦ فأكثر)` : "",
+        d.worker ? `محلّلُ الخطوط: ${esc(d.worker)}` : "",
+        ...Object.entries(d.rejected).map(([k, v]) => `${esc(lineAr(k))}: رُفِضَ في ${AR(v.length)} لقطة — ${esc(v[0])}`),
+      ].filter(Boolean);
+      return `<details class="intro" ${none ? "open" : ""} style="grid-column:1/-1"><summary>تفاصيلُ التحليلِ الفنّيّة</summary><div class="body"><ul class="kv">${rows.map((r) => `<li>${r}</li>`).join("")}</ul></div></details>`;
+    };
+    const showCamResult = (feats, dataUrl) => {
+          lastCam = JSON.parse(JSON.stringify(feats)); // يُحفَظُ ليُكمَّلَ لاحقًا بالحقولِ اليدويّة
+          const LINE_KEYS = ["heart", "head", "life", "fate"];
+          const COLORS = (vis && vis.LINE_COLORS) || {};
+          const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
+          const rejected = new Set(); // خطوطٌ قال المستخدمُ إنّ الآلةَ أخطأت تحديدَها
+          const render = () => {
+            const f = mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual());
+            for (const k of rejected) f.lines[k] = { present: false, confidence: 0, states: [], source: "camera" };
+            let r; try { r = kaf.read(f); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+            try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
+            const hint = f.handHint;
+            const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
+            const handLine = f.hand ? `<div class="kv"><b>اليد:</b> ${f.hand === "left" ? "اليسرى" : "اليمنى"} <span class="gloss">— عرفتْها الكاميرا من وضعِ الإبهام${$("#k-hand", main)?.value ? " (أو كما اخترتَ يدويًّا)" : ""}</span></div>` : "";
+            const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — يتّسقُ ذلك مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.</div>` : "";
+            const camLines = LINE_KEYS.filter((k) => lastCam.lines?.[k]?.source === "camera");
+            const legend = camLines.map((k) => {
+              const L = lastCam.lines[k];
+              const sw = `<span style="display:inline-block;width:14px;height:4px;border-radius:2px;background:${COLORS[k] || "#fff"};vertical-align:middle;margin-inline-end:.35rem"></span>`;
+              if (!L.present) return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b> — ${L.unclear ? "لم يتّضحْ بثباتٍ بين اللقطات" : "لم تجدْه الكاميرا"}</div>`;
+              return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b>${L.states.length ? ` — ${L.states.map(esc).join("، ")}` : ""}
+                <label class="chip" style="margin-inline-start:.4rem"><input type="checkbox" class="k-ok" data-k="${k}" ${rejected.has(k) ? "" : "checked"}> التحديدُ صحيح</label></div>`;
+            }).join("");
+            const camHonesty = r.honesty.filter((h) => !h.startsWith("نوعُ اليدِ"));
+            $("#k-shot", main).innerHTML = `<div class="grid wide">
+              ${f._err ? `<div class="warn">${esc(f._err)}</div>` : ""}
+              ${f._linesNote ? `<div class="warn">${esc(f._linesNote)}</div>` : ""}
+              ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${handLine}${hintHtml}` })}
+              ${f._creaseImage ? card({ title: "خطوطُ كفّك كما حدّدتْها الكاميرا", body: `<img src="${f._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
+                <div class="gloss" style="margin:.3rem 0 .5rem">راحتُك مقوَّمة: الأعلى قواعدُ الأصابع، والأسفلُ الرسغ، واليسارُ جهةُ الإبهام. حُلِّلت ${AR(lastCam._linesFrames || 0)} لقطات، ولا يُذكَرُ إلّا ما اتّفقت عليه.</div>
+                ${legend}
+                <div class="gloss" style="margin-top:.4rem">إن رأيتَ خطًّا ملوّنًا على تجعّدٍ غيرِ الخطِّ المقصود، أزِلْ علامةَ «صحيح» عنه فيُستبعَدُ من القراءة.</div>` }) : ""}
+              ${diagHtml(f._linesDiag)}
+              ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
+                body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
+                reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
+              ${card({ title: "ما لا تقيسُه الكاميرا — أكمِلْه إن شئت", body: `<ul class="kv">
+                  ${!f.handType ? "<li>نوعُ اليد — يُعرَفُ في الكتبِ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل.</li>" : ""}
+                  ${camHonesty.map((h) => `<li>${esc(h)}</li>`).join("")}
+                  <li>الجُزُرُ والسلاسلُ والفروعُ الدقيقةُ على الخطوط، والعلامات (نجمة/صليب/مربّع) — تحتاجُ تكبيرًا لا تكفيه صورةُ الهاتف.</li></ul>
+                <button class="btn sec" type="button" id="k-open-manual">افتحِ الوضعَ اليدويّ</button>` })}
+            </div>`;
+            main.querySelectorAll(".k-ok").forEach((cb) => (cb.onchange = () => { cb.checked ? rejected.delete(cb.dataset.k) : rejected.add(cb.dataset.k); render(); }));
+            const om = $("#k-open-manual", main); if (om) om.onclick = () => { const km = $("#k-manual", main); if (km) { km.open = true; km.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+            wireCards(main);
+          };
+          render();
+          wireCards(main);
+    };
+
+    // ── صورةُ كاميرا الجهاز ──
+    let photos = [];
+    const pStatus = $("#k-photo-status", main);
+    const runPhotos = async () => {
+      $("#k-photo-btn", main).disabled = true; $("#k-photo2-btn", main).disabled = true;
+      $("#k-shot", main).innerHTML = "";
+      try {
+        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02c");
+        const out = await vis.analyzePhotos(photos, (m) => (pStatus.textContent = m));
+        if (out.error) { pStatus.innerHTML = `<span style="color:var(--warn)">${esc(out.error)}</span>`; photos = photos.slice(0, -1); }
+        else {
+          pStatus.textContent = (photos.length > 1 ? "حُلِّلت الصورتان." : "حُلِّلت الصورة.") + (out.problems.length ? " " + out.problems.join(" · ") : "");
+          showCamResult(out.feats, out.dataUrl);
+          $("#k-shot", main).scrollIntoView({ behavior: "smooth", block: "start" });
+          $("#k-photo2-btn", main).hidden = photos.length >= 2;
+        }
+      } catch (e) {
+        pStatus.innerHTML = `<span style="color:var(--warn)">تعذّرَ التحليل: ${esc(e.message || e)}</span>`;
+        const km = $("#k-manual", main); if (km) km.open = true;
+      } finally { $("#k-photo-btn", main).disabled = false; $("#k-photo2-btn", main).disabled = false; }
+    };
+    $("#k-photo-btn", main).onclick = () => $("#k-photo", main).click();
+    $("#k-photo2-btn", main).onclick = () => $("#k-photo2", main).click();
+    $("#k-photo", main).onchange = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; photos = [f]; runPhotos(); };
+    $("#k-photo2", main).onchange = (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; photos = [photos[0], f].filter(Boolean); runPhotos(); };
+
     const startCam = async () => {
       const my = ++attempt;
       const cancelled = () => my !== attempt;
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
       $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية… (أوّلَ مرّةٍ قد يستغرقُ حتى دقيقةٍ على اتّصالٍ بطيء)";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
-      try { vis = await import("./kaf-vision.js"); }
+      try { vis = await import("./kaf-vision.js?v=2026-10-02c"); }
       catch (e) { if (!cancelled()) failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
       if (cancelled()) return;
       try { await vis.ensureLoaded(); }
@@ -23959,57 +24063,11 @@ PANELS.kaf = (main) => {
         onShot: (feats, dataUrl) => {
           if (cancelled()) return; // أُوقِفَ أو غادرَ المستخدمُ أثناءَ تحليلِ الخطوط
           stopAll();
-          lastCam = JSON.parse(JSON.stringify(feats)); // يُحفَظُ ليُكمَّلَ لاحقًا بالحقولِ اليدويّة
-          const LINE_KEYS = ["heart", "head", "life", "fate"];
-          const COLORS = vis.LINE_COLORS || {};
-          const lineAr = (k) => (sc.lines.find((l) => l.key === k) || {}).ar || k;
-          const rejected = new Set(); // خطوطٌ قال المستخدمُ إنّ الآلةَ أخطأت تحديدَها
-          const render = () => {
-            const f = mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual());
-            for (const k of rejected) f.lines[k] = { present: false, confidence: 0, states: [], source: "camera" };
-            let r; try { r = kaf.read(f); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
-            try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
-            const hint = f.handHint;
-            const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
-            const handLine = f.hand ? `<div class="kv"><b>اليد:</b> ${f.hand === "left" ? "اليسرى" : "اليمنى"} <span class="gloss">— عرفتْها الكاميرا من وضعِ الإبهام${$("#k-hand", main)?.value ? " (أو كما اخترتَ يدويًّا)" : ""}</span></div>` : "";
-            const hintHtml = hint ? `<div class="kv" style="margin-top:.4rem"><b>ما قاستْه الكاميرا:</b> الراحةُ ${esc(hint.palmShape)}، والأصابعُ ${esc(hint.fingerLen)}${hint.fits.length ? ` — يتّسقُ ذلك مع: ${hint.fits.map((k) => esc(typeAr(k))).join("، ")}` : ""}.</div>` : "";
-            const camLines = LINE_KEYS.filter((k) => lastCam.lines?.[k]?.source === "camera");
-            const legend = camLines.map((k) => {
-              const L = lastCam.lines[k];
-              const sw = `<span style="display:inline-block;width:14px;height:4px;border-radius:2px;background:${COLORS[k] || "#fff"};vertical-align:middle;margin-inline-end:.35rem"></span>`;
-              if (!L.present) return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b> — ${L.unclear ? "لم يتّضحْ بثباتٍ بين اللقطات" : "لم تجدْه الكاميرا"}</div>`;
-              return `<div class="kv" style="margin:.25rem 0">${sw}<b>${esc(lineAr(k))}</b>${L.states.length ? ` — ${L.states.map(esc).join("، ")}` : ""}
-                <label class="chip" style="margin-inline-start:.4rem"><input type="checkbox" class="k-ok" data-k="${k}" ${rejected.has(k) ? "" : "checked"}> التحديدُ صحيح</label></div>`;
-            }).join("");
-            const camHonesty = r.honesty.filter((h) => !h.startsWith("نوعُ اليدِ"));
-            $("#k-shot", main).innerHTML = `<div class="grid wide">
-              ${f._err ? `<div class="warn">${esc(f._err)}</div>` : ""}
-              ${f._linesNote ? `<div class="warn">${esc(f._linesNote)}</div>` : ""}
-              ${card({ title: "الصورةُ الملتقطة", body: `<img src="${dataUrl}" style="max-width:360px;width:100%;border-radius:10px">${handLine}${hintHtml}` })}
-              ${f._creaseImage ? card({ title: "خطوطُ كفّك كما حدّدتْها الكاميرا", body: `<img src="${f._creaseImage}" style="max-width:360px;width:100%;border-radius:10px">
-                <div class="gloss" style="margin:.3rem 0 .5rem">راحتُك مقوَّمة: الأعلى قواعدُ الأصابع، والأسفلُ الرسغ، واليسارُ جهةُ الإبهام. حُلِّلت ${AR(lastCam._linesFrames || 0)} لقطات، ولا يُذكَرُ إلّا ما اتّفقت عليه.</div>
-                ${legend}
-                <div class="gloss" style="margin-top:.4rem">إن رأيتَ خطًّا ملوّنًا على تجعّدٍ غيرِ الخطِّ المقصود، أزِلْ علامةَ «صحيح» عنه فيُستبعَدُ من القراءة.</div>` }) : ""}
-              ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
-                body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
-                reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
-              ${card({ title: "ما لا تقيسُه الكاميرا — أكمِلْه إن شئت", body: `<ul class="kv">
-                  ${!f.handType ? "<li>نوعُ اليد — يُعرَفُ في الكتبِ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل.</li>" : ""}
-                  ${camHonesty.map((h) => `<li>${esc(h)}</li>`).join("")}
-                  <li>الجُزُرُ والسلاسلُ والفروعُ الدقيقةُ على الخطوط، والعلامات (نجمة/صليب/مربّع) — تحتاجُ تكبيرًا لا تكفيه صورةُ الهاتف.</li></ul>
-                <button class="btn sec" type="button" id="k-open-manual">افتحِ الوضعَ اليدويّ</button>` })}
-            </div>`;
-            main.querySelectorAll(".k-ok").forEach((cb) => (cb.onchange = () => { cb.checked ? rejected.delete(cb.dataset.k) : rejected.add(cb.dataset.k); render(); }));
-            const om = $("#k-open-manual", main); if (om) om.onclick = () => { const km = $("#k-manual", main); if (km) { km.open = true; km.scrollIntoView({ behavior: "smooth", block: "start" }); } };
-            wireCards(main);
-          };
-          render();
-          wireCards(main);
+          showCamResult(feats, dataUrl);
         },
       });
     };
     btn.onclick = startCam;
-    startCam();
   }
 };
 
@@ -24446,7 +24504,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 let _startPanel = "home";
-try { _startPanel = localStorage.getItem("smk-panel") || "home"; } catch {}
+try { _startPanel = sessionStorage.getItem("smk-panel") || "home"; } catch {}
 if (!SHELL_PAGES.includes(_startPanel) && !PANELS[_startPanel]) _startPanel = "home";
 route(_startPanel);
 

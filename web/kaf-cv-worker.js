@@ -11,7 +11,7 @@ let cvReady = null, CV = null;
 function loadCV() {
   if (cvReady) return cvReady;
   cvReady = new Promise((resolve, reject) => {
-    try { importScripts("../vendor/opencv.js"); importScripts("./kaf-lines.js"); }
+    try { importScripts("../vendor/opencv.js"); importScripts("./kaf-lines.js" + (self.location.search || "")); }
     catch (e) { reject(e); return; }
     let finished = false;
     const done = (m) => {
