@@ -1333,6 +1333,11 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(arif.abjadDate(2026) === "بغكو" && arif.abjadDate(1991) === "غظصا", "التأريخُ بالجُمّل: ٢٠٢٦ ⇒ بغكو");
   const dv = a.months.map((m) => m.voices.filter((v) => v.fam === "divination").map((v) => Math.sign(v.s)).join(""));
   ok(dv.filter(Boolean).length > 30 && new Set(dv).size >= 4, "الرملُ والجفر يدخلان كلَّ شهرٍ ويتغيّران من شهرٍ لآخر");
+  const skyN = falakM.snapshot(C.birth, C.lat, C.lon);
+  const mc = arif.midheaven(skyN.ascendant.localSiderealTime);
+  ok(mc > 115 && mc < 125, "وسطُ السماء في الميلاد ≈ ١٢٠° (الأسد) لطالعِ الميزان في عمّان");
+  ok(arif.tasyir(skyN, 34).some((v) => /تسييرُ سهم السعادة بلغ تربيعَ زحل/.test(v.why) && v.s < 0 && v.topics.includes("money")) && arif.tasyir(skyN, 30).length === 0, "التسيير (الثمرة ٧٩): في الرابعة والثلاثين يبلغُ سهمُ السعادة تربيعَ زحل ⇒ ضيقٌ في المال");
+  ok(a.months.some((m) => m.voices.some((v) => /^تسييرُ/.test(v.why))), "أصواتُ التسيير تدخلُ الخطَّ الزمنيّ");
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

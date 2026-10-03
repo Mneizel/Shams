@@ -110,6 +110,42 @@ export function revolutions(c, natal, fromYear, toYear) {
   return out;
 }
 
+// ── التسيير (الثمرة، الكلمة ٧٩): «سيّر درجةَ الطالع لأعراض الجسد، ودرجةَ سهم السعادة لذات اليد، ودرجةَ القمر لتصرّف الجسد
+// مع النفس، ودرجةَ الشمس لحظوظه من السلطان، ودرجةَ وسط السماء لما يعانيه من الأعمال — لكلّ درجةٍ سنة». يُسيَّرُ الدليلُ درجةً
+// لكلّ سنةٍ من العمر، فإذا بلغ موضعَ سعدٍ أو نحسٍ في الميلاد (أو نظرَه) ظهر أثرُه في تلك السنة.
+/** وسطُ السماء من الزمن النجميّ المحلّيّ (بالدرجات) وميلِ فلك البروج */
+export function midheaven(lstDeg, eps = 23.4393) {
+  const r = Math.PI / 180, x = Math.atan2(Math.sin(lstDeg * r), Math.cos(lstDeg * r) * Math.cos(eps * r)) / r;
+  return ((x % 360) + 360) % 360;
+}
+const TASYIR_POINTS = [
+  { key: "asc", ar: "الطالع", topics: ["all", "health"], good: "عافيةٌ وقوّةٌ في البدن", bad: "عارضٌ في البدن" },
+  { key: "lot", ar: "سهم السعادة", topics: ["money"], good: "زيادةٌ في المال", bad: "نقصٌ أو خسارةٌ في المال" },
+  { key: "moon", ar: "القمر", topics: ["all", "love"], good: "راحةٌ في النفس والبيت", bad: "همٌّ في النفس أو البيت" },
+  { key: "sun", ar: "الشمس", topics: ["work"], good: "حظوةٌ ورفعةٌ عند أصحاب الأمر", bad: "خصومةٌ مع ذوي السلطان" },
+  { key: "mc", ar: "وسط السماء", topics: ["work"], good: "نجاحٌ في الأعمال", bad: "عثرةٌ في الأعمال" },
+];
+export function tasyir(natal, ageYears) {
+  const base = {
+    asc: natal.ascendant.longitude, sun: natal.planets["الشمس"].longitude, moon: natal.planets["القمر"].longitude,
+    lot: natal.lots?.lots?.["سهم السعادة"]?.longitude, mc: midheaven(natal.ascendant.localSiderealTime ?? 0),
+  };
+  const out = [];
+  for (const pt of TASYIR_POINTS) {
+    if (base[pt.key] == null) continue;
+    const dir = base[pt.key] + ageYears; // درجةٌ لكلّ سنة
+    for (const pr of ["المشتري", "الزهرة", "زحل", "المريخ"]) {
+      const asp = aspectOf(dir, natal.planets[pr].longitude, 0.6);
+      if (!asp) continue;
+      const ben = pr === "المشتري" || pr === "الزهرة";
+      const s = ben ? (["conj", "trine", "sextile"].includes(asp) ? 1 : 0.5) : (["conj", "square", "opp"].includes(asp) ? -1 : 0);
+      if (!s) continue;
+      out.push({ s, plain: s > 0 ? pt.good : pt.bad, why: `تسييرُ ${pt.ar} بلغ ${({ conj: "موضعَ", sextile: "تسديسَ", square: "تربيعَ", trine: "تثليثَ", opp: "مقابلةَ" })[asp]} ${pr} في الميلاد`, topics: pt.topics });
+    }
+  }
+  return out;
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -154,6 +190,8 @@ function monthVoices(ctx, y, m) {
     const sP = NATURE[P.yearLord] ?? 0;
     push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"]);
   }
+  // ١أ) التسيير: درجةٌ لكلِّ سنةٍ من العمر
+  if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics);
   // ١ب) تحويلُ السنة التي يقعُ فيها هذا الشهر
   const rv = [...ctx.revs].reverse().find((r) => r.when <= date);
   if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics);
@@ -400,4 +438,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { timeline, read, ask, eclipses, revolutions, abjadDate, MONTHS, TOPICS, FAMILIES };
+export default { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, MONTHS, TOPICS, FAMILIES };
