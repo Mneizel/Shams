@@ -715,6 +715,32 @@ const NOTE =
   "الباقي فهرسٌ ووصفٌ فقط — نصوصُها الكاملةُ طويلةٌ ومتاحةٌ في مجاميع الأوراد وفي بحث `corpus`.";
 
 ;__exports["ADIYA"]=ADIYA;__exports["NOTE"]=NOTE;return __exports;})();
+__M["ages-ptolemy.data"]=(function(){"use strict";const __exports={};
+// data/ages-ptolemy.data.js — بطليموس، «الأربع مقالات» م٤ ف١٠ «في قسمة الأزمان»: أعمارُ الإنسان السبعة، لكلِّ عمرٍ كوكبٌ
+// على ترتيب الأفلاك من القمر إلى زحل، و«الأعراضُ الخاصّةُ بكلِّ عمرٍ هي الطبيعيّةُ للكوكب المقارَن به».
+// ترجمة F. E. Robbins (Loeb، ١٩٤٠ — ملكيّةٌ عامّة)، text/sources/mizaj/tetrabiblos/4C.txt. الترجمةُ العربيّة أمينةٌ للمعنى ومختصرة.
+
+const AGES_SRC = "بطليموس، الأربع مقالات، م٤ ف١٠ «في قسمة الأزمان» (ترجمة Robbins)";
+
+// from/to بالسنين؛ to = null للأخير
+const AGES = [
+  { planet: "القمر", from: 0, to: 4, name: "الطفولة الأولى",
+    text: "يتولّى القمرُ سنَّ الرضاعة: ليونةُ البدن وقلّةُ ثباته، وسرعةُ نموّه، ورطوبةُ غذائه، وتقلّبُ حاله، ونقصُ النفس وعدمُ إفصاحها." },
+  { planet: "عطارد", from: 4, to: 14, name: "الصبا",
+    text: "يأخذُ عطاردُ في تفصيلِ الجزءِ العاقلِ المنطقيّ من النفس وتشكيله، فيغرسُ بذورَ العلم وأوائلَه، ويُظهِرُ خصائصَ الطبع والملَكات، ويوقظُ النفسَ بالتعليم والتأديب والرياضة الأولى." },
+  { planet: "الزهرة", from: 14, to: 22, name: "الشباب الأوّل",
+    text: "تتولّى الزهرةُ سنَّ الفتوّة ثماني سنين: تبعثُ نشاطَ الشهوة ودافعَ الحبّ، وتدخلُ النفسَ في هذا العمر حدّةٌ وقلّةُ ضبطٍ وهوًى مشتعلٌ واندفاعُ العاشق." },
+  { planet: "الشمس", from: 22, to: 41, name: "الرجولة الأولى (أوسط العمر)",
+    text: "تتولّى الشمسُ العمرَ الأوسطَ تسعَ عشرةَ سنة: تغرسُ في النفس أخيرًا الإمساكَ بزمام أفعالها وتدبيرَها، وطلبَ المال والمجد والمنزلة، والتحوّلَ من اللهو والسذاجة إلى الجدّ والوقار والطموح." },
+  { planet: "المريخ", from: 41, to: 56, name: "الكهولة",
+    text: "يتولّى المريخُ سنَّ الرجولة خمسَ عشرةَ سنة: يُدخلُ على الحياة شدّةً ومشقّة، ويغرسُ الهمومَ والمتاعبَ في النفس والبدن، ويُشعرُها بأنّها جاوزت ذروتَها، فيحثُّها قبل أن تقتربَ من نهايتها على أن تُنجزَ بالجهد أمرًا يستحقُّ الذكر." },
+  { planet: "المشتري", from: 56, to: 68, name: "الشيخوخة الأولى",
+    text: "يتولّى المشتري سنَّ المسنّين اثنتي عشرةَ سنة: يُبعدُ عن العمل اليدويّ والكدّ والاضطراب والمخاطرة، ويأتي مكانَها بالوقار والتبصّر والاعتزال، والتدبّر الشامل والنصح والتسلية، ويجعلُ الإنسانَ يعتدُّ بالكرامة والثناء والاستقلال مع الحياء والهيبة." },
+  { planet: "زحل", from: 68, to: null, name: "الهرم",
+    text: "لزحلَ آخرُ العمر إلى نهايته: تبردُ حركاتُ البدن والنفس وتتعوّقُ في دوافعها ولذّاتها ورغباتها وسرعتها، فيصيرُ المرءُ أضعفَ وأسرعَ تأذّيًا وأصعبَ إرضاءً." },
+];
+
+;__exports["AGES_SRC"]=AGES_SRC;__exports["AGES"]=AGES;return __exports;})();
 __M["asm-azam.data"]=(function(){"use strict";const __exports={};
 // data/asm-azam.data.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22309,6 +22335,51 @@ function reading(q) {
 __exports.default = { reading };
 
 ;__exports["reading"]=reading;return __exports;})();
+__M["qiraa"]=(function(){"use strict";const __exports={};
+// engines/qiraa.js
+// «قراءتُك الكاملة»: ما يُقالُ عن الشخصِ نفسِه من بطاقتِه — طبعُه وحالُه، وهويّتُه بالاسم (للمعرفة)، ودرجاتُ مولده،
+// وعمرُه ومرحلتُه وسنتُه. بلا خطواتِ عمل. حتميّ: نفسُ البطاقة واليوم ⇒ نفسُ القراءة.
+
+const falak=__M["falak"].default;
+const ak=__M["asma-khuddam"].default;
+const hal=__M["hal"].default;
+const { AGES, AGES_SRC }=__M["ages-ptolemy.data"];
+
+/** مرحلةُ العمر عند بطليموس */
+function ageStage(years) {
+  let i = AGES.findIndex((a) => years >= a.from && (a.to == null || years < a.to));
+  if (i < 0) i = AGES.length - 1;
+  const a = AGES[i];
+  return { ...a, index: i, yearsLeft: a.to == null ? null : Math.ceil(a.to - years), next: AGES[i + 1] || null, src: AGES_SRC };
+}
+
+/** @param c {name, mother, birth: Date, lat, lon, now?: Date} */
+function full(c) {
+  if (!c || !c.name || !c.birth) throw new Error("القراءةُ الكاملةُ تحتاجُ الاسمَ وتاريخَ الميلادِ ووقتَه ومكانَه");
+  const now = c.now ? new Date(c.now) : new Date();
+  const sky = falak.snapshot(c.birth, c.lat, c.lon);
+  const h = hal.reading(c);
+  const id = c.mother ? ak.reading(c.name, c.mother) : null;
+  const identity = id ? {
+    planet: id.planet.name, element: id.element, nameSign: id.sign.name, mansion: id.mansion.name,
+    angel: id.servant.angelOfPlanet, servant: id.servant.derivedServantName,
+  } : null;
+  const natal = { sunSign: sky.planets["الشمس"].sign, ascendant: sky.ascendant.sign, moonSign: sky.planets["القمر"].sign, dayRuler: sky.day.planet };
+  const years = (now - new Date(c.birth)) / (365.2422 * 86400000);
+  const byNight = sky.lots && sky.lots.sect === "ليليّ";
+  const age = {
+    years: Math.floor(years),
+    stage: ageStage(years),
+    profection: falak.annualProfection(c.birth, now, sky.ascendant.longitude),
+    firdaria: falak.firdaria(c.birth, now, { byNight }),
+  };
+  return { hal: h, identity, natal, age };
+}
+
+const AGES_LIST = AGES;
+__exports.default = { full, ageStage, AGES_LIST };
+
+;__exports["ageStage"]=ageStage;__exports["full"]=full;__exports["AGES_LIST"]=AGES_LIST;return __exports;})();
 __M["qura"]=(function(){"use strict";const __exports={};
 // engines/qura.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24214,6 +24285,7 @@ const qura=__M["qura"].default;
 const debunk=__M["debunk"].default;
 const kaf=__M["kaf"].default;
 const hal=__M["hal"].default;
+const qiraa=__M["qiraa"].default;
 const spirits=__M["spirits.data"].default;
 const { MANUAL }=__M["manual.data"];
 const { QUESTION_GROUPS, QUESTIONS_WITH_TARGET }=__M["questions.data"];
@@ -24449,7 +24521,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["session", "🕯 الجلسة الكاملة"], ["hal", "🪞 قراءة حالك"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["hal", "🪞 قراءة حالك"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -24459,9 +24531,10 @@ const NAV = [
 ];
 
 // ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──
-const ICON = { home: "home", tools: "grid", card: "user", session: "candle", hal: "eye", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
+const ICON = { home: "home", tools: "grid", card: "user", session: "candle", full: "user", hal: "eye", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
 const BRIEF = {
   session: "الأداةُ الأولى لأيّ سؤال: إجماعُ الجفر والزايرجة والفلك، وشاهدٌ من الرمل، وتوصيةُ عمل، ودعمٌ من الخواصّ.",
+  full: "كلُّ ما يُقالُ عنك أنت من بطاقتك: طبعُك وحالُك، وهويّتُك، وعمرُك ومرحلتُك وسنتُك — بلا أعمالٍ ولا تسخير.",
   hal: "طبعُك ومزاجُك وانفعالاتُك وما قد يُتعبُك — من بطاقتِك وحدَها، بدمجِ عدّةِ كتب: ما اتّفقت عليه يُقال، وما اختلفت فيه «أحيانًا».",
   reading: "كلُّ المحرّكات في «طالعٍ» واحد: هويّةُ الاسم، والكوكب، والمنزلة، والحالُ الفلكيّة.",
   compat: "يقيس التوافقَ بين شخصين من اسمَيهما واسمَي أمّيهما.",
@@ -24630,7 +24703,7 @@ function renderDeco() {
   const who = `${c.name} ابن/ة ${c.mother}`;
   const f = r.fortune || {};
   let h;
-  if (["home", "card", "asma", "spirits", "taskhir", "hal"].includes(id)) {
+  if (["home", "card", "asma", "spirits", "taskhir", "hal", "full"].includes(id)) {
     h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
   } else if (id === "session" || id === "compat" || id === "diagnosis") {
     h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
@@ -26411,13 +26484,8 @@ PANELS.kaf = (main) => {
 
 
 // قراءة الحال ─────────────────────────────────────────────────────────
-PANELS.hal = (main) => {
-  main.innerHTML = head("hal", "قراءة حالك");
-  if (!gate(main)) return;
-  const c = ctx();
-  let r;
-  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon }); }
-  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
+// يُعيدُ HTML قراءةِ الحال (يُستعمَلُ في «قراءة حالك» و«قراءتك الكاملة»)
+function halHTML(r) {
   const LN = r.lineNames;
   const who = (ls) => ls.map((l) => LN[l] || l).join(" + ");
   const evid = (evs) => {
@@ -26436,7 +26504,7 @@ PANELS.hal = (main) => {
     reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
   })).join("");
   const singles = Object.values(r.groups).flatMap((g) => g.single.map((x) => ({ ...x, g: g.title })));
-  main.insertAdjacentHTML("beforeend", subjectBar(c) + `
+  return `
     ${card({ title: "مزاجُك", cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
       reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
     <div class="grid wide">${groupCards}</div>
@@ -26448,7 +26516,56 @@ PANELS.hal = (main) => {
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
       <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
-    <div class="gloss" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`);
+    <div class="gloss" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`;
+}
+
+PANELS.hal = (main) => {
+  main.innerHTML = head("hal", "قراءة حالك");
+  if (!gate(main)) return;
+  const c = ctx();
+  let r;
+  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon }); }
+  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
+};
+
+// قراءتك الكاملة ───────────────────────────────────────────────────────
+PANELS.full = (main) => {
+  main.innerHTML = head("full", "قراءتك الكاملة");
+  if (!gate(main)) return;
+  const c = ctx();
+  let r;
+  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon, now: c.now }); }
+  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
+  const I = r.identity, N = r.natal, A = r.age, S = A.stage;
+  let kafCard = "";
+  try {
+    const k = JSON.parse(localStorage.getItem("smk-last-kaf") || "null");
+    if (k) kafCard = card({ title: "يدُك", k: esc(k.hand || ""), body: `<div class="kv">من آخر قراءةِ كفٍّ حفظتَها: نوعُ يدك <b>${esc(k.handType || "—")}</b>، وأوّلُ أبوابها «${esc(k.firstTitle || "—")}». ${navLink("kaf", "افتح قراءة الكفّ")}</div>` });
+  } catch {}
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + `
+    <h2>١. طبعُك وحالُك</h2>
+    ${halHTML(r.hal)}
+    <h2>٢. هويّتُك</h2>
+    <div class="grid wide">
+    ${card({ title: "من تاريخِ ميلادك", body: `<div class="kv">برجُ ميلادِك (موضعُ الشمس) <b>${esc(N.sunSign)}</b>، وطالعُك <b>${esc(N.ascendant)}</b>، وقمرُك في <b>${esc(N.moonSign)}</b>، ووُلدتَ في يومٍ ربُّه <b>${esc(N.dayRuler)}</b>.</div>` })}
+    ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "للمعرفة", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وطبعُه <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
+      <div class="gloss" style="margin-top:.4rem">هذه أسماءٌ تُستخرَجُ بالحساب من الاسم كما في الكتب، تُذكَرُ هنا للمعرفة. ما يتعلّقُ بالعمل بها في أدواتِه: ${navLink("asma", "الأسماء والخدّام")}.</div>` }) : ""}
+    ${kafCard}
+    </div>
+    <h2>٣. عمرُك ومرحلتُك</h2>
+    <div class="grid wide">
+    ${card({ title: `عمرُك ${AR(A.years)} سنة — ${esc(S.name)}`, k: `يحكمها ${esc(S.planet)}`, cls: "closing",
+      body: `<div class="kv">${esc(S.text)}</div>
+        <div class="gloss" style="margin-top:.4rem">${S.yearsLeft != null ? `بقي من هذه المرحلة نحوُ ${AR(S.yearsLeft)} سنة، ثمّ ${esc(S.next.name)} (${esc(S.next.planet)}).` : "هذه آخرُ المراحل."}</div>`,
+      basis: esc(S.src), reveal: "أعمارُ الإنسان عند بطليموس: " + qiraa.AGES_LIST.map((x) => `${x.planet} ${x.from}–${x.to ?? "…"}`).join("، ") })}
+    ${card({ title: "سنتُك هذه", k: `ربُّها ${esc(A.profection.yearLord)}`,
+      body: `<div class="kv">من عيد ميلادك الأخير إلى القادم: ربُّ سنتِك <b>${esc(A.profection.yearLord)}</b>، ومحورُها «<b>${esc(A.profection.houseName)}</b>» (${esc(A.profection.houseTopic)}). ويدلُّ ربُّها على: ${esc(A.profection.governs || "—")}.</div>`,
+      basis: "الانتهاءُ السنويّ: من برجِ الطالع بُرجًا لكلِّ سنةٍ من العمر." })}
+    ${card({ title: "الفترةُ التي أنت فيها", k: `${esc(A.firdaria.majorLord)} / ${esc(A.firdaria.minorLord)}`,
+      body: `<div class="kv">أنت في فترةِ <b>${esc(A.firdaria.majorLord)}</b> الكبرى (${esc(A.firdaria.majorGoverns || "")})، والفرعيّةُ الآن لـ<b>${esc(A.firdaria.minorLord)}</b> (${esc(A.firdaria.minorGoverns || "")}).</div>`,
+      basis: "الفردارات: تقسيمُ العمر إلى فتراتٍ يحكمُ كلًّا منها كوكب." })}
+    </div>`);
 };
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────
