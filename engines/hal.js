@@ -25,6 +25,7 @@ import * as CH from "../data/hal-cheiro.data.js";
 import * as TH from "../data/hal-thamara.data.js";
 import * as WM from "../data/hal-women.data.js";
 import bodyM from "./body.js";
+import dalil from "./dalil.js";
 import * as AM from "../data/hal-abumashar.data.js";
 import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
@@ -209,12 +210,12 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)", birth_number: "رقمُ يوم الميلاد (Cheiro)", th_social: "الطالعُ وصاحبُه (الثمرة)", th_merc: "عطاردُ في بُرجَي زحلَ أو المريخ (الثمرة)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)", birth_number: "رقمُ يوم الميلاد (Cheiro)", th_social: "الطالعُ وصاحبُه (الثمرة)", th_merc: "عطاردُ في بُرجَي زحلَ أو المريخ (الثمرة)", dalil: "مرتبةُ الطالع (دليل الحيران)" };
 // خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
 // وطبعُ برجِ الطالع (أبو معشر) ودرجةُ الطالع (كتاب الدرج) كلاهما من الطالع
-const FAMILY = { name_sign: "name", am_asc: "asc", asc_degree: "asc", th_social: "asc", th_merc: "ptol_signs" };
+const FAMILY = { dalil: "name", name_sign: "name", am_asc: "asc", asc_degree: "asc", th_social: "asc", th_merc: "ptol_signs" };
 // مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
-const SECONDARY = new Set(["name_sign", "birth_number"]);
+const SECONDARY = new Set(["name_sign", "birth_number", "dalil"]);
 
 /** رقمُ الميلاد عند Cheiro: يومُ الشهر (المحلّيّ) مجموعًا حتّى رقمٍ واحد */
 export function birthNumber(day) {
@@ -288,6 +289,9 @@ export function reading(c) {
     if (TH.K40.saturn.signs.includes(me.sign) && strength("عطارد", sky).level !== "weak") testify("th_merc", `${TH.THAMARA_SRC}، الكلمة ٤٠`, TH.K40.saturn.text, TH.K40.saturn.traits);
     else if (TH.K40.mars.signs.includes(me.sign)) testify("th_merc", `${TH.THAMARA_SRC}، الكلمة ٤٠`, TH.K40.mars.text, TH.K40.mars.traits);
   }
+  // دليل الحيران: مرتبةُ الطالع من الاسم واسم الأمّ (بالأعداد الهجائيّة)
+  const dr = c.mother ? dalil.rank(c.name, c.mother, female ? "f" : "m") : null;
+  if (dr && dr.traits) testify("dalil", `${dr.src}، المرتبة ${dr.rank} ص${dr.page}`, dr.text, dr.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
@@ -349,7 +353,7 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees, bodyForm: bodyM.form(sky), birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
+    nameSign, degrees, bodyForm: bodyM.form(sky), dalil: dr, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,

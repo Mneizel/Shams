@@ -1268,6 +1268,14 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(B.lilly[0].text.startsWith("معتدلُ القامة") && B.lilly[1].who.includes("النصفُ الثاني"), "Lilly: القامةُ من الميزان، والبدنُ من نصفِه الثاني (الطالع ٢٧°)");
 }
 
+// ── دليل الحيران ──
+{
+  const dalil = (await import("../engines/dalil.js")).default;
+  ok(dalil.hijaiValue("اب") === 3 && dalil.hijaiValue("ي") === 28, "الأعدادُ الهجائيّة: ا=١، ب=٢، ي=٢٨");
+  const m = dalil.rank("محمد", "سميرة"), f = dalil.rank("محمد", "سميرة", "f");
+  ok(m.rank === (m.total % 9 || 9) && m.text && f.text && m.text !== f.text && ["ناريّ", "هوائيّ", "مائيّ", "ترابيّ"].includes(m.tab), "دليل الحيران: مرتبةٌ من ٩ بحسب الجنس، وطبعٌ من ٤");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

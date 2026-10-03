@@ -2254,6 +2254,10 @@ function halHTML(r) {
     ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
       body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
       basis: esc(r.birthNumber.src) }) : ""}
+    ${r.dalil ? card({ title: `${k_("مرتبةُ طالعِك", "مرتبةُ طالعِكِ")}: ${AR(r.dalil.rank)}`, k: `${esc(r.dalil.tab)} · الطوخي`,
+      body: `<div class="kv">${esc(r.dalil.text)}</div>${Object.entries(r.dalil.houses || {}).map(([k, v]) => `<div class="kv" style="margin-top:.35rem"><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}
+        <div class="gloss" style="margin-top:.4rem">من اسمِك واسمِ أمّك بأعداد الحروف الهجائيّة (ا=١ … ي=٢٨) ÷ ٩. مؤلّفٌ متأخّر، فيدخلُ صفاتِك شاهدًا ثانويًّا.</div>`,
+      basis: esc(r.dalil.src) + ` ص${AR(r.dalil.page)}`, reveal: traceText(r.dalil.trace) }) : ""}
     ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: r.bodyForm.agree || "من الطالع",
       body: `<div class="kv"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
         <div class="kv"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
