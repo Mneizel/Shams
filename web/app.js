@@ -2311,12 +2311,14 @@ PANELS.hal = (main) => {
 
 
 // العارف بالأمر ───────────────────────────────────────────────────────
-const ARIF_FB = "smk-arif-fb", ARIF_INT = "smk-arif-int";
+const ARIF_FB0 = "smk-arif-fb", ARIF_INT = "smk-arif-int";
+// إجاباتُ «صار/لم يصر» خاصّةٌ بصاحب البطاقة: مفتاحُها الاسمُ واسمُ الأمّ وتاريخُ الميلاد (لا تنتقلُ إلى بطاقةِ شخصٍ آخر)
+const arifFbKey = () => { const c = ctx(); return `${ARIF_FB0}:${abjad.normalize(c.name || "")}|${abjad.normalize(c.mother || "")}|${c.date || ""}`; };
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 // «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
 function arifWeights() {
-  const fb = lsGet(ARIF_FB, {}), tally = {};
+  const fb = lsGet(arifFbKey(), {}), tally = {};
   for (const e of Object.values(fb)) for (const [fam, s] of Object.entries(e.fams || {})) {
     if (!s) continue;
     const t = (tally[fam] = tally[fam] || { hit: 0, miss: 0 });
@@ -2408,10 +2410,10 @@ PANELS.arif = (main) => {
   }
   function month() {
     const d = R.months.find((m) => m.k === sel); if (!d) return;
-    const fb = lsGet(ARIF_FB, {})[d.label];
+    const fb = lsGet(arifFbKey(), {})[d.label + "|" + topic];
     const lvl = d.level[topic];
     md.innerHTML = `<h3><span>${esc(MON[d.m])} ${AR(d.y)}</span><span class="k">${d.past ? "مضى" : d.now ? "الآن" : ""}</span></h3><div class="normal">
-      <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? "كان " : ""}شهرًا ${esc(AR(lvl))}</div>
+      <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? `كان شهرًا ${({ "ممتاز": "ممتازًا", "جيّد": "جيّدًا", "عاديّ": "عاديًّا", "ثقيل": "ثقيلًا", "صعب": "صعبًا" })[lvl] || lvl}` : `شهرٌ ${esc(lvl)}`}</div>
       <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
       ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
       ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
@@ -2419,10 +2421,10 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
     </div>`;
     md.querySelectorAll("[data-ok]").forEach((b) => b.addEventListener("click", () => {
-      const all = lsGet(ARIF_FB, {}), fams = {};
-      for (const v of d.voices) fams[v.fam] = (fams[v.fam] || 0) + v.s;
-      all[d.label] = { ok: b.dataset.ok === "1", score: d.scores.all, fams };
-      lsSet(ARIF_FB, all); month();
+      const all = lsGet(arifFbKey(), {}), fams = {};
+      for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) fams[v.fam] = (fams[v.fam] || 0) + v.s;
+      all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams };
+      lsSet(arifFbKey(), all); month();
     }));
   }
   main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
@@ -2442,7 +2444,7 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     draw(); month();
   });
-  $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(ARIF_FB); } catch {} route("arif"); });
+  $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });
   draw(); month();
 };
 
