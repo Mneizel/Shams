@@ -1133,6 +1133,28 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(wv && Math.abs(wv - 280) <= 4, "راحةٌ مستقلّةٌ عن الإبهام ⇒ عرضُها الحقيقيّ");
 }
 
+// ── قراءةُ الحال: الشهاداتُ والدمج ──
+{
+  const hal = (await import("../engines/hal.js")).default;
+  const C = { name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), lat: 31.9539, lon: 35.9106 };
+  const a = hal.reading(C), b = hal.reading(C);
+  ok(JSON.stringify(a.groups) === JSON.stringify(b.groups) && a.summary === b.summary, "قراءةُ الحالِ حتميّة: نفسُ البطاقة ⇒ نفسُ القراءة");
+  // الشهاداتُ الخمسُ على خريطةٍ معروفة (حُسِبت يدويًّا من جدولِ Lilly): ميزانٌ طالع، الزهرةُ مشرّقةٌ في السنبلة، القمرُ هلالٌ في القوس
+  const tl = a.temperament.chart.tally;
+  ok(tl.H === 6 && tl.C === 3 && tl.M === 4 && tl.D === 7 && a.temperament.chart.complexion.key === "choleric", "مزاجُ الخريطةِ بطريقةِ Lilly يطابقُ الحسابَ اليدويّ (حارٌّ يابس ⇒ صفراويّ)");
+  ok(a.temperament.chart.testimonies.some((t) => t.who.startsWith("زحل ينظرُ الطالع")), "زحلُ المربّعُ للطالع يُدخِلُ كيفيّتَه (قاعدةُ Lilly)");
+  // اسمٌ متعادلُ الحرارةِ والبرودة لا يُدَّعى له اتّفاقٌ في الحرارة
+  ok(a.temperament.name.complexion == null && a.temperament.final.heat.agree === false && /تتعادلُ فيها الحرارةُ والبرودة/.test(a.summary), "اسمٌ متعادلٌ ⇒ لا يُقالُ إنّه وافق الخريطةَ في الحرارة");
+  // صفةٌ بدليلين ⇒ مؤكّدة؛ بدليلٍ واحد ⇒ منفردة؛ ضدّان ⇒ «أحيانًا»
+  const firm = Object.values(a.groups).flatMap((g) => g.firm), single = Object.values(a.groups).flatMap((g) => g.single), some = Object.values(a.groups).flatMap((g) => g.sometimes);
+  ok(firm.every((x) => x.lines.length >= 2) && single.every((x) => x.lines.length === 1), "المؤكَّدُ بدليلين مستقلّين فأكثر، والمنفردُ بدليلٍ واحد");
+  ok(some.every((x) => x.ar.startsWith("أحيانًا") && !/أحيانًا.*أحيانًا.*أحيانًا/.test(x.ar)), "صفتان متضادّتان ⇒ «أحيانًا… وأحيانًا…» بلا تكرار");
+  ok(!firm.concat(single).some((x) => some.some((y) => y.ids.includes(x.id))), "الصفةُ لا تظهرُ مؤكّدةً وفي «أحيانًا» معًا");
+  // اسمٌ ناريٌّ صريح يدخلُ بنصِّ شمسِ المعارف
+  const n2 = hal.nameTemperament("طارق");
+  ok(n2.clearDominant ? !!n2.mizajText : n2.mizajText === null, "نصُّ مزاجِ الاسمِ يُستعمَلُ فقط حين يكونُ الطبعُ الغالبُ صريحًا");
+}
+
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
 {
   const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");

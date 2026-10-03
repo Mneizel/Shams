@@ -21,6 +21,7 @@ import art from "../engines/spirit-art.js";
 import qura from "../engines/qura.js";
 import debunk from "../engines/debunk.js";
 import kaf from "../engines/kaf.js";
+import hal from "../engines/hal.js";
 import spirits from "../data/spirits.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
@@ -256,7 +257,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["session", "🕯 الجلسة الكاملة"], ["hal", "🪞 قراءة حالك"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -266,9 +267,10 @@ const NAV = [
 ];
 
 // ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──
-const ICON = { home: "home", tools: "grid", card: "user", session: "candle", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
+const ICON = { home: "home", tools: "grid", card: "user", session: "candle", hal: "eye", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
 const BRIEF = {
   session: "الأداةُ الأولى لأيّ سؤال: إجماعُ الجفر والزايرجة والفلك، وشاهدٌ من الرمل، وتوصيةُ عمل، ودعمٌ من الخواصّ.",
+  hal: "طبعُك ومزاجُك وانفعالاتُك وما قد يُتعبُك — من بطاقتِك وحدَها، بدمجِ عدّةِ كتب: ما اتّفقت عليه يُقال، وما اختلفت فيه «أحيانًا».",
   reading: "كلُّ المحرّكات في «طالعٍ» واحد: هويّةُ الاسم، والكوكب، والمنزلة، والحالُ الفلكيّة.",
   compat: "يقيس التوافقَ بين شخصين من اسمَيهما واسمَي أمّيهما.",
   diagnosis: "يحاكي جلسةَ الراقي: أعراضٌ تختارها، وتشخيصٌ يُذكَر معه التفسيرُ العاديّ.",
@@ -436,7 +438,7 @@ function renderDeco() {
   const who = `${c.name} ابن/ة ${c.mother}`;
   const f = r.fortune || {};
   let h;
-  if (["home", "card", "asma", "spirits", "taskhir"].includes(id)) {
+  if (["home", "card", "asma", "spirits", "taskhir", "hal"].includes(id)) {
     h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
   } else if (id === "session" || id === "compat" || id === "diagnosis") {
     h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
@@ -2191,6 +2193,44 @@ PANELS.kaf = (main) => {
     };
     btn.onclick = startCam;
   }
+};
+
+
+// قراءة الحال ─────────────────────────────────────────────────────────
+PANELS.hal = (main) => {
+  main.innerHTML = head("hal", "قراءة حالك");
+  if (!gate(main)) return;
+  const c = ctx();
+  let r;
+  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon }); }
+  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
+  const LN = r.lineNames;
+  const who = (ls) => ls.map((l) => LN[l] || l).join(" + ");
+  const evid = (evs) => {
+    const uniq = []; const seen = new Set();
+    for (const e of evs) { const k = e.src + "|" + e.text; if (!seen.has(k)) { seen.add(k); uniq.push(e); } }
+    return uniq.map((e) => `• [${esc(LN[e.line] || e.line)}] ${e.text} — ${e.src}`).join("\n");
+  };
+  const T = r.temperament;
+  const tq = (t) => `حرارة ${AR(t.H)} · برودة ${AR(t.C)} · رطوبة ${AR(t.M)} · يبوسة ${AR(t.D)}`;
+  const groupCards = Object.values(r.groups).filter((g) => g.firm.length || g.sometimes.length).map((g) => card({
+    title: g.title,
+    body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
+        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}</span></li>`).join("")}
+        ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
+      </ul>`,
+    reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
+  })).join("");
+  const singles = Object.values(r.groups).flatMap((g) => g.single.map((x) => ({ ...x, g: g.title })));
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + `
+    ${card({ title: "مزاجُك", cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
+      reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
+    <div class="grid wide">${groupCards}</div>
+    ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${esc(b.text)}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا: ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
+    ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
+      <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
+      <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
+    <div class="gloss" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`);
 };
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────
