@@ -1505,6 +1505,15 @@ PANELS.asma = (main) => {
       vs: [`«اسمك تحت ${esc(r.planet.name)}، خادمك ${esc(r.servant.derivedServantName)}، يومك ${esc(r.timing.day)}.»`,
         `${AR(r.values.total)} = جُمّل الاسم + جُمّل الأمّ\nقسمةٌ على ٤ و٧ و١٢ و٢٨ ⇒ فهرسةٌ في جداول ثابتة.`]
     })}</div>
+    <div class="grid wide">${(() => { const mz = abjad.sirrMazruf(c.name, c.mother); return card({
+      title: "أسماءُ الخدّام بطريقة «السرّ المظروف»", k: mz.element ? `الغالب: ${esc(mz.element)}` : "متعادل",
+      body: `<div class="kv">الزمام (ملكٌ أرضيّ + اسمك + اسم أمّك): <span class="mono">${esc(mz.zimam)}</span></div>
+        <div class="big" style="font-size:1.05rem;margin:.4rem 0">${mz.names.map(esc).join(" · ")}</div>
+        <div class="kv"><b>الموضع:</b> ${esc(mz.place)}. <b>للخير:</b> ${esc(mz.ink["خير"])}.</div>
+        <div class="gloss" style="margin-top:.3rem">في الكتاب يوضعُ اسمُ المطلوب مكانَ اسم الأمّ (ألفةٌ أو فرقةٌ بين اثنين)؛ هنا بالبطاقة.</div>`,
+      basis: `${esc(mz.source)}، ص٣–٥: تكسيرٌ «من آخرٍ إلى أوّل» حتّى يظهرَ الزمام (${AR(mz.rows.length)} أسطر)، ثمّ نظمُ الأسماء من السطر الأوّل.`,
+      reveal: traceText(mz.trace) + "\n\nأسطرُ التكسير:\n" + mz.rows.join("\n") + "\n\nأوقاتُ الأعمال:\n" + mz.times.map((t) => `• ${t.work}: ${t.time}`).join("\n"),
+    }); })()}</div>
     <h2>كيف تسخّر خادمَك هذا وتستفيد منه — العملُ كاملًا</h2>
     ${(() => { try { return taskhirOpFullHTML(taskhir.operation("تسخير_خادم", { name: c.name, mother: c.mother, when: c.now, lat: c.lat, lon: c.lon })); } catch (e) { return `<div class="warn">${esc(e.message)}</div>`; } })()}
     <div class="grid wide">

@@ -1205,6 +1205,14 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok("houseFigureNafhat" in r && r.houseFigureIskandari && r.houseFigureIskandari.sign, "قراءةُ الرمل تحملُ شاهدَ نفحات الأسرار");
 }
 
+// ── السرّ المظروف ──
+{
+  const abjad = (await import("../engines/abjad.js")).default;
+  const a = abjad.sirrMazruf("علي", "احمد"), b = abjad.sirrMazruf("علي", "احمد");
+  ok(a.zimam === "ا ل ا ح م ر ع ل ي ا ح م د" && JSON.stringify(a) === JSON.stringify(b), "السرّ المظروف: الزمام = الأحمر + علي + أحمد (مثالُ الكتاب ص٣–٤)، وحتميّ");
+  ok(a.names.every((n) => n.endsWith("ايل")) && a.names.length === 5 && a.rows.length > 1, "١٣ حرفًا (فرد) ⇒ خمسةُ أسماءٍ ثلاثيّة + ايل، والتكسيرُ يعودُ إلى الزمام");
+}
+
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
 {
   const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");

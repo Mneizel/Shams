@@ -27,6 +27,7 @@ import {
   AYQANIYYA, ELEMENT_FRIENDSHIP,
 } from "../data/huruf-tibb.data.js";
 import * as ASM_AZAM from "../data/asm-azam.data.js";
+import * as MZ from "../data/sirr-mazruf.data.js";
 import { LETTER_AILMENTS_MORE, SANUSI_DAYS, DAY_SERVANT_CURE, GHAZALI_TIBB_SRC, SANUSI_SRC } from "../data/huruf-tibb-ghazali.data.js";
 
 // ── تطبيع ───────────────────────────────────────────────────────────────────
@@ -476,6 +477,44 @@ export function sanusiPrognosis(patientName, motherName, illnessDay) {
 }
 
 /**
+ * «السرّ المظروف» — الكيفيّةُ الأولى: (ملكٌ أرضيّ + الطالب + المطلوب) أحرفًا متفرّقة ⇒ تكسيرٌ «من آخرٍ إلى أوّل» (يُؤخذ الآخِرُ ثمّ
+ * الأوّلُ ثمّ ما قبلَ الآخِر…) حتّى يعودَ الزمام ⇒ أسماءٌ من السطر الأوّل (ثلاثيّةٌ، أو رباعيّةٌ إن كان العددُ زوجًا) + «ايل» ⇒
+ * العنصرُ الغالب في حروف الأسماء ⇒ موضعُ الطلسم. إعادةُ بناءٍ حتميّةٌ لنصٍّ مقتضب: اتّجاهُ التكسير على ما فهمناه من عبارته.
+ */
+export function sirrMazruf(talib, matlub, opt = {}) {
+  const king = normalize(opt.king || "الاحمر");
+  const zimam = [...letters(king), ...letters(talib || ""), ...letters(matlub || "")];
+  const rot = (arr) => { const out = []; let i = 0, j = arr.length - 1; while (i <= j) { out.push(arr[j]); if (i !== j) out.push(arr[i]); i++; j--; } return out; };
+  const rows = [zimam];
+  let cur = zimam;
+  for (let k = 0; k < 200; k++) { cur = rot(cur); if (cur.join("") === zimam.join("")) break; rows.push(cur); }
+  const size = zimam.length % 2 === 0 ? 4 : 3;
+  const names = [];
+  for (let i = 0; i < zimam.length; i += size) {
+    let g = zimam.slice(i, i + size);
+    if (g.length < size) g = [...g, ...letters(king)].slice(0, size);
+    names.push(g.join("") + "ايل");
+  }
+  const counts = { نار: 0, هواء: 0, ماء: 0, تراب: 0 };
+  for (const ch of names.map((n) => n.slice(0, -3)).join("")) { const nat = natureOf(ch); if (counts[nat] != null) counts[nat]++; }
+  const max = Math.max(...Object.values(counts));
+  const top = Object.keys(counts).filter((k) => counts[k] === max);
+  const element = top.length === 1 ? top[0] : null;
+  return {
+    king, zimam: zimam.join(" "), rows: rows.map((r) => r.join(" ")), names, counts, element,
+    place: element ? MZ.ELEMENT_PLACE[element] : "تتعادلُ العناصرُ فلا موضعَ مرجَّحًا",
+    ink: MZ.INK, times: MZ.WORK_TIMES, busut: MZ.BUSUT, source: MZ.MAZRUF_SRC,
+    trace: [
+      `الزمام = ${king} + ${normalize(talib || "")} + ${normalize(matlub || "")} = ${zimam.length} حرفًا`,
+      `التكسير من آخرٍ إلى أوّل حتّى عاد الزمام بعد ${rows.length} أسطر`,
+      `${size === 4 ? "العددُ زوجٌ ⇒ أسماءٌ رباعيّة" : "العددُ فردٌ ⇒ أسماءٌ ثلاثيّة"} + «ايل»: ${names.join("، ")}`,
+      `العناصر في حروفها: ${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join("، ")}`,
+      "نفسُ الأسماء ⇒ نفسُ «الأسماء» المستخرجة دائمًا: ترتيبُ حروفٍ لا غير.",
+    ],
+  };
+}
+
+/**
  * «كتابُ اسمِ اللهِ الأعظمِ» — الإطارُ المرجعيّ (البسطان، الأحدَ عشرَ اسمًا، طريقةُ
  * الكعبِ ومثالُها، جدولُ خدّامِ الأيّام) [السحر العظيم، القسم الثاني، ص ٩٨–١١٣].
  * وإن مُرِّرَ اسمٌ: بسطُه وعددُ حروفِه و«كعبُه» (n²) — الخطوةُ الآليّةُ الممكنة.
@@ -516,6 +555,7 @@ export default {
   letters,
   letterMedicine,
   sanusiPrognosis,
+  sirrMazruf,
   letterValue,
   saghir,
   digitalRoot,

@@ -5505,6 +5505,53 @@ const SOURCES_META = {
 };
 
 ;__exports["FIGURES"]=FIGURES;__exports["HOUSES"]=HOUSES;__exports["TASKIN16_EXTRA"]=TASKIN16_EXTRA;__exports["HOUSE_MNEMONIC"]=HOUSE_MNEMONIC;__exports["HOUSES16"]=HOUSES16;__exports["HOUSES16_NOTE"]=HOUSES16_NOTE;__exports["TASKIN_METHODS"]=TASKIN_METHODS;__exports["HOUSE_ELEMENTS"]=HOUSE_ELEMENTS;__exports["ELEMENTS"]=ELEMENTS;__exports["ELEMENT_VICTORY"]=ELEMENT_VICTORY;__exports["ELEMENT_FRIENDS"]=ELEMENT_FRIENDS;__exports["PLANET_OPPOSITION"]=PLANET_OPPOSITION;__exports["FIGURE_IN_HOUSE_OVERRIDES"]=FIGURE_IN_HOUSE_OVERRIDES;__exports["TOPIC_HOUSE"]=TOPIC_HOUSE;__exports["HOUSE_ASPECTS"]=HOUSE_ASPECTS;__exports["SOURCES_META"]=SOURCES_META;return __exports;})();
+__M["sirr-mazruf.data"]=(function(){"use strict";const __exports={};
+// data/sirr-mazruf.data.js — محمّد الشافعيّ الحلوتيّ الحنفيّ، «السرّ المظروف في علم بسط الحروف» (مطبوع، ٣٠ ص؛
+// text/sources/hekma2/alsr). منه: البسوطُ الثلاثة، والمزجُ، والكيفيّةُ الأولى (ألفةٌ أو فرقةٌ بين اثنين): اسمُ ملكٍ أرضيٍّ
+// ثمّ الطالبُ ثمّ المطلوبُ أحرفًا متفرّقة، ثمّ تكسيرُها «من آخرٍ إلى أوّل» حتّى يظهرَ الزمام (السطرُ الأوّل)، ثمّ تُنظَمُ من
+// أوّلِ سطرٍ أسماءٌ ثلاثيّةٌ (أو رباعيّةٌ إن كانت الحروفُ زوجًا) ويُضافُ «ايل»، وما فضل أقلَّ من ذلك يُكمَّلُ من اسمِ الملك (ص٣–٤).
+// ثمّ يُنظَرُ أيُّ العناصرِ أكثرُ في حروفِ الأسماء: فالنارُ تُجعَلُ في النار، والهواءُ يُعلَّقُ في الهواء، والماءُ في الماء،
+// والترابُ يُدفَن (ص٤)؛ والأوقاتُ للأعمال (ص٤–٥).
+
+const MAZRUF_SRC = "السرّ المظروف في علم بسط الحروف — محمّد الشافعيّ الحلوتيّ";
+
+const BUSUT = [
+  { name: "بسطُ الرقم", how: "أن تضعَ الحروفَ على صورتِها: ا ب ج د…" },
+  { name: "بسطُ الحروف", how: "أن تضعَ الحروفَ كما تنطقُ بها: ا ل ف ب ا ج ي م… ومنه يُجمَعُ الأعوانُ من الخدّام الأرضيّة" },
+  { name: "البسطُ العدديّ", how: "أن تضعَ حروفَ العدد الذي تنطقُ به: ا ح د، ا ث ن ي ن… ومنه يُستخرَجُ القسمُ على الأعوان" },
+];
+
+const ELEMENT_PLACE = {
+  نار: "يُجعَلُ الطلسمُ في النار",
+  هواء: "يُجعَلُ الطلسمُ في الهواء (على نخلةٍ مثلًا)",
+  ماء: "يُجعَلُ الطلسمُ في الزير الذي يُشرَبُ منه، أو في ماءٍ يُرَشّ في المكان الذي يتخطّاه",
+  تراب: "يُدفَنُ الطلسم",
+};
+
+const INK = {
+  خير: "يُكتَبُ بمسكٍ وزعفرانٍ وماءِ وردٍ، ويُبخَّرُ بالعود والعنبر والندّ وما أشبهه",
+  شرّ: "يُكتَبُ في الرصاص والحديد والخزف بالمُرّ والصبر والحلتيت والزنجار، ويُبخَّرُ بالثوم والحنظل والكبريت",
+};
+
+// «فائدة في معرفة الأوقات للأعمال» (ص٤–٥)
+const WORK_TIMES = [
+  { work: "الوفق والمحبّة", time: "ساعةُ الزهرة ويومُها" },
+  { work: "القبولُ عند الناس", time: "ساعةُ عطارد يومَ الزهرة" },
+  { work: "القبولُ والإجلالُ عند الملوك", time: "يومُ الشمس وساعةُ الزهرة" },
+  { work: "العطفُ بين متحابَّين", time: "يومُ الزهرة وساعةُ القمر" },
+  { work: "الصلحُ بين الرجل وزوجته", time: "ساعةُ الزهرة يومَ المشتري" },
+  { work: "الجاهُ عند السلطان", time: "يومُ زحل والقمرُ مسعود، أو ساعةُ المشتري" },
+  { work: "الجاهُ والهيبةُ عند الناس", time: "ساعةُ الزهرة في يومها" },
+  { work: "الهيبةُ في النفوس", time: "يومُ المرّيخ وساعةُ المشتري" },
+  { work: "التهييجات", time: "ساعةُ المرّيخ من يوم الزهرة" },
+  { work: "الخصوماتُ والشرّ والبغضة", time: "ساعةُ عطارد من يوم المرّيخ" },
+  { work: "النقلةُ والخراب", time: "ساعةُ زحل من يوم زحل" },
+  { work: "العمارة", time: "ساعةُ عطارد من يوم القمر" },
+  { work: "جلبُ الآبق والهارب", time: "ساعةُ زحل من يوم المرّيخ" },
+  { work: "طردُ الهمّ", time: "ساعةُ زحل من يوم عطارد" },
+];
+
+;__exports["MAZRUF_SRC"]=MAZRUF_SRC;__exports["BUSUT"]=BUSUT;__exports["ELEMENT_PLACE"]=ELEMENT_PLACE;__exports["INK"]=INK;__exports["WORK_TIMES"]=WORK_TIMES;return __exports;})();
 __M["spirits.data"]=(function(){"use strict";const __exports={};
 // data/spirits.data.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -7375,6 +7422,7 @@ const {
   AYQANIYYA, ELEMENT_FRIENDSHIP,
 }=__M["huruf-tibb.data"];
 const ASM_AZAM=__M["asm-azam.data"];
+const MZ=__M["sirr-mazruf.data"];
 const { LETTER_AILMENTS_MORE, SANUSI_DAYS, DAY_SERVANT_CURE, GHAZALI_TIBB_SRC, SANUSI_SRC }=__M["huruf-tibb-ghazali.data"];
 
 // ── تطبيع ───────────────────────────────────────────────────────────────────
@@ -7824,6 +7872,44 @@ function sanusiPrognosis(patientName, motherName, illnessDay) {
 }
 
 /**
+ * «السرّ المظروف» — الكيفيّةُ الأولى: (ملكٌ أرضيّ + الطالب + المطلوب) أحرفًا متفرّقة ⇒ تكسيرٌ «من آخرٍ إلى أوّل» (يُؤخذ الآخِرُ ثمّ
+ * الأوّلُ ثمّ ما قبلَ الآخِر…) حتّى يعودَ الزمام ⇒ أسماءٌ من السطر الأوّل (ثلاثيّةٌ، أو رباعيّةٌ إن كان العددُ زوجًا) + «ايل» ⇒
+ * العنصرُ الغالب في حروف الأسماء ⇒ موضعُ الطلسم. إعادةُ بناءٍ حتميّةٌ لنصٍّ مقتضب: اتّجاهُ التكسير على ما فهمناه من عبارته.
+ */
+function sirrMazruf(talib, matlub, opt = {}) {
+  const king = normalize(opt.king || "الاحمر");
+  const zimam = [...letters(king), ...letters(talib || ""), ...letters(matlub || "")];
+  const rot = (arr) => { const out = []; let i = 0, j = arr.length - 1; while (i <= j) { out.push(arr[j]); if (i !== j) out.push(arr[i]); i++; j--; } return out; };
+  const rows = [zimam];
+  let cur = zimam;
+  for (let k = 0; k < 200; k++) { cur = rot(cur); if (cur.join("") === zimam.join("")) break; rows.push(cur); }
+  const size = zimam.length % 2 === 0 ? 4 : 3;
+  const names = [];
+  for (let i = 0; i < zimam.length; i += size) {
+    let g = zimam.slice(i, i + size);
+    if (g.length < size) g = [...g, ...letters(king)].slice(0, size);
+    names.push(g.join("") + "ايل");
+  }
+  const counts = { نار: 0, هواء: 0, ماء: 0, تراب: 0 };
+  for (const ch of names.map((n) => n.slice(0, -3)).join("")) { const nat = natureOf(ch); if (counts[nat] != null) counts[nat]++; }
+  const max = Math.max(...Object.values(counts));
+  const top = Object.keys(counts).filter((k) => counts[k] === max);
+  const element = top.length === 1 ? top[0] : null;
+  return {
+    king, zimam: zimam.join(" "), rows: rows.map((r) => r.join(" ")), names, counts, element,
+    place: element ? MZ.ELEMENT_PLACE[element] : "تتعادلُ العناصرُ فلا موضعَ مرجَّحًا",
+    ink: MZ.INK, times: MZ.WORK_TIMES, busut: MZ.BUSUT, source: MZ.MAZRUF_SRC,
+    trace: [
+      `الزمام = ${king} + ${normalize(talib || "")} + ${normalize(matlub || "")} = ${zimam.length} حرفًا`,
+      `التكسير من آخرٍ إلى أوّل حتّى عاد الزمام بعد ${rows.length} أسطر`,
+      `${size === 4 ? "العددُ زوجٌ ⇒ أسماءٌ رباعيّة" : "العددُ فردٌ ⇒ أسماءٌ ثلاثيّة"} + «ايل»: ${names.join("، ")}`,
+      `العناصر في حروفها: ${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join("، ")}`,
+      "نفسُ الأسماء ⇒ نفسُ «الأسماء» المستخرجة دائمًا: ترتيبُ حروفٍ لا غير.",
+    ],
+  };
+}
+
+/**
  * «كتابُ اسمِ اللهِ الأعظمِ» — الإطارُ المرجعيّ (البسطان، الأحدَ عشرَ اسمًا، طريقةُ
  * الكعبِ ومثالُها، جدولُ خدّامِ الأيّام) [السحر العظيم، القسم الثاني، ص ٩٨–١١٣].
  * وإن مُرِّرَ اسمٌ: بسطُه وعددُ حروفِه و«كعبُه» (n²) — الخطوةُ الآليّةُ الممكنة.
@@ -7864,6 +7950,7 @@ __exports.default = {
   letters,
   letterMedicine,
   sanusiPrognosis,
+  sirrMazruf,
   letterValue,
   saghir,
   digitalRoot,
@@ -7886,7 +7973,7 @@ __exports.default = {
   SOURCES,
 };
 
-;__exports["normalize"]=normalize;__exports["letters"]=letters;__exports["letterValue"]=letterValue;__exports["saghir"]=saghir;__exports["digitalRoot"]=digitalRoot;__exports["value"]=value;__exports["jummal"]=jummal;__exports["bast"]=bast;__exports["taksirBasit"]=taksirBasit;__exports["taksirMurakkab"]=taksirMurakkab;__exports["analyzeLetters"]=analyzeLetters;__exports["fromNameAndMother"]=fromNameAndMother;__exports["methods"]=methods;__exports["allMethods"]=allMethods;__exports["natureOf"]=natureOf;__exports["letterZodiac"]=letterZodiac;__exports["letterCorrespondences"]=letterCorrespondences;__exports["analyze"]=analyze;__exports["nameBattle"]=nameBattle;__exports["letterMedicine"]=letterMedicine;__exports["sanusiPrognosis"]=sanusiPrognosis;__exports["bookOfNames"]=bookOfNames;__exports["SOURCES"]=SOURCES;__exports["AYQANIYYA_GROUPS"]=AYQANIYYA_GROUPS;return __exports;})();
+;__exports["normalize"]=normalize;__exports["letters"]=letters;__exports["letterValue"]=letterValue;__exports["saghir"]=saghir;__exports["digitalRoot"]=digitalRoot;__exports["value"]=value;__exports["jummal"]=jummal;__exports["bast"]=bast;__exports["taksirBasit"]=taksirBasit;__exports["taksirMurakkab"]=taksirMurakkab;__exports["analyzeLetters"]=analyzeLetters;__exports["fromNameAndMother"]=fromNameAndMother;__exports["methods"]=methods;__exports["allMethods"]=allMethods;__exports["natureOf"]=natureOf;__exports["letterZodiac"]=letterZodiac;__exports["letterCorrespondences"]=letterCorrespondences;__exports["analyze"]=analyze;__exports["nameBattle"]=nameBattle;__exports["letterMedicine"]=letterMedicine;__exports["sanusiPrognosis"]=sanusiPrognosis;__exports["sirrMazruf"]=sirrMazruf;__exports["bookOfNames"]=bookOfNames;__exports["SOURCES"]=SOURCES;__exports["AYQANIYYA_GROUPS"]=AYQANIYYA_GROUPS;return __exports;})();
 __M["asma-khuddam"]=(function(){"use strict";const __exports={};
 // engines/asma-khuddam.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25610,6 +25697,15 @@ PANELS.asma = (main) => {
       vs: [`«اسمك تحت ${esc(r.planet.name)}، خادمك ${esc(r.servant.derivedServantName)}، يومك ${esc(r.timing.day)}.»`,
         `${AR(r.values.total)} = جُمّل الاسم + جُمّل الأمّ\nقسمةٌ على ٤ و٧ و١٢ و٢٨ ⇒ فهرسةٌ في جداول ثابتة.`]
     })}</div>
+    <div class="grid wide">${(() => { const mz = abjad.sirrMazruf(c.name, c.mother); return card({
+      title: "أسماءُ الخدّام بطريقة «السرّ المظروف»", k: mz.element ? `الغالب: ${esc(mz.element)}` : "متعادل",
+      body: `<div class="kv">الزمام (ملكٌ أرضيّ + اسمك + اسم أمّك): <span class="mono">${esc(mz.zimam)}</span></div>
+        <div class="big" style="font-size:1.05rem;margin:.4rem 0">${mz.names.map(esc).join(" · ")}</div>
+        <div class="kv"><b>الموضع:</b> ${esc(mz.place)}. <b>للخير:</b> ${esc(mz.ink["خير"])}.</div>
+        <div class="gloss" style="margin-top:.3rem">في الكتاب يوضعُ اسمُ المطلوب مكانَ اسم الأمّ (ألفةٌ أو فرقةٌ بين اثنين)؛ هنا بالبطاقة.</div>`,
+      basis: `${esc(mz.source)}، ص٣–٥: تكسيرٌ «من آخرٍ إلى أوّل» حتّى يظهرَ الزمام (${AR(mz.rows.length)} أسطر)، ثمّ نظمُ الأسماء من السطر الأوّل.`,
+      reveal: traceText(mz.trace) + "\n\nأسطرُ التكسير:\n" + mz.rows.join("\n") + "\n\nأوقاتُ الأعمال:\n" + mz.times.map((t) => `• ${t.work}: ${t.time}`).join("\n"),
+    }); })()}</div>
     <h2>كيف تسخّر خادمَك هذا وتستفيد منه — العملُ كاملًا</h2>
     ${(() => { try { return taskhirOpFullHTML(taskhir.operation("تسخير_خادم", { name: c.name, mother: c.mother, when: c.now, lat: c.lat, lon: c.lon })); } catch (e) { return `<div class="warn">${esc(e.message)}</div>`; } })()}
     <div class="grid wide">
