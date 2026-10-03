@@ -1299,6 +1299,14 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(t.ratio != null && t.ratio > 0.7 && t.ratio < 1.3, "الإبهام: سُلامَيان متقاربتان ⇒ لا حكمَ بكِبَرٍ ولا صِغَر");
 }
 
+// ── بطليموس م٣ ف١٢: الآفات والأمراض ──
+{
+  const [falakM, bodyM] = await Promise.all([import("../engines/falak.js"), import("../engines/body.js")]);
+  const s = falakM.default.snapshot(new Date(Date.UTC(1991, 10, 9, 2, 35)), 31.9539, 35.9106);
+  const a = bodyM.default.ailments(s);
+  ok(a.hits.length === 1 && a.hits[0].malefic === "زحل" && a.hits[0].how === "تربيع" && a.hits[0].part.includes("الكليتان"), "زحلُ يربّعُ الطالع (الميزان ⇒ الكليتان وأسفلُ الظهر) — محورُ الطالع والغارب يُعَدُّ مرّةً واحدة");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

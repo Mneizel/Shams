@@ -353,7 +353,7 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees, bodyForm: bodyM.form(sky), dalil: dr, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
+    nameSign, degrees, bodyForm: bodyM.form(sky), dalil: dr, ailments: bodyM.ailments(sky), birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,

@@ -1382,7 +1382,41 @@ const LILLY_FACE = {
   plain: { signs: ["الثور", "السرطان", "العقرب", "الحوت"], half2: ["الحمل", "الأسد"], text: "تدلُّ على قلّةِ حُسنٍ في الوجه." },
 };
 
-;__exports["PTOLEMY_FORM_SRC"]=PTOLEMY_FORM_SRC;__exports["LILLY_FORM_SRC"]=LILLY_FORM_SRC;__exports["PLANET_FORM"]=PLANET_FORM;__exports["QUADRANT_FORM"]=QUADRANT_FORM;__exports["SIGN_SHAPE"]=SIGN_SHAPE;__exports["LILLY_STATURE"]=LILLY_STATURE;__exports["LILLY_BUILD"]=LILLY_BUILD;__exports["LILLY_FACE"]=LILLY_FACE;return __exports;})();
+// ── بطليموس م٣ ف١٢ «في آفات البدن وأمراضه» ──
+const PTOLEMY_DISEASE_SRC = "بطليموس، الأربع مقالات م٣ ف١٢ (ترجمة Robbins)";
+// الكواكبُ وأعضاؤها
+const PLANET_PARTS = {
+  زحل: "الأذنُ اليمنى والطحالُ والمثانةُ والبلغمُ والعظام",
+  المشتري: "اللمسُ والرئتان والشرايين والمنيّ",
+  المريخ: "الأذنُ اليسرى والكليتان والعروقُ والأعضاءُ التناسليّة",
+  الشمس: "البصرُ والدماغُ والقلبُ والأعصابُ وكلُّ الجهةِ اليمنى",
+  الزهرة: "الشمُّ والكبدُ واللحم",
+  عطارد: "النطقُ والفكرُ واللسانُ والصفراء",
+  القمر: "الذوقُ والمعدةُ والبطنُ والرحمُ وكلُّ الجهةِ اليسرى",
+};
+// ما يُحدثُه النحسان من الأمراض (حين يكونان مغرِّبين؛ وحين يكونان مشرِّقين فالآفاتُ العارضةُ أكثر)
+const MALEFIC_DISEASE = {
+  زحل: "برودةُ البطن وكثرةُ البلغم والروماتيزم والهزالُ والضعف والصفار، والإسهالُ والسعالُ والمغص",
+  المريخ: "نفثُ الدم والسوداويّة وضعفُ الرئتين والحكّة، والبواسيرُ والقروحُ والأورامُ الحارّة",
+};
+const DISEASE_SIGNS = {
+  skin: { signs: ["السرطان", "الجدي", "الحوت"], text: "السرطانُ والجديُ والحوت (والبروجُ الترابيّةُ والمائيّة) تُحدثُ أمراضَ الجلد كالقروح والقشور" },
+  fits: { signs: ["القوس", "الجوزاء"], text: "القوسُ والجوزاءُ لما يأتي بنوباتٍ ودوار" },
+};
+const BENEFIC_RELIEF = {
+  yes: "وإذا نظر السعدان إلى النحسين أو كانا أقوى منهما كانت الآفاتُ غيرَ مشوِّهة، والأمراضُ معتدلةً تستجيبُ للعلاج",
+  no: "ولا ينظرُ سعدٌ إلى النحسِ المسبِّب، فهو عند بطليموس أطولُ وأصعب",
+};
+
+// أعضاءُ البروج (الثمرة، الكلمة ٢٩ وشرحها؛ وهو المشهور عند المنجّمين)
+const THAMARA_PARTS_SRC = "كتاب الثمرة، الكلمة ٢٩ وشرحها";
+const SIGN_PARTS = {
+  الحمل: "الرأسُ والوجه", الثور: "الرقبةُ والحلق", الجوزاء: "المنكبان واليدان", السرطان: "الصدرُ والقلبُ والمعدة",
+  الأسد: "الظهرُ والقلب", السنبلة: "البطنُ والأمعاء", الميزان: "الكليتان وأسفلُ الظهر", العقرب: "الأعضاءُ التناسليّةُ والمثانة",
+  القوس: "الفخذان والوركان", الجدي: "الركبتان", الدلو: "الساقان", الحوت: "القدمان",
+};
+
+;__exports["PTOLEMY_FORM_SRC"]=PTOLEMY_FORM_SRC;__exports["LILLY_FORM_SRC"]=LILLY_FORM_SRC;__exports["PLANET_FORM"]=PLANET_FORM;__exports["QUADRANT_FORM"]=QUADRANT_FORM;__exports["SIGN_SHAPE"]=SIGN_SHAPE;__exports["LILLY_STATURE"]=LILLY_STATURE;__exports["LILLY_BUILD"]=LILLY_BUILD;__exports["LILLY_FACE"]=LILLY_FACE;__exports["PTOLEMY_DISEASE_SRC"]=PTOLEMY_DISEASE_SRC;__exports["PLANET_PARTS"]=PLANET_PARTS;__exports["MALEFIC_DISEASE"]=MALEFIC_DISEASE;__exports["DISEASE_SIGNS"]=DISEASE_SIGNS;__exports["BENEFIC_RELIEF"]=BENEFIC_RELIEF;__exports["THAMARA_PARTS_SRC"]=THAMARA_PARTS_SRC;__exports["SIGN_PARTS"]=SIGN_PARTS;return __exports;})();
 __M["chapters.data"]=(function(){"use strict";const __exports={};
 // data/chapters.data.js
 // خريطة أبواب شمس المعارف الكبرى موضوعيًّا، وربط كل باب بالمحرّك الذي يطبّقه.
@@ -9140,9 +9174,41 @@ function form(sky) {
   return { sign, ...out, agree, src: [BF.PTOLEMY_FORM_SRC, BF.LILLY_FORM_SRC] };
 }
 
-__exports.default = { form };
+/** بطليموس م٣ ف١٢: النحسان (زحل والمريخ) على الطالع أو الغارب أو البيت السادس (البرجُ السابقُ للغارب) جسدًا أو تربيعًا أو مقابلة
+ *  ⇒ آفةٌ أو مرضٌ في العضو الذي يدلُّ عليه برجُ ذلك الموضع، من جنسِ طبعِ النحس؛ ونظرُ السعدين يخفّفه. */
+function ailments(sky) {
+  const asc = sky.ascendant.longitude;
+  const SIGNS = ["الحمل", "الثور", "الجوزاء", "السرطان", "الأسد", "السنبلة", "الميزان", "العقرب", "القوس", "الجدي", "الدلو", "الحوت"];
+  const signAt = (lon) => SIGNS[Math.floor((((lon % 360) + 360) % 360) / 30)];
+  const places = [{ name: "الطالع", lon: asc }, { name: "الغارب", lon: asc + 180 }, { name: "البيتُ السادس", lon: asc + 150 }];
+  const hits = [];
+  for (const mal of ["زحل", "المريخ"]) {
+    const ml = sky.planets[mal].longitude;
+    for (const pl of places) {
+      const d = Math.abs(((ml - pl.lon) % 360 + 540) % 360 - 180); // 0..180 بعدٌ عن المقابلة
+      const sep = 180 - d; // البعدُ الحقيقيّ
+      const kind = sep <= 8 ? "مقارنة" : Math.abs(sep - 90) <= 8 ? "تربيع" : Math.abs(sep - 180) <= 8 ? "مقابلة" : null;
+      const inPlace = pl.name === "البيتُ السادس" && signAt(ml) === signAt(pl.lon);
+      // تربيعُ الطالع هو تربيعُ الغاربِ نفسُه (محورٌ واحد) ⇒ لا يُعَدُّ مرّتين
+      if (kind === "تربيع" && pl.name === "الغارب" && hits.some((x) => x.malefic === mal && x.how === "تربيع")) continue;
+      if (kind || inPlace) {
+        const sg = signAt(pl.lon);
+        const oo = sky.orientalOccidental?.[mal]?.side || "";
+        hits.push({ malefic: mal, place: pl.name, how: inPlace && !kind ? "فيه" : kind, sign: sg, part: BF.SIGN_PARTS[sg],
+          nature: BF.MALEFIC_DISEASE[mal], planetParts: BF.PLANET_PARTS[mal], injury: /مشرِّق/.test(oo) });
+      }
+    }
+  }
+  const benefic = ["المشتري", "الزهرة"].some((b) => hits.some((hh) => (sky.aspects || []).some((x) => (x.a === b && x.b === hh.malefic) || (x.b === b && x.a === hh.malefic))));
+  const ascSign = sky.ascendant.sign;
+  const extra = Object.values(BF.DISEASE_SIGNS).filter((x) => hits.some((hh) => x.signs.includes(hh.sign))).map((x) => x.text);
+  return { hits, relief: hits.length ? (benefic ? BF.BENEFIC_RELIEF.yes : BF.BENEFIC_RELIEF.no) : null, extra,
+    ascPart: { sign: ascSign, part: BF.SIGN_PARTS[ascSign], src: BF.THAMARA_PARTS_SRC }, src: BF.PTOLEMY_DISEASE_SRC };
+}
 
-;__exports["form"]=form;return __exports;})();
+__exports.default = { form, ailments };
+
+;__exports["form"]=form;__exports["ailments"]=ailments;return __exports;})();
 __M["corpus.data"]=(function(){"use strict";const __exports={};
 // مُولَّد آليًّا عبر tools/build-corpus.js — لا تُحرّره يدويًّا.
 // مصدران: نصّ الشاملة المكتوب (2483 مقطع، دقيق) + نسخ OCR (4423 مقطع، تقاطعيّ).
@@ -21052,7 +21118,7 @@ function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees, bodyForm: bodyM.form(sky), dalil: dr, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
+    nameSign, degrees, bodyForm: bodyM.form(sky), dalil: dr, ailments: bodyM.ailments(sky), birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
@@ -27085,7 +27151,7 @@ function halHTML(r) {
         <div class="kv"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
         <div class="gloss">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
       basis: r.bodyForm.src.map(esc).join(" · ") }) : ""}
-    ${r.body.length ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
+    ${(r.body.length || (r.ailments && (r.ailments.hits.length || r.ailments.ascPart))) ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: (r.ailments ? `${r.ailments.hits.map((x) => `<div class="kv" style="margin:.3rem 0"><b>قال بطليموس:</b> ${esc(x.malefic)} ${esc(x.how === "فيه" ? "في" : x.how)} ${esc(x.place)} (${esc(x.sign)}) ⇒ قد يتعبُ <b>${esc(x.part)}</b>، ومن جنسِ ${esc(x.malefic)}: ${esc(x.nature)}. <span class="gloss">${x.injury ? "النحسُ مشرِّق: الغالبُ آفةٌ عارضةٌ لا مرضٌ مزمن" : "النحسُ مغرِّب: الغالبُ مرضٌ يطولُ أو يعاود"} — ${esc(r.ailments.src)}</span></div>`).join("")}${r.ailments.hits.length ? `<div class="kv" style="margin:.3rem 0">${esc(r.ailments.relief)}.</div>` : `<div class="kv" style="margin:.3rem 0">لا يقعُ نحسٌ على الطالع ولا الغارب ولا السادس عند بطليموس.</div>`}<div class="kv" style="margin:.3rem 0">وطالعُك ${esc(r.ailments.ascPart.sign)} ويحكمُ من البدن <b>${esc(r.ailments.ascPart.part)}</b>. <span class="gloss">— ${esc(r.ailments.ascPart.src)}</span></div>` : "") + r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
       <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}

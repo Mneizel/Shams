@@ -47,4 +47,36 @@ export function form(sky) {
   return { sign, ...out, agree, src: [BF.PTOLEMY_FORM_SRC, BF.LILLY_FORM_SRC] };
 }
 
-export default { form };
+/** بطليموس م٣ ف١٢: النحسان (زحل والمريخ) على الطالع أو الغارب أو البيت السادس (البرجُ السابقُ للغارب) جسدًا أو تربيعًا أو مقابلة
+ *  ⇒ آفةٌ أو مرضٌ في العضو الذي يدلُّ عليه برجُ ذلك الموضع، من جنسِ طبعِ النحس؛ ونظرُ السعدين يخفّفه. */
+export function ailments(sky) {
+  const asc = sky.ascendant.longitude;
+  const SIGNS = ["الحمل", "الثور", "الجوزاء", "السرطان", "الأسد", "السنبلة", "الميزان", "العقرب", "القوس", "الجدي", "الدلو", "الحوت"];
+  const signAt = (lon) => SIGNS[Math.floor((((lon % 360) + 360) % 360) / 30)];
+  const places = [{ name: "الطالع", lon: asc }, { name: "الغارب", lon: asc + 180 }, { name: "البيتُ السادس", lon: asc + 150 }];
+  const hits = [];
+  for (const mal of ["زحل", "المريخ"]) {
+    const ml = sky.planets[mal].longitude;
+    for (const pl of places) {
+      const d = Math.abs(((ml - pl.lon) % 360 + 540) % 360 - 180); // 0..180 بعدٌ عن المقابلة
+      const sep = 180 - d; // البعدُ الحقيقيّ
+      const kind = sep <= 8 ? "مقارنة" : Math.abs(sep - 90) <= 8 ? "تربيع" : Math.abs(sep - 180) <= 8 ? "مقابلة" : null;
+      const inPlace = pl.name === "البيتُ السادس" && signAt(ml) === signAt(pl.lon);
+      // تربيعُ الطالع هو تربيعُ الغاربِ نفسُه (محورٌ واحد) ⇒ لا يُعَدُّ مرّتين
+      if (kind === "تربيع" && pl.name === "الغارب" && hits.some((x) => x.malefic === mal && x.how === "تربيع")) continue;
+      if (kind || inPlace) {
+        const sg = signAt(pl.lon);
+        const oo = sky.orientalOccidental?.[mal]?.side || "";
+        hits.push({ malefic: mal, place: pl.name, how: inPlace && !kind ? "فيه" : kind, sign: sg, part: BF.SIGN_PARTS[sg],
+          nature: BF.MALEFIC_DISEASE[mal], planetParts: BF.PLANET_PARTS[mal], injury: /مشرِّق/.test(oo) });
+      }
+    }
+  }
+  const benefic = ["المشتري", "الزهرة"].some((b) => hits.some((hh) => (sky.aspects || []).some((x) => (x.a === b && x.b === hh.malefic) || (x.b === b && x.a === hh.malefic))));
+  const ascSign = sky.ascendant.sign;
+  const extra = Object.values(BF.DISEASE_SIGNS).filter((x) => hits.some((hh) => x.signs.includes(hh.sign))).map((x) => x.text);
+  return { hits, relief: hits.length ? (benefic ? BF.BENEFIC_RELIEF.yes : BF.BENEFIC_RELIEF.no) : null, extra,
+    ascPart: { sign: ascSign, part: BF.SIGN_PARTS[ascSign], src: BF.THAMARA_PARTS_SRC }, src: BF.PTOLEMY_DISEASE_SRC };
+}
+
+export default { form, ailments };
