@@ -1338,6 +1338,12 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(mc > 115 && mc < 125, "وسطُ السماء في الميلاد ≈ ١٢٠° (الأسد) لطالعِ الميزان في عمّان");
   ok(arif.tasyir(skyN, 34).some((v) => /تسييرُ سهم السعادة بلغ تربيعَ زحل/.test(v.why) && v.s < 0 && v.topics.includes("money")) && arif.tasyir(skyN, 30).length === 0, "التسيير (الثمرة ٧٩): في الرابعة والثلاثين يبلغُ سهمُ السعادة تربيعَ زحل ⇒ ضيقٌ في المال");
   ok(a.months.some((m) => m.voices.some((v) => /^تسييرُ/.test(v.why))), "أصواتُ التسيير تدخلُ الخطَّ الزمنيّ");
+  const fr = arif.read({ ...C, sex: "f" });
+  ok(Object.values(fr.months.find((m) => m.now).advice).every((x) => /ي |ِ|ي\./.test(x) || /تابعي|تبدئي|أنجزي/.test(x)), "النصيحةُ للمرأة بصيغة المؤنّث");
+  ok(!/محبوسٌ —/.test(arif.ask({ ...C, sex: "f" }, "هل أتزوج؟").text), "جملةُ التوقيت في جواب السؤال سليمة");
+  ok(a.turning.some((t) => /^تحويلُ سنة/.test(t.why)), "بدايةُ سنةِ التحويل الواضحة نقطةُ تحوّل");
+  const per = a.months.find((m) => m.now).voices.filter((v) => v.fam === "periods");
+  ok(per.every((v) => v.meth) && new Set(per.map((v) => v.meth)).size >= 2, "داخلَ العائلة لكلِّ طريقةٍ صوتٌ واحد (التحويلُ لا يطغى بكثرةِ أحكامِه)");
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

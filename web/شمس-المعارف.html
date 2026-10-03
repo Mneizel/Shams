@@ -21193,6 +21193,7 @@ const jafr=__M["jafr"].default;
 const AE=__M["astronomy-engine"];
 const { birthNumber }=__M["hal"];
 const { PLANET_GOVERNS }=__M["falak-ahkam.data"];
+const { AGES }=__M["ages-ptolemy.data"];
 
 const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 const FAMILIES = { periods: "أزمنةُ العمر", sky: "مرورُ الكواكب", numbers: "علمُ الأرقام", name: "الاسم", divination: "الرملُ والجفر", question: "لحظةُ السؤال" };
@@ -21348,23 +21349,23 @@ function abjadDate(n) {
 function monthVoices(ctx, y, m) {
   const date = new Date(Date.UTC(y, m, 15, 12));
   const V = [];
-  const push = (fam, s, plain, why, topics = ["all"]) => { if (s !== 0 || plain) V.push({ fam, s, plain, why, topics }); };
+  const push = (fam, s, plain, why, topics = ["all"], meth = fam) => { if (s !== 0 || plain) V.push({ fam, meth, s, plain, why, topics }); };
   // ١) أزمنةُ العمر
   if (date > ctx.birth) {
     const F = falak.firdaria(ctx.birth, date, { byNight: ctx.byNight });
     const maj = NATURE[F.majorLord] ?? 0, min = NATURE[F.minorLord] ?? 0;
     const sF = Math.max(-1, Math.min(1, 0.45 * maj + 0.55 * min));
     push("periods", sF, sF <= -0.5 ? "تعبٌ وتأخيرٌ في الأمور" : sF >= 0.5 ? "خفّةٌ وتيسيرٌ في الحال" : sF < 0 ? "شيءٌ من الثقل" : sF > 0 ? "شيءٌ من التيسير" : "",
-      `الفترةُ الكبرى لـ${F.majorLord} والصغرى لـ${F.minorLord} (${PLANET_GOVERNS[F.minorLord] || ""})`);
+      `الفترةُ الكبرى لـ${F.majorLord} والصغرى لـ${F.minorLord} (${PLANET_GOVERNS[F.minorLord] || ""})`, ["all"], "firdaria");
     const P = falak.annualProfection(ctx.birth, date, ctx.sky.ascendant.longitude);
     const sP = NATURE[P.yearLord] ?? 0;
-    push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"]);
+    push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"], "profection");
   }
   // ١أ) التسيير: درجةٌ لكلِّ سنةٍ من العمر
-  if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics);
+  if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics, "tasyir");
   // ١ب) تحويلُ السنة التي يقعُ فيها هذا الشهر
   const rv = [...ctx.revs].reverse().find((r) => r.when <= date);
-  if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics);
+  if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics, "revolution");
   // ٢) مرورُ الكواكب على الخريطة
   const pos = falak.planetPositions(date);
   const J = pos["المشتري"].longitude, S = pos["زحل"].longitude, M = pos["المريخ"].longitude;
@@ -21382,12 +21383,12 @@ function monthVoices(ctx, y, m) {
     if (dm < 0 || dm > 2) continue;
     for (const pt of ctx.points.filter((q) => ["asc", "sun", "moon"].includes(q.key))) {
       const asp = aspectOf(e.lon, pt.lon, 5);
-      if (asp === "conj" || asp === "opp") push("sky", -1, "تغيّرٌ مفاجئٌ أو انقلابٌ في أمر", `${e.kind === "solar" ? "كسوفٌ للشمس" : "خسوفٌ للقمر"} ${asp === "conj" ? "على" : "مقابلَ"} ${pt.ar} (${e.date.toISOString().slice(0, 10)})`, pt.topics);
+      if (asp === "conj" || asp === "opp") push("sky", -1, "تغيّرٌ مفاجئٌ أو انقلابٌ في أمر", `${e.kind === "solar" ? "كسوفٌ للشمس" : "خسوفٌ للقمر"} ${asp === "conj" ? "على" : "مقابلَ"} ${pt.ar} (${e.date.toISOString().slice(0, 10)})`, pt.topics, "eclipse");
     }
   }
   const hJ = ((signIdx(J) - ctx.ascIdx + 12) % 12) + 1, hS = ((signIdx(S) - ctx.ascIdx + 12) % 12) + 1;
-  if (HOUSE_PLAIN.jup[hJ]) push("sky", 0.5, HOUSE_PLAIN.jup[hJ], `المشتري في بيتِك ${hJ}`, HOUSE_TOPIC[hJ] || ["all"]);
-  if (HOUSE_PLAIN.sat[hS]) push("sky", -0.5, HOUSE_PLAIN.sat[hS], `زحل في بيتِك ${hS}`, HOUSE_TOPIC[hS] || ["all"]);
+  if (HOUSE_PLAIN.jup[hJ]) push("sky", 0.5, HOUSE_PLAIN.jup[hJ], `المشتري في بيتِك ${hJ}`, HOUSE_TOPIC[hJ] || ["all"], "house");
+  if (HOUSE_PLAIN.sat[hS]) push("sky", -0.5, HOUSE_PLAIN.sat[hS], `زحل في بيتِك ${hS}`, HOUSE_TOPIC[hS] || ["all"], "house");
   // ٢ب) الرملُ والجفر: «طالعُ الشهر» — ضربُ الرمل لأوّلِ الشهر، والجفرُ لاسمِ الشهرِ وسنتِه بالجُمّل (عائلةٌ واحدة)
   if (ctx.name && ctx.mother) {
     const first = new Date(Date.UTC(y, m, 1, 12));
@@ -21395,12 +21396,12 @@ function monthVoices(ctx, y, m) {
     try {
       const rr = raml.reading({ name: ctx.name, mother: ctx.mother, question: ask0, when: first });
       const s = (rr.score ?? 0) > 0.5 ? 1 : (rr.score ?? 0) < -0.5 ? -1 : 0;
-      if (s) push("divination", s, s > 0 ? "تيسيرٌ وقبول" : "تعسّرٌ وتعطيل", `الرمل لأوّلِ الشهر: ${rr.house?.figure?.ar || ""} — ${rr.verdict}`);
+      if (s) push("divination", s, s > 0 ? "تيسيرٌ وقبول" : "تعسّرٌ وتعطيل", `الرمل لأوّلِ الشهر: ${rr.house?.figure?.ar || ""} — ${rr.verdict}`, ["all"], "raml");
     } catch {}
     try {
       const jj = jafr.extractAnswer(ask0, { name: ctx.name, mother: ctx.mother });
       const s = jj?.verdict?.direction === "نعم" ? 0.8 : jj?.verdict?.direction === "لا" ? -0.8 : 0;
-      if (s) push("divination", s, s > 0 ? "الأمورُ تنفتح" : "الأمورُ تنغلقُ قليلًا", `الجفر («${ask0}»): ${jj.verdict.text}`);
+      if (s) push("divination", s, s > 0 ? "الأمورُ تنفتح" : "الأمورُ تنغلقُ قليلًا", `الجفر («${ask0}»): ${jj.verdict.text}`, ["all"], "jafr");
     } catch {}
   }
   // ٣) علمُ الأرقام
@@ -21425,10 +21426,11 @@ function scoreFor(V, topic = "all", weights = {}) {
   for (const v of V) {
     const w = v.topics.includes(topic) ? 1 : topic === "all" ? 0.5 : (v.topics.includes("all") ? 0.5 : 0);
     if (!w) continue;
-    (fam[v.fam] = fam[v.fam] || []).push(v.s * w);
+    const f = (fam[v.fam] = fam[v.fam] || {}); (f[v.meth || v.fam] = f[v.meth || v.fam] || []).push(v.s * w);
   }
+  const avg = (a) => a.reduce((p, c) => p + c, 0) / a.length;
   let total = 0;
-  for (const [f, a] of Object.entries(fam)) total += (a.reduce((p, c) => p + c, 0) / a.length) * (weights[f] ?? 1);
+  for (const [f, meths] of Object.entries(fam)) total += avg(Object.values(meths).map(avg)) * (weights[f] ?? 1);
   return Math.round(total * 100) / 100;
 }
 const level = (s) => s >= 1.2 ? "ممتاز" : s >= 0.45 ? "جيّد" : s <= -1.2 ? "صعب" : s <= -0.45 ? "ثقيل" : "عاديّ";
@@ -21447,7 +21449,7 @@ function monthText(V, topic, s) {
 }
 // جرُّ المثنّى بعد «إلى»
 const gen = (t) => (t || "").replace(/الكليتان/g, "الكليتين").replace(/المنكبان/g, "المنكبين").replace(/اليدان/g, "اليدين").replace(/الفخذان/g, "الفخذين").replace(/الوركان/g, "الوركين").replace(/الركبتان/g, "الركبتين").replace(/الساقان/g, "الساقين").replace(/القدمان/g, "القدمين").replace(/أسفلُ/g, "أسفلِ").replace(/الرأسُ/g, "الرأسِ").replace(/الرقبةُ/g, "الرقبةِ").replace(/الصدرُ/g, "الصدرِ").replace(/الظهرُ/g, "الظهرِ").replace(/البطنُ/g, "البطنِ").replace(/الأعضاءُ/g, "الأعضاءِ");
-const advice = (s) => s >= 0.45 ? "وقتٌ مناسبٌ لتبدأ ما أجّلتَه." : s <= -0.45 ? "لا تبدأ أمرًا كبيرًا هذا الشهر، وأنجزْ ما بين يديك." : "تابعْ ما بدأتَه دون استعجال.";
+const advice = (s, f) => s >= 0.45 ? (f ? "وقتٌ مناسبٌ لتبدئي ما أجّلتِه." : "وقتٌ مناسبٌ لتبدأ ما أجّلتَه.") : s <= -0.45 ? (f ? "لا تبدئي أمرًا كبيرًا هذا الشهر، وأنجزي ما بين يديكِ." : "لا تبدأ أمرًا كبيرًا هذا الشهر، وأنجزْ ما بين يديك.") : (f ? "تابعي ما بدأتِه دون استعجال." : "تابعْ ما بدأتَه دون استعجال.");
 
 /** @param c {name, mother, sex, birth, birthDay, lat, lon, now} · opt {weights, past=12, future=36} */
 function timeline(c, opt = {}) {
@@ -21471,7 +21473,7 @@ function timeline(c, opt = {}) {
     months.push({ k, y, m, label: `${MONTHS[m]} ${y}`, past: k < 0, now: k === 0, voices: V, scores, yearNote,
       text: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, monthText(V, t, scores[t])])),
       level: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, level(scores[t])])),
-      advice: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, advice(scores[t])])) });
+      advice: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, advice(scores[t], c.sex === "f")])) });
   }
   return { months, ctx };
 }
@@ -21506,7 +21508,23 @@ function turningPoints(c, ctx, months) {
     const jup = mo.voices.find((v) => v.fam === "sky" && v.s === 1 && /المشتري يقارن (طالعِك|شمسِك)/.test(v.why));
     if (jup && !out.some((o) => o.k === mo.k - 1 && /المشتري/.test(o.why))) out.push({ k: mo.k, label: mo.label, text: "انفراجٌ وبابُ فرصة: من أقوى أشهرِك.", why: jup.why });
   }
-  return out.sort((a, b) => a.k - b.k).slice(0, 4);
+  // بدايةُ سنةِ التحويل إن كان حكمُها واضحًا
+  const fut = months.filter((x) => x.k >= 0);
+  for (const rv of ctx.revs || []) {
+    const mo = fut.find((x) => x.y === rv.when.getUTCFullYear() && x.m === rv.when.getUTCMonth());
+    if (!mo) continue;
+    const net = rv.voices.reduce((a, v) => a + v.s, 0);
+    if (Math.abs(net) >= 1) out.push({ k: mo.k, label: mo.label, text: net > 0 ? `تبدأ سنةٌ طيّبة: ${rv.voices.filter((v) => v.s > 0).map((v) => v.plain).slice(0, 2).join("، ")}.` : `تبدأ سنةٌ تحتاجُ حذرًا: ${rv.voices.filter((v) => v.s < 0).map((v) => v.plain).slice(0, 2).join("، ")}.`, why: `تحويلُ سنة ${rv.y} (طالعُه ${rv.asc})` });
+  }
+  // تبدّلُ مرحلةِ العمر عند بطليموس
+  for (const a of AGES) {
+    if (!a.from) continue;
+    const d = new Date(ctx.birth.getTime() + a.from * 365.2422 * 86400000);
+    const mo = fut.find((x) => x.y === d.getUTCFullYear() && x.m === d.getUTCMonth());
+    if (mo) out.push({ k: mo.k, label: mo.label, text: `تدخلُ مرحلةَ «${a.name}» من العمر: ${a.text.split("،").slice(0, 2).join("،")}.`, why: `أعمارُ بطليموس: يحكمُها ${a.planet}` });
+  }
+  const seen = new Set();
+  return out.sort((a, b) => a.k - b.k).filter((o) => { const key = o.k + o.why.slice(0, 8); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 6);
 }
 
 // أقربُ شهرٍ قادمٍ يتبدّلُ فيه حكمُ موضوعٍ تبدّلًا واضحًا
@@ -21603,8 +21621,11 @@ function ask(c, question, opt = {}) {
     { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${level(tl)}` },
   ];
   const sum = votes.reduce((a, v) => a + v.s, 0);
-  const big = sum >= 2 ? "يتمّ، والوقتُ في صالحك." : sum === 1 ? "يتمّ، لكن لا تستعجل." : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
-  const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${r.timing?.text ? `، وأوّلُ ما يظهرُ منه ${r.timing.text.replace("نحوَ", "بعد نحو")}` : ""}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? "وتجنّبْ" : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
+  const F_ = c.sex === "f";
+  const big = sum >= 2 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum === 1 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
+  const locked = /محبوس/.test(r.timing?.text || "");
+  const tStr = !locked && r.timing?.magnitude && r.timing?.unit ? `، وأوّلُ ما يظهرُ منه بعد نحو ${r.timing.magnitude} ${r.timing.unit}` : locked ? "، لكنّه لا يظهرُ قريبًا" : "";
+  const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
   return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
