@@ -1245,6 +1245,20 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(aff && new Set(aff.lines.map((l) => ({ am_asc: "asc", asc_degree: "asc", th_social: "asc", name_sign: "name" })[l] || l)).size >= 2, "طبعُ الطالع (أبو معشر) والثمرة من عائلةٍ واحدة: لا يُعَدّان دليلين");
 }
 
+// ── قراءةُ المرأة ──
+{
+  const halM = (await import("../engines/hal.js")).default;
+  const { ASC_NATURE_WOMAN, NAME_SIGN_WOMAN, TRAITS_F } = await import("../data/hal-women.data.js");
+  const { TRAITS: TT4 } = await import("../data/hal-traits.data.js");
+  ok(Object.keys(ASC_NATURE_WOMAN).length === 12 && Object.keys(NAME_SIGN_WOMAN).length === 12 && [...Object.values(ASC_NATURE_WOMAN), ...Object.values(NAME_SIGN_WOMAN)].every((v) => v.page && v.traits.every((x) => TT4[x])), "أبوابُ النساء: ١٢ برجًا من أبي معشر و١٢ من كشف المكتوم، بصفحاتٍ وصفاتٍ معرَّفة");
+  ok(Object.keys(TT4).every((k) => TRAITS_F[k]), "لكلِّ صفةٍ صيغةُ المخاطَبة المؤنّثة");
+  const C = { name: "سميرة", mother: "فاطمة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), birthDay: 9, lat: 31.9539, lon: 35.9106 };
+  const m = halM.reading({ ...C, sex: "m" }), f = halM.reading({ ...C, sex: "f" });
+  const srcs = (r) => Object.values(r.groups).flatMap((g) => [...g.firm, ...g.single, ...g.sometimes]).flatMap((x) => x.evidence).map((e) => e.src).join("|");
+  ok(/مواليد النساء/.test(srcs(f)) && !/مواليد النساء/.test(srcs(m)), "الأنثى تأخذُ «مواليد النساء» والذكرُ لا");
+  ok(f.sex === "f" && Object.values(f.groups)[0].title.includes("كِ") && /ميلادِكِ/.test(f.summary), "النصُّ بصيغة المخاطَبة المؤنّثة");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

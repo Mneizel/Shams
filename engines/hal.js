@@ -23,6 +23,7 @@ import ak from "./asma-khuddam.js";
 import darj from "./darj.js";
 import * as CH from "../data/hal-cheiro.data.js";
 import * as TH from "../data/hal-thamara.data.js";
+import * as WM from "../data/hal-women.data.js";
 import * as AM from "../data/hal-abumashar.data.js";
 import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
@@ -254,12 +255,15 @@ export function reading(c) {
     if (sm) testify("sign", `${L.LILLY_SRC}، ف١٠٧`, sm.text, sm.traits);
   }
   for (const w of witTestimony(sky)) testify("wit", `${L.LILLY_SRC}، ف١٠٩`, w.text, w.traits);
-  const am = AM.ASC_NATURE[sky.ascendant.sign];
-  if (am) testify("am_asc", `${AM.ABUMASHAR_SRC}، ص ${am.page}`, am.text, am.traits);
+  // المرأة: «مواليد النساء» عند أبي معشر وبابُ «المرأة» في كشف المكتوم بدلَ أبواب الرجال
+  const female = c.sex === "f";
+  const am = female ? WM.ASC_NATURE_WOMAN[sky.ascendant.sign] : AM.ASC_NATURE[sky.ascendant.sign];
+  const amSrc = female ? `${AM.ABUMASHAR_SRC} — مواليد النساء` : AM.ABUMASHAR_SRC;
+  if (am) testify("am_asc", `${amSrc}، ص ${am.page}`, am.text, am.traits);
   // برجُ الاسم بالحساب (كما في بقيّةِ الموقع) ⇒ فصلُ «الرجل» من كشف المكتوم — مصدرٌ ثانويٌّ معاصر
   let nameSign = null;
   if (c.mother) { try { nameSign = ak.reading(c.name, c.mother).sign.name; } catch {} }
-  const kf = nameSign && KF.NAME_SIGN_MAN[nameSign];
+  const kf = nameSign && (female ? WM.NAME_SIGN_WOMAN : KF.NAME_SIGN_MAN)[nameSign];
   if (kf) testify("name_sign", `${KF.KASHF_SRC}، ص ${kf.page}`, kf.text, kf.traits);
   // درجةُ الطالع ⇒ «طبعُ الدرجة» في كتاب الدرج
   const degrees = darj.natal(sky);
@@ -299,7 +303,8 @@ export function reading(c) {
   const fams = (t) => new Set([...lines(t)].map((l) => FAMILY[l] || l));
   const primary = (t) => new Set([...lines(t)].filter((l) => !SECONDARY.has(l)).map((l) => FAMILY[l] || l)).size;
   const booksOf = (evs) => [...new Set(evs.map((e) => e.src.split("،")[0]))];
-  const groups = Object.fromEntries(Object.keys(TRAIT_GROUPS).map((g) => [g, { title: TRAIT_GROUPS[g], firm: [], sometimes: [], single: [] }]));
+  const AR_ = (id) => (female && WM.TRAITS_F[id]) || TRAITS[id].ar;
+  const groups = Object.fromEntries(Object.keys(TRAIT_GROUPS).map((g) => [g, { title: female ? WM.GROUPS_F[g] : TRAIT_GROUPS[g], firm: [], sometimes: [], single: [] }]));
   const done = new Set();
   for (const id of Object.keys(TRAITS)) {
     if (done.has(id) || !ev[id]) continue;
@@ -311,17 +316,17 @@ export function reading(c) {
     if (opp && (overrule(id, opp) || overrule(opp, id))) {
       const [w, l] = overrule(id, opp) ? [id, opp] : [opp, id];
       done.add(w); done.add(l);
-      groups[TRAITS[w].group].firm.push({ id: w, ar: TRAITS[w].ar, lines: [...lines(w)], books: booksOf(ev[w]), evidence: ev[w], dissent: ev[l] });
+      groups[TRAITS[w].group].firm.push({ id: w, ar: AR_(w), lines: [...lines(w)], books: booksOf(ev[w]), evidence: ev[w], dissent: ev[l] });
     } else if (opp && n >= 1 && no >= 1) {
       done.add(id); done.add(opp);
       const [a, b] = n >= no ? [id, opp] : [opp, id];
-      g.sometimes.push({ ids: [a, b], ar: `أحيانًا ${TRAITS[a].ar}، وأحيانًا ${TRAITS[b].ar}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
+      g.sometimes.push({ ids: [a, b], ar: `أحيانًا ${AR_(a)}، وأحيانًا ${AR_(b)}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
     } else if (n >= 2) {
       done.add(id);
-      g.firm.push({ id, ar: t.ar, lines: [...lines(id)], books: booksOf(ev[id]), evidence: ev[id] });
+      g.firm.push({ id, ar: AR_(id), lines: [...lines(id)], books: booksOf(ev[id]), evidence: ev[id] });
     } else {
       done.add(id);
-      g.single.push({ id, ar: t.ar, lines: [...lines(id)], evidence: ev[id] });
+      g.single.push({ id, ar: AR_(id), lines: [...lines(id)], evidence: ev[id] });
     }
   }
   for (const g of Object.values(groups)) g.firm.sort((a, b) => b.lines.length - a.lines.length);
@@ -348,11 +353,12 @@ export function reading(c) {
     groups, body,
     lineNames: LINE_AR,
     sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC, CH.CHEIRO_SRC, TH.THAMARA_SRC],
-    summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
+    summary: summarize(chart, nm, heatAx, moistAx, finalComplexion, female),
+    sex: female ? "f" : "m",
   };
 }
 
-function summarize(chart, nm, heatAx, moistAx, fc) {
+function summarize(chart, nm, heatAx, moistAx, fc, female) {
   const parts = [];
   if (chart.complexion) parts.push(`بحسب خريطةِ ميلادِك (طريقةُ Lilly) يغلبُ على مزاجِك ${chart.complexion.qual}، أي المزاجُ ال${chart.complexion.ar}.`);
   else parts.push("خريطةُ ميلادِك متعادلةُ الكيفيّاتِ على أحدِ المحورين، فلا يغلبُ عليها مزاجٌ واحد.");
@@ -368,7 +374,8 @@ function summarize(chart, nm, heatAx, moistAx, fc) {
   if (mixed.length) ns.push(mixed.join("، و") + " — فيكونُ فيك تقلّبٌ في ذلك");
   if (ns.length) parts.push(`أمّا حروفُ اسمِك ف${ns.join("، و")}.`);
   if (heatAx.agree && moistAx.agree && fc) parts.push(`فاتّفق الدليلان على أنّ مزاجَك ${fc.ar}.`);
-  return parts.join(" ");
+  const s = parts.join(" ");
+  return female ? s.replace(/ميلادِك/g, "ميلادِكِ").replace(/مزاجِك/g, "مزاجِكِ").replace(/اسمِك/g, "اسمِكِ").replace(/فيك /g, "فيكِ ").replace(/مزاجَك/g, "مزاجَكِ") : s;
 }
 
 export default { reading, lillyTemperament, nameTemperament, mannersSignificator };

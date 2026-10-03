@@ -41,6 +41,7 @@ function fmtDateTime(d) { return `${AR_DAYS[d.getDay()]} ${fmtDate(d)}، الس�
 
 function ctx() {
   const g = (id) => ($("#" + id)?.value || "").trim();
+  const sex = g("ctx-sex") === "f" ? "f" : "m";
   const name = g("ctx-name"), mother = g("ctx-mother"), date = g("ctx-date"), city = g("ctx-city");
   const time = g("ctx-time") || "12:00";
   // إحداثيّاتٌ يدويّة (لمدينةٍ غير مُدرَجة): تَغلِب على المدينة المختارة إن مُلئت.
@@ -75,7 +76,7 @@ function ctx() {
   const subject = ready
     ? `عن: ${name} (اسم الأمّ: ${mother})، مواليد ${fmtDate(new Date(date + "T00:00:00"))} الساعة ${AR(time)} في ${placeLabel}. القراءة أُجريت اليوم ${fmtDate(now)}.`
     : "";
-  return { name, mother, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
+  return { name, mother, sex, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
 }
 
 // شريط «عن مَن ومتى» يتصدّر كلّ نتيجة
@@ -137,7 +138,7 @@ function nextDayHourText(dayName, planet, lat, lon, from = new Date()) {
   } catch {}
   return `${dayName} ${fmtDate(d)} (ساعة ${planet})`;
 }
-const CTX_IDS = ["ctx-name", "ctx-mother", "ctx-question", "ctx-target", "ctx-target-mother", "ctx-date", "ctx-time", "ctx-city", "ctx-lat", "ctx-lon", "ctx-tz"];
+const CTX_IDS = ["ctx-name", "ctx-mother", "ctx-sex", "ctx-question", "ctx-target", "ctx-target-mother", "ctx-date", "ctx-time", "ctx-city", "ctx-lat", "ctx-lon", "ctx-tz"];
 function saveCtx() {
   const o = {};
   CTX_IDS.forEach((id) => { const el = $("#" + id); if (el) o[id] = el.value; });
@@ -2223,6 +2224,7 @@ PANELS.kaf = (main) => {
 // قراءة الحال ─────────────────────────────────────────────────────────
 // يُعيدُ HTML قراءةِ الحال (يُستعمَلُ في «قراءة حالك» و«قراءتك الكاملة»)
 function halHTML(r) {
+  const F = r.sex === "f", k_ = (m, f) => (F ? f : m);
   const LN = r.lineNames;
   const who = (ls) => ls.map((l) => LN[l] || l).join(" + ");
   const evid = (evs) => {
@@ -2242,17 +2244,17 @@ function halHTML(r) {
   })).join("");
   const singles = Object.values(r.groups).flatMap((g) => g.single.map((x) => ({ ...x, g: g.title })));
   return `
-    ${card({ title: "مزاجُك", cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
+    ${card({ title: k_("مزاجُك", "مزاجُكِ"), cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
       reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
     <div class="grid wide">${groupCards}</div>
-    ${r.degrees ? card({ title: "درجاتُ مولدِك", k: "كتاب الدرج",
+    ${r.degrees ? card({ title: k_("درجاتُ مولدِك", "درجاتُ مولدِكِ"), k: "كتاب الدرج",
       body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d) => `<li style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
-        <div class="gloss" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في صفاتِك أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
+        <div class="gloss" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في ${k_("صفاتِك", "صفاتِكِ")} أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
       reveal: `المصدر: ${r.degrees.src}\n${r.degrees.points.map((d) => `${d.point}: ${d.sign} ${d.n}${d.entry && d.entry.note ? ` (${d.entry.note})` : ""}`).join("\n")}` }) : ""}
-    ${r.birthNumber ? card({ title: `رقمُ ميلادِك ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
-      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">يومُ ميلادِك من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
+    ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
+      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
       basis: esc(r.birthNumber.src) }) : ""}
-    ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
+    ${r.body.length ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
       <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
@@ -2264,7 +2266,7 @@ PANELS.hal = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
+  try { r = hal.reading({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
 };
@@ -2275,7 +2277,7 @@ PANELS.full = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
+  try { r = qiraa.full({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const I = r.identity, N = r.natal, A = r.age, S = A.stage;
   let kafCard = "";
