@@ -21,6 +21,7 @@ import * as PT from "../data/hal-ptolemy.data.js";
 import * as KF from "../data/hal-kashf.data.js";
 import ak from "./asma-khuddam.js";
 import darj from "./darj.js";
+import * as CH from "../data/hal-cheiro.data.js";
 import * as AM from "../data/hal-abumashar.data.js";
 import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
@@ -205,12 +206,19 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)", birth_number: "رقمُ يوم الميلاد (Cheiro)" };
 // خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
 // وطبعُ برجِ الطالع (أبو معشر) ودرجةُ الطالع (كتاب الدرج) كلاهما من الطالع
 const FAMILY = { name_sign: "name", am_asc: "asc", asc_degree: "asc" };
 // مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
-const SECONDARY = new Set(["name_sign"]);
+const SECONDARY = new Set(["name_sign", "birth_number"]);
+
+/** رقمُ الميلاد عند Cheiro: يومُ الشهر (المحلّيّ) مجموعًا حتّى رقمٍ واحد */
+export function birthNumber(day) {
+  let n = Math.trunc(day);
+  while (n > 9) n = String(n).split("").reduce((a, d) => a + +d, 0);
+  return n >= 1 && n <= 9 ? n : null;
+}
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 export function reading(c) {
@@ -256,6 +264,10 @@ export function reading(c) {
   const degrees = darj.natal(sky);
   const ascDeg = degrees.points[0];
   if (ascDeg.entry && ascDeg.entry.traits) testify("asc_degree", `${darj.SRC}، ${ascDeg.sign} ${ascDeg.n}`, ascDeg.entry.text, ascDeg.entry.traits);
+  // رقمُ يوم الميلاد (Cheiro) — يومُ الشهر بالتوقيت المحلّيّ إن أُعطي، وإلّا من التاريخ العالميّ
+  const bn = birthNumber(c.birthDay || new Date(c.birth).getUTCDate());
+  const cb = bn && CH.BIRTH_NUMBER[bn];
+  if (cb) testify("birth_number", `${CH.CHEIRO_SRC}، الرقم ${bn}`, cb.text, cb.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
@@ -316,11 +328,11 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees,
+    nameSign, degrees, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC, CH.CHEIRO_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }

@@ -2249,6 +2249,9 @@ function halHTML(r) {
       body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d) => `<li style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
         <div class="gloss" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في صفاتِك أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
       reveal: `المصدر: ${r.degrees.src}\n${r.degrees.points.map((d) => `${d.point}: ${d.sign} ${d.n}${d.entry && d.entry.note ? ` (${d.entry.note})` : ""}`).join("\n")}` }) : ""}
+    ${r.birthNumber ? card({ title: `رقمُ ميلادِك ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
+      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">يومُ ميلادِك من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
+      basis: esc(r.birthNumber.src) }) : ""}
     ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
@@ -2261,7 +2264,7 @@ PANELS.hal = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon }); }
+  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
 };
@@ -2272,7 +2275,7 @@ PANELS.full = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon, now: c.now }); }
+  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const I = r.identity, N = r.natal, A = r.age, S = A.stage;
   let kafCard = "";

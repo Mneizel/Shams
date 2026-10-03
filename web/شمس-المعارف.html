@@ -2641,6 +2641,27 @@ const PLANET_DISPOSITION = {
 };
 
 ;__exports["BIRUNI_SRC"]=BIRUNI_SRC;__exports["PLANET_DISPOSITION"]=PLANET_DISPOSITION;return __exports;})();
+__M["hal-cheiro.data"]=(function(){"use strict";const __exports={};
+// data/hal-cheiro.data.js — Cheiro (William John Warner)، «Cheiro's Book of Numbers» (لندن، ١٩٢٦)، الفصول ٣–١١:
+// «رقمُ الميلاد» = يومُ الميلاد من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد (مثلًا ٢٩ ⇒ ٢+٩ = ١١ ⇒ ٢). لكلِّ رقمٍ كوكب.
+// مصدرٌ غربيٌّ حديث (القرن العشرون) — يدخلُ قراءةَ الحال شاهدًا ثانويًّا لا يقلبُ حكمَ الكتب القديمة.
+// النصُّ: text/sources/numerology/cheiro_numbers_djvu.txt. الترجمةُ مختصرةٌ أمينة؛ الصفاتُ ممّا في النصّ.
+
+const CHEIRO_SRC = "Cheiro، كتاب الأرقام (١٩٢٦)";
+
+const BIRTH_NUMBER = {
+  1: { planet: "الشمس", text: "مبدعٌ مبتكر، قويُّ الفرديّة، واضحُ الآراء، ولذلك عنيدٌ مصمّمٌ في كلِّ ما يتولّاه.", traits: ["clever", "firm_opinion"] },
+  2: { planet: "القمر", text: "لطيفُ الطبع، خيّال، فنّيّ، رومانسيّ، مبتكرٌ لكن دون قوّةٍ في التنفيذ. يحذرُ من: القلقِ وعدمِ الاستقرار، وقلّةِ المتابعة لخططه، وقلّةِ الثقة بالنفس، وفرطِ الحساسيّة، وسرعةِ الكآبة إن لم يكن في محيطٍ سعيد.", traits: ["affable", "restless", "starts_not_finish", "low_self", "sorrowful"] },
+  3: { planet: "المشتري", text: "طموح، لا يرضى بالمراتب الدنيا، يحبُّ السلطةَ والنظامَ والانضباط، أمينٌ في أداء واجبه. عيوبُه: التسلّطُ وفرضُ رأيه، والاعتزازُ بالنفس، وكراهيةُ أن يكونَ مدينًا لأحد.", traits: ["ambitious", "leader", "proud"] },
+  4: { planet: "أورانوس", text: "يرى الأمورَ من زاويةٍ معاكسة، يأخذُ الجانبَ المخالفَ في الجدال، فيكثرُ خصومُه؛ يتمرّدُ على القواعد؛ لا يكسبُ الأصدقاءَ بسهولة، وقليلُ الاكتراث بجمع المال.", traits: ["quarrelsome", "solitary"] },
+  5: { planet: "عطارد", text: "يكسبُ الأصدقاءَ بسهولة، مشدودُ الأعصاب يحبُّ الإثارة، سريعُ التفكير والقرار، مندفعٌ في أفعاله، يكرهُ العملَ الرتيب، مغامر، ومرنٌ ينهضُ سريعًا من أشدِّ الضربات.", traits: ["affable", "clever", "rash", "restless", "grudge_short"] },
+  6: { planet: "الزهرة", text: "جذّابٌ يحبُّه الناس، مصمّمٌ عنيدٌ في خططه، يحبُّ الجمالَ والفنّ، كريمٌ يحبُّ إسعادَ من حوله، ولا يحتملُ الشقاقَ والغيرة.", traits: ["affable", "firm_opinion", "generous", "peacemaker"] },
+  7: { planet: "نبتون", text: "مستقلٌّ أصيلُ الفرديّة، يحبُّ التغييرَ والسفر، قلقُ الطبع، كثيرُ القراءة، ذو نظرةٍ فلسفيّة، قليلُ الاكتراث بالمادّة كثيرُ البذل.", traits: ["restless", "learner", "deep_thinker", "generous"] },
+  8: { planet: "زحل", text: "يُساءُ فهمُه كثيرًا فيشعرُ بوحدةٍ في قلبه، عميقُ الطبع شديدُه، يمضي فيما يتبنّاه رغم كلِّ معارضة، يبدو باردًا ويُخفي مشاعرَه.", traits: ["solitary", "deep_thinker", "firm_opinion", "secretive"] },
+  9: { planet: "المريخ", text: "مقاتلٌ في كلِّ ما يحاول، صعبُ البدايات ثمّ ينجحُ بعزمه، حادُّ الغضب مندفعٌ مستقلٌّ يحبُّ أن يكونَ سيّدَ نفسه، شجاع، يكرهُ النقد، وله رأيٌ حسنٌ في نفسه.", traits: ["bold", "anger_quick", "rash", "quarrelsome", "proud", "firm_opinion"] },
+};
+
+;__exports["CHEIRO_SRC"]=CHEIRO_SRC;__exports["BIRTH_NUMBER"]=BIRTH_NUMBER;return __exports;})();
 __M["hal-ibnsina.data"]=(function(){"use strict";const __exports={};
 // data/hal-ibnsina.data.js — دلائلُ الأمزجة عند ابن سينا.
 // المصدر: «القانون في الطب»، الكتاب الأوّل، الفنّ الثاني، التعليم الثالث، «الفصل الثالث: علامات الأمزجة»
@@ -20288,6 +20309,7 @@ const PT=__M["hal-ptolemy.data"];
 const KF=__M["hal-kashf.data"];
 const ak=__M["asma-khuddam"].default;
 const darj=__M["darj"].default;
+const CH=__M["hal-cheiro.data"];
 const AM=__M["hal-abumashar.data"];
 const BR=__M["hal-biruni.data"];
 const { MIZAJ }=__M["huruf.data"];
@@ -20472,12 +20494,19 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)", birth_number: "رقمُ يوم الميلاد (Cheiro)" };
 // خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
 // وطبعُ برجِ الطالع (أبو معشر) ودرجةُ الطالع (كتاب الدرج) كلاهما من الطالع
 const FAMILY = { name_sign: "name", am_asc: "asc", asc_degree: "asc" };
 // مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
-const SECONDARY = new Set(["name_sign"]);
+const SECONDARY = new Set(["name_sign", "birth_number"]);
+
+/** رقمُ الميلاد عند Cheiro: يومُ الشهر (المحلّيّ) مجموعًا حتّى رقمٍ واحد */
+function birthNumber(day) {
+  let n = Math.trunc(day);
+  while (n > 9) n = String(n).split("").reduce((a, d) => a + +d, 0);
+  return n >= 1 && n <= 9 ? n : null;
+}
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 function reading(c) {
@@ -20523,6 +20552,10 @@ function reading(c) {
   const degrees = darj.natal(sky);
   const ascDeg = degrees.points[0];
   if (ascDeg.entry && ascDeg.entry.traits) testify("asc_degree", `${darj.SRC}، ${ascDeg.sign} ${ascDeg.n}`, ascDeg.entry.text, ascDeg.entry.traits);
+  // رقمُ يوم الميلاد (Cheiro) — يومُ الشهر بالتوقيت المحلّيّ إن أُعطي، وإلّا من التاريخ العالميّ
+  const bn = birthNumber(c.birthDay || new Date(c.birth).getUTCDate());
+  const cb = bn && CH.BIRTH_NUMBER[bn];
+  if (cb) testify("birth_number", `${CH.CHEIRO_SRC}، الرقم ${bn}`, cb.text, cb.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
@@ -20583,11 +20616,11 @@ function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees,
+    nameSign, degrees, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC, CH.CHEIRO_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }
@@ -20613,7 +20646,7 @@ function summarize(chart, nm, heatAx, moistAx, fc) {
 
 __exports.default = { reading, lillyTemperament, nameTemperament, mannersSignificator };
 
-;__exports["lillyTemperament"]=lillyTemperament;__exports["nameTemperament"]=nameTemperament;__exports["mannersSignificator"]=mannersSignificator;__exports["reading"]=reading;return __exports;})();
+;__exports["lillyTemperament"]=lillyTemperament;__exports["nameTemperament"]=nameTemperament;__exports["mannersSignificator"]=mannersSignificator;__exports["birthNumber"]=birthNumber;__exports["reading"]=reading;return __exports;})();
 __M["jafr"]=(function(){"use strict";const __exports={};
 // engines/jafr.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26512,6 +26545,9 @@ function halHTML(r) {
       body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d) => `<li style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
         <div class="gloss" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في صفاتِك أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
       reveal: `المصدر: ${r.degrees.src}\n${r.degrees.points.map((d) => `${d.point}: ${d.sign} ${d.n}${d.entry && d.entry.note ? ` (${d.entry.note})` : ""}`).join("\n")}` }) : ""}
+    ${r.birthNumber ? card({ title: `رقمُ ميلادِك ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
+      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">يومُ ميلادِك من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
+      basis: esc(r.birthNumber.src) }) : ""}
     ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
@@ -26524,7 +26560,7 @@ PANELS.hal = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon }); }
+  try { r = hal.reading({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
 };
@@ -26535,7 +26571,7 @@ PANELS.full = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, lat: c.lat, lon: c.lon, now: c.now }); }
+  try { r = qiraa.full({ name: c.name, mother: c.mother, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const I = r.identity, N = r.natal, A = r.age, S = A.stage;
   let kafCard = "";

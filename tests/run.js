@@ -1213,6 +1213,19 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(a.names.every((n) => n.endsWith("ايل")) && a.names.length === 5 && a.rows.length > 1, "١٣ حرفًا (فرد) ⇒ خمسةُ أسماءٍ ثلاثيّة + ايل، والتكسيرُ يعودُ إلى الزمام");
 }
 
+// ── رقمُ الميلاد (Cheiro) ──
+{
+  const halM = await import("../engines/hal.js");
+  const { BIRTH_NUMBER } = await import("../data/hal-cheiro.data.js");
+  const { TRAITS: TT3 } = await import("../data/hal-traits.data.js");
+  ok(halM.birthNumber(29) === 2 && halM.birthNumber(9) === 9 && halM.birthNumber(28) === 1 && halM.birthNumber(19) === 1, "رقمُ الميلاد: ٢٩⇒٢، ٢٨⇒١، ١٩⇒١");
+  ok(Object.values(BIRTH_NUMBER).every((v) => v.traits.every((x) => TT3[x])), "صفاتُ Cheiro من اللغةِ المشتركة");
+  const r = halM.default.reading({ name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), birthDay: 9, lat: 31.9539, lon: 35.9106 });
+  ok(r.birthNumber.n === 9 && r.birthNumber.planet === "المريخ", "البطاقةُ التجريبيّة: يوم ٩ ⇒ الرقم ٩ (المريخ)");
+  const firm = Object.values(r.groups).flatMap((g) => g.firm);
+  ok(firm.every((x) => x.lines.filter((l) => l !== "birth_number" && l !== "name_sign").length >= 1), "Cheiro ثانويّ: لا يؤكّدُ صفةً مع مصدرٍ ثانويٍّ آخرَ وحدَهما");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;
