@@ -1152,6 +1152,19 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
     const fam = Object.values(a.groups).flatMap((g) => g.firm);
     ok(fam.every((x) => new Set(x.lines.map((l) => (l === "name_sign" ? "name" : l))).size >= 2), "الاسمُ وبرجُ الاسم عائلةٌ واحدة: لا يؤكّدان صفةً وحدَهما");
   }
+  {
+    const darj = (await import("../engines/darj.js")).default;
+    const { DEGREES } = await import("../data/darj.data.js");
+    const { TRAITS: TT2 } = await import("../data/hal-traits.data.js");
+    ok(Object.values(DEGREES).every((arr) => arr.length === 30) && Object.values(DEGREES).flat().filter((e) => e === null).length === 8, "كتاب الدرج: ١٢ برجًا × ٣٠ درجة، والدرجاتُ الثماني التي أغفلها الناسخُ null");
+    ok(Object.values(DEGREES).flat().filter(Boolean).every((e) => !e.traits || e.traits.every((x) => TT2[x])), "صفاتُ الدرج كلُّها من اللغةِ المشتركة");
+    ok(darj.degreeNumber(0) === 1 && darj.degreeNumber(0.99) === 1 && darj.degreeNumber(27.68) === 28 && darj.degreeNumber(29.999) === 30, "الدرجةُ الأولى = ٠°–١°");
+    ok(a.degrees.points[0].point === "الطالع" && a.degrees.points[0].sign === "الميزان" && a.degrees.points[0].n === 28, "طالعُ البطاقةِ التجريبيّة: الدرجة ٢٨ من الميزان");
+    ok(a.degrees.points.find((p) => p.point === "الشمس").n === 17 && a.degrees.points.find((p) => p.point === "الشمس").sign === "العقرب", "شمسُ البطاقة: الدرجة ١٧ من العقرب");
+    ok(a.degrees.points.slice(1).every((p) => p.text === "") && !/يموت|يُقتل/.test(a.degrees.points.map((p) => p.text + (p.planetNote || "")).join(" ")), "طبعُ الدرجةِ للطالعِ وحدَه، وأحكامُ الموتِ لا تُعرَض");
+    const asc0 = darj.at("الحمل", 1);
+    ok(asc0.planets["المريخ"] && asc0.traits.includes("proud"), "الحمل ١: «عزّة النفس…» ⇒ proud، وقولُه في المريخ محفوظ");
+  }
   ok(a.temperament.chart.testimonies.some((t) => t.who.startsWith("زحل ينظرُ الطالع")), "زحلُ المربّعُ للطالع يُدخِلُ كيفيّتَه (قاعدةُ Lilly)");
   // أدلّةُ بطليموس وأبي معشر حاضرةٌ ومستقلّة
   const allFirm = Object.values(a.groups).flatMap((g) => g.firm);

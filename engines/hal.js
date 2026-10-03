@@ -20,6 +20,7 @@ import * as IS from "../data/hal-ibnsina.data.js";
 import * as PT from "../data/hal-ptolemy.data.js";
 import * as KF from "../data/hal-kashf.data.js";
 import ak from "./asma-khuddam.js";
+import darj from "./darj.js";
 import * as AM from "../data/hal-abumashar.data.js";
 import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
@@ -204,9 +205,10 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)", asc_degree: "درجةُ الطالع (كتاب الدرج)" };
 // خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
-const FAMILY = { name_sign: "name" };
+// وطبعُ برجِ الطالع (أبو معشر) ودرجةُ الطالع (كتاب الدرج) كلاهما من الطالع
+const FAMILY = { name_sign: "name", am_asc: "asc", asc_degree: "asc" };
 // مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
 const SECONDARY = new Set(["name_sign"]);
 
@@ -250,6 +252,10 @@ export function reading(c) {
   if (c.mother) { try { nameSign = ak.reading(c.name, c.mother).sign.name; } catch {} }
   const kf = nameSign && KF.NAME_SIGN_MAN[nameSign];
   if (kf) testify("name_sign", `${KF.KASHF_SRC}، ص ${kf.page}`, kf.text, kf.traits);
+  // درجةُ الطالع ⇒ «طبعُ الدرجة» في كتاب الدرج
+  const degrees = darj.natal(sky);
+  const ascDeg = degrees.points[0];
+  if (ascDeg.entry && ascDeg.entry.traits) testify("asc_degree", `${darj.SRC}، ${ascDeg.sign} ${ascDeg.n}`, ascDeg.entry.text, ascDeg.entry.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
@@ -310,11 +316,11 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign,
+    nameSign, degrees,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC, darj.SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }
