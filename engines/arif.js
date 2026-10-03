@@ -81,7 +81,8 @@ export function revolutions(c, natal, fromYear, toYear) {
     let t;
     try { t = AE.SearchSunLongitude(sunL, new Date(Date.UTC(y, new Date(c.birth).getUTCMonth(), new Date(c.birth).getUTCDate() - 8)), 20); } catch { t = null; }
     if (!t) continue;
-    const when = t.date, rev = falak.snapshot(when, c.lat, c.lon);
+    // التحويلُ على مكانِ السكن إن أُعطي (Lilly يحسبُه على البلدِ الذي يكونُ فيه صاحبُ المولد)، وإلّا مكانُ الميلاد
+    const when = t.date, rev = falak.snapshot(when, c.resLat ?? c.lat, c.resLon ?? c.lon);
     const rA = signIdx(rev.ascendant.longitude);
     const natalHouseOfRevAsc = ((rA - ascIdx + 12) % 12) + 1;
     const V = [];

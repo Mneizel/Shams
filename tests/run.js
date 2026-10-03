@@ -1349,6 +1349,9 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
     const rr = arif.read({ ...C, birth: new Date(b), lat: la, lon: lo });
     ok(rr.months.every((m) => Object.values(m.scores).every(Number.isFinite)) && rr.months.some((m) => m.voices.some((v) => v.meth === "revolution")), `العارف يعملُ لميلادٍ صعب (${new Date(b).toISOString().slice(0, 10)}، ${la}°)`);
   }
+  const rvA = arif.revolutions(C, falakM.snapshot(C.birth, C.lat, C.lon), 2027, 2027)[0];
+  const rvD = arif.revolutions({ ...C, resLat: 51.5074, resLon: -0.1278 }, falakM.snapshot(C.birth, C.lat, C.lon), 2027, 2027)[0];
+  ok(rvA.when.getTime() === rvD.when.getTime() && rvA.asc !== rvD.asc, "مدينةُ السكن تغيّرُ طالعَ التحويل (عمّان ⇐ لندن) ولا تغيّرُ لحظتَه");
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

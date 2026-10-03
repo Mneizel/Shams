@@ -77,7 +77,8 @@ function ctx() {
   const subject = ready
     ? `عن: ${name} (اسم الأمّ: ${mother})، مواليد ${fmtDate(new Date(date + "T00:00:00"))} الساعة ${AR(time)} في ${placeLabel}. القراءة أُجريت اليوم ${fmtDate(now)}.`
     : "";
-  return { name, mother, sex, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
+  const resCity = g("ctx-res-city"), resLoc = resCity && CITY_INDEX[resCity] ? CITY_INDEX[resCity] : null;
+  return { resCity: resLoc ? resCity : "", resLat: resLoc ? resLoc.lat : null, resLon: resLoc ? resLoc.lon : null, name, mother, sex, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
 }
 
 // شريط «عن مَن ومتى» يتصدّر كلّ نتيجة
@@ -139,7 +140,7 @@ function nextDayHourText(dayName, planet, lat, lon, from = new Date()) {
   } catch {}
   return `${dayName} ${fmtDate(d)} (ساعة ${planet})`;
 }
-const CTX_IDS = ["ctx-name", "ctx-mother", "ctx-sex", "ctx-question", "ctx-target", "ctx-target-mother", "ctx-date", "ctx-time", "ctx-city", "ctx-lat", "ctx-lon", "ctx-tz"];
+const CTX_IDS = ["ctx-name", "ctx-mother", "ctx-sex", "ctx-question", "ctx-target", "ctx-target-mother", "ctx-date", "ctx-time", "ctx-city", "ctx-res-city", "ctx-lat", "ctx-lon", "ctx-tz"];
 function saveCtx() {
   const o = {};
   CTX_IDS.forEach((id) => { const el = $("#" + id); if (el) o[id] = el.value; });
@@ -2341,7 +2342,7 @@ PANELS.arif = (main) => {
   main.innerHTML = head("arif", "العارف بالأمر");
   if (!gate(main)) return;
   const c = ctx();
-  const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now };
+  const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now, resLat: c.resLat, resLon: c.resLon, resCity: c.resCity };
   let R;
   const palmSaved = lsGet("smk-last-kaf", null);
   try { R = arif.read(C, { weights: arifWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
@@ -2808,6 +2809,7 @@ document.addEventListener("click", (e) => {
 buildNav();
 fillSelect($("#ctx-question"), QUESTION_GROUPS);
 fillSelect($("#ctx-city"), CITY_GROUPS);
+if ($("#ctx-res-city")) { fillSelect($("#ctx-res-city"), CITY_GROUPS); const o = $("#ctx-res-city").querySelector("option"); if (o && o.value === "") o.textContent = "— نفسُ مدينة الميلاد —"; }
 loadCtx();
 refreshMeHint();
 CTX_IDS.forEach((id) => {
