@@ -38,8 +38,28 @@ export function full(c) {
     profection: falak.annualProfection(c.birth, now, sky.ascendant.longitude),
     firdaria: falak.firdaria(c.birth, now, { byNight }),
   };
+  age.fortune = fortune(age, now);
   return { hal: h, identity, natal, age, life: life.all(sky, c.sex === "f" ? "f" : "m") };
 }
 
 export const AGES_LIST = AGES;
+
+// السعدُ والنحسُ بطبعِ الكوكب: السعدان المشتري والزهرة، والنحسان زحل والمريخ، والباقي ممتزجٌ بحسب ما يقارنه
+export const NATURE = { المشتري: "saad", الزهرة: "saad", زحل: "nahs", المريخ: "nahs", الشمس: "mixed", القمر: "mixed", عطارد: "mixed", الرأس: "saad", الذنب: "nahs" };
+const NAT_AR = { saad: "سعد", nahs: "نحس", mixed: "وسط" };
+const addYears = (d, y) => new Date(d.getTime() + y * 365.2422 * 86400000);
+const fmtMY = (d) => `${["كانون الثاني", "شباط", "آذار", "نيسان", "أيّار", "حزيران", "تمّوز", "آب", "أيلول", "تشرين الأوّل", "تشرين الثاني", "كانون الأوّل"][d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+
+/** حكمٌ واحدٌ واضح: الفترةُ الكبرى والصغرى وسنةُ العمر — سعدٌ أم نحس، ومتى تنتهي. */
+export function fortune(age, now) {
+  const F = age.firdaria, maj = NATURE[F.majorLord], min = NATURE[F.minorLord], yr = NATURE[age.profection.yearLord];
+  const endMaj = addYears(now, F.yearsLeftMajor), endMin = addYears(now, F.yearsLeftMinor);
+  const overall = maj === min ? maj : (maj === "nahs" && min === "saad") || (maj === "saad" && min === "nahs") ? "mixed" : (maj === "mixed" ? min : maj);
+  let line = `أنت الآن في مرحلةِ ${NAT_AR[maj]} (${F.majorLord}) حتّى ${fmtMY(endMaj)}`;
+  if (min !== maj) line += min === "saad" ? `، وفي داخلها فترةٌ ألطف (${F.minorLord}) حتّى ${fmtMY(endMin)}` : min === "nahs" ? `، وفي داخلها فترةٌ أشدّ (${F.minorLord}) حتّى ${fmtMY(endMin)}` : `، وفي داخلها فترةٌ وسط (${F.minorLord}) حتّى ${fmtMY(endMin)}`;
+  if (F.nextMinor && F.yearsLeftMinor < 1.5) line += `، ثمّ فترةُ ${F.nextMinor} (${NAT_AR[NATURE[F.nextMinor]]})`;
+  line += `؛ وسنتُك هذه ${NAT_AR[yr]} (${age.profection.yearLord}).`;
+  const next = F.nextLord ? `بعدها تبدأ مرحلةُ ${F.nextLord} (${NAT_AR[NATURE[F.nextLord]]}) في ${fmtMY(endMaj)}.` : "";
+  return { overall, overallAr: NAT_AR[overall], line, next, major: { lord: F.majorLord, nature: maj, ends: endMaj }, minor: { lord: F.minorLord, nature: min, ends: endMin }, year: { lord: age.profection.yearLord, nature: yr } };
+}
 export default { full, ageStage, AGES_LIST };

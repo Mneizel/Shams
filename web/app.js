@@ -2332,6 +2332,7 @@ PANELS.full = (main) => {
     ${kafCard}
     </div>
     <h2>٣. عمرُك ومرحلتُك</h2>
+    ${A.fortune ? `<div class="card closing" style="margin-bottom:.8rem"><h3><span>${A.fortune.overall === "saad" ? "☀️ مرحلةُ سعد" : A.fortune.overall === "nahs" ? "🌑 مرحلةُ نحس" : "🌗 مرحلةٌ ممتزجة"}</span></h3><div class="normal"><div class="kv" style="font-size:1.05rem">${esc(A.fortune.line)}</div>${A.fortune.next ? `<div class="kv" style="margin-top:.35rem">${esc(A.fortune.next)}</div>` : ""}<div class="reveal">السعدان: المشتري والزهرة · النحسان: زحل والمريخ · الشمس والقمر وعطارد ممتزجة. الفترات من «الفردارات»، والسنة من «الانتهاء السنويّ».</div></div></div>` : ""}
     <div class="grid wide">
     ${card({ title: `عمرُك ${AR(A.years)} سنة — ${esc(S.name)}`, k: `يحكمها ${esc(S.planet)}`, cls: "closing",
       body: `<div class="kv">${esc(S.text)}</div>

@@ -1010,6 +1010,8 @@ export function firdaria(birthWhen, targetWhen, opt = {}) {
     ageYears: Math.round(ageYears * 100) / 100,
     majorLord, majorGoverns: PLANET_GOVERNS[majorLord], yearsIntoMajor: Math.round(posInMajor * 100) / 100, majorLength: majorYears,
     minorLord, minorGoverns: PLANET_GOVERNS[minorLord],
+    nextLord: order[(order.indexOf(major) + 1) % order.length][0], yearsLeftMajor: Math.round((majorYears - posInMajor) * 100) / 100,
+    yearsLeftMinor: Math.round((subLen - (posInMajor % subLen)) * 100) / 100, nextMinor: rot[Math.min(6, Math.floor(posInMajor / subLen)) + 1] || null,
     note: `الحكمُ الأكبرُ لـ${majorLord} (${PLANET_GOVERNS[majorLord]})، والفرعيُّ الآن لـ${minorLord}.`,
   };
 }

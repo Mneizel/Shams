@@ -1313,6 +1313,7 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   const C = { name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), lat: 31.9539, lon: 35.9106, now: new Date(Date.UTC(2026, 9, 3)) };
   const r = qiraa.full(C), r2 = qiraa.full(C);
   ok(JSON.stringify(r.age) === JSON.stringify(r2.age) && r.age.years === 34 && r.age.stage.planet === "الشمس", "قراءتك الكاملة: ٣٤ سنة ⇒ مرحلةُ الشمس (٢٢–٤١) عند بطليموس، وحتميّة");
+  ok(r.age.fortune && r.age.fortune.major.lord === "المريخ" && r.age.fortune.major.nature === "nahs" && r.age.fortune.minor.nature === "saad" && r.age.fortune.overall === "mixed" && /حتّى/.test(r.age.fortune.line), "السعدُ والنحس: كبرى المريخ (نحس) وصغرى الزهرة (سعد) ⇒ ممتزجة، مع تاريخِ الانتهاء");
   ok(qiraa.ageStage(3).planet === "القمر" && qiraa.ageStage(4).planet === "عطارد" && qiraa.ageStage(70).planet === "زحل" && qiraa.ageStage(70).yearsLeft === null, "حدودُ الأعمار السبعة");
   ok(r.identity.angelDesc && r.identity.angelDesc.angel === r.identity.angel && r.identity.angelDesc.servant === "ميمون", "وصفُ البونيّ لملَك الكوكب يطابقُ الملَكَ المحسوب (زحل ⇒ كسفيائيل، خادمُه ميمون)");
   ok(r.identity.nameSign === "الدلو" && r.natal.sunSign === "العقرب" && r.hal.groups, "الهويّةُ وقراءةُ الحال داخلُ القراءةِ الكاملة");
