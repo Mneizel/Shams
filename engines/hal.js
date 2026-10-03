@@ -17,6 +17,8 @@ import abjad from "./abjad.js";
 import { TRAITS, TRAIT_GROUPS } from "../data/hal-traits.data.js";
 import * as L from "../data/hal-lilly.data.js";
 import * as IS from "../data/hal-ibnsina.data.js";
+import * as PT from "../data/hal-ptolemy.data.js";
+import * as AM from "../data/hal-abumashar.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
 
 const SHAMS_SRC = "شمس المعارف الكبرى — مزاجُ الطبعِ الغالبِ في حروفِ الاسم";
@@ -174,8 +176,32 @@ function witTestimony(sky) {
   return out;
 }
 
+// ── بطليموس م٣ ف١٣: نوعُ برجَي عطاردَ والقمر، وحاكمُ النفس، وحالُ القمر ──
+function ptolemySoul(sky) {
+  const out = [];
+  const modality = (sign) => falak.SIGNS.find((s) => s.name === sign)?.quality;
+  const types = [...new Set(["عطارد", "القمر"].map((n) => modality(sky.planets[n].sign)).filter(Boolean))];
+  for (const ty of types) { const st = PT.SIGN_TYPE_SOUL[ty]; if (st) out.push({ line: "ptol_signs", text: st.text, traits: st.traits }); }
+  // حاكمُ النفس: الكوكبُ الأكثرُ حظوظًا في موضعَي عطاردَ والقمر؛ عند التعادلِ لا يُحكَم
+  const totals = {};
+  for (const n of ["عطارد", "القمر"]) for (const pl of falak.CHALDEAN) totals[pl] = (totals[pl] || 0) + Math.max(0, falak.dignities(pl, sky.planets[n].longitude).score);
+  const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  let ruler = null, rulerStr = null;
+  if (ranked[0][1] > 0 && ranked[0][1] > (ranked[1]?.[1] ?? -1) && PT.RULER_ALONE[ranked[0][0]]) {
+    ruler = ranked[0][0]; rulerStr = strength(ruler, sky);
+    if (rulerStr.level !== "middle") { // المتوسّطُ لا يُحكَمُ له بشرفٍ ولا بضدِّه
+      const side = rulerStr.level === "strong" ? PT.RULER_ALONE[ruler].honour : PT.RULER_ALONE[ruler].dishonour;
+      out.push({ line: "ptol_ruler", text: side.text, traits: side.traits });
+    }
+  }
+  const el = ((sky.planets["القمر"].longitude - sky.planets["الشمس"].longitude) % 360 + 360) % 360;
+  if (el > 12 && el < 168) out.push({ line: "ptol_moon", ...PT.MOON_STATE.waxing });
+  else if (el > 192 && el < 348) out.push({ line: "ptol_moon", ...PT.MOON_STATE.waning });
+  return { testimonies: out, ruler, rulerStrength: rulerStr, totals: ranked };
+}
+
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)" };
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 export function reading(c) {
@@ -210,6 +236,10 @@ export function reading(c) {
     if (sm) testify("sign", `${L.LILLY_SRC}، ف١٠٧`, sm.text, sm.traits);
   }
   for (const w of witTestimony(sky)) testify("wit", `${L.LILLY_SRC}، ف١٠٩`, w.text, w.traits);
+  const am = AM.ASC_NATURE[sky.ascendant.sign];
+  if (am) testify("am_asc", `${AM.ABUMASHAR_SRC}، ص ${am.page}`, am.text, am.traits);
+  const soul = ptolemySoul(sky);
+  for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
   // الحكمُ على كلِّ صفة
   const lines = (t) => new Set((ev[t] || []).map((e) => e.line));
@@ -242,6 +272,7 @@ export function reading(c) {
   const body = [];
   if (heatAx.agree) body.push({ q: heatAx.k, text: IS.EXCESS_SIGNS[heatAx.k] });
   if (moistAx.agree) body.push({ q: moistAx.k, text: IS.EXCESS_SIGNS[moistAx.k] });
+  if (am && am.body) body.push({ q: "asc", text: am.body, src: `${AM.ABUMASHAR_SRC}، ص ${am.page}` });
 
   return {
     temperament: {
@@ -250,9 +281,10 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
+    soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, SHAMS_SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, SHAMS_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }

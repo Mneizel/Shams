@@ -2170,6 +2170,31 @@ const MANSIONS = [
 const MANSION_ARC = 360 / 28;
 
 ;__exports["CHALDEAN"]=CHALDEAN;__exports["DAY_RULERS"]=DAY_RULERS;__exports["DAY_NAMES"]=DAY_NAMES;__exports["PLANETS"]=PLANETS;__exports["SIGNS"]=SIGNS;__exports["MANSIONS"]=MANSIONS;__exports["MANSION_ARC"]=MANSION_ARC;return __exports;})();
+__M["hal-abumashar.data"]=(function(){"use strict";const __exports={};
+// data/hal-abumashar.data.js — أبو معشر الفلكي، «مواليد الرجال والنساء»: «القولُ على طبعِ الطالع».
+// نُقِلت الأوصافُ من صفحاتِ الكتاب (طبعةٌ مصوّرة، ملفّ text/sources/mizaj/hekma/aboma3shr)، باب «طوالع الرجال».
+// في الطوالعِ من الحملِ إلى الميزانِ وصفٌ نثريٌّ للمولود؛ ومن العقربِ إلى الحوتِ يأتي الوصفُ العامُّ في أبياتٍ ثمّ
+// يتفرّعُ الكتابُ «بحسبِ الكوكبِ الناظرِ إلى الطالع» — فأُخِذَ هنا الوصفُ العامُّ وحدَه. نُقِلَ نصُّ الطبعِ بلفظِه، وأُسقِطَ
+// وصفُ الهيئةِ الجسديّة. الصفاتُ المرتبطةُ ممّا في النصِّ نفسِه لا أكثر.
+
+const ABUMASHAR_SRC = "أبو معشر الفلكي، مواليد الرجال والنساء، «القول على طبع الطالع»";
+
+const ASC_NATURE = {
+  الحمل:   { page: 11, text: "المولودُ بهذا البرج… صعبُ المِراس، سريعُ الغضب قريبُ الرضا، وهّابًا نهّابًا، سريعُ الانتقالِ من مكانٍ إلى مكان، يقولُ الحقَّ ويكرهُ الباطل، لا يعملُ إلّا برأيِه… صبورًا على الأهوال.", traits: ["anger_quick", "grudge_short", "generous", "restless", "open", "firm_opinion", "patient"] },
+  الثور:   { page: 16, text: "يكونُ كبيرَ الرفعةِ عاليَ المنازل… يحبُّ اللهوَ واللعبَ والطربَ والمزاح، ذو فرحٍ وهيبةٍ ووقار، يمازحُ الناسَ على قدرِ عقولِهم… عزيزُ النفس، محبوبٌ عند كلِّ إنسان، لا يُمَلُّ من حسنِ عشرتِه… يقضي حوائجَ الناسِ ويكسلُ عن حاجةِ نفسِه، كتومٌ لبعضِ الأسرار.", traits: ["ambitious", "cheerful", "affable", "proud", "generous", "lazy", "secretive"] },
+  الجوزاء: { page: 20, text: "حلوُ الكلام، ذكيُّ العقل، ذو أدب، غيورٌ ذو حرص (من الأبيات)… كاتبًا حاسبًا منجّمًا لبيبًا ذا رأيٍ صائب، يخالطُ الأكابرَ وأربابَ الدولة، معجبٌ بنفسِه، كثيرُ الأصدقاء، صاحبُ مكرٍ ومكايد، لا يثبتُ على حالةٍ واحدة.", traits: ["eloquent", "clever", "learner", "covetous", "proud", "affable", "changes_opinion"] },
+  السرطان: { page: 26, text: "كثيرُ النقلةِ من مكانٍ إلى مكان، عزيزُ النفس، معجبٌ بنفسِه، يُصابُ بالعين، يقوى بدنُه في أوّلِ الشهرِ ويتوعّكُ في آخرِه… خفيفُ الروح.", traits: ["restless", "proud", "cheerful"] },
+  الأسد:   { page: 31, text: "ذو قوّةٍ… ظهرت من عِظَمِ همّتِه، ورِفعةٍ في علوِّ الشأن… عند الملوكِ وأربابِ المناصبِ ذو كرامة، يبلغُ القصدَ والأمل (من الأبيات).", traits: ["ambitious", "leader"] },
+  السنبلة: { page: 35, text: "مدبّرُ الرأي ذو عقلٍ ومعرفة، له القبول… نِعمَ الرفيق، حرُّ الطباع (من الأبيات).", traits: ["clever", "affable"] },
+  الميزان: { page: 39, text: "المولودُ به… عاقلًا لبيبًا، عزيزَ النفس… محبوبٌ عند كلِّ من يراه… يحبُّ الزينةَ واللعب… لا يثبتُ على أمرٍ واحد.", traits: ["clever", "proud", "affable", "cheerful", "changes_opinion"], body: "الغالبُ عليه الدمُ والصفرة، والصداعُ ووجعُ الصدغين." },
+  العقرب:  { page: 44, text: "أبو الزعازع، ربُّ الحربِ والحَوْل، له خداعٌ وعزمٌ في الحروب… قائدُ جيوشٍ لها عزٌّ بحركتِه (من الأبيات).", traits: ["bold", "leader", "firm_opinion"] },
+  القوس:   { page: 47, text: "حرُّ الصفات، في خُلُقِها عجب، أحلى من السكّر… ظريفُ القدّ، ظهرت أحكامُه بالفضلِ والعلمِ والعمل (من الأبيات).", traits: ["affable", "generous", "learner", "hardworking"] },
+  الجدي:   { page: 50, text: "سخيُّ اليدين، مُداري كلِّ نائبة، صبورٌ على الضرّاءِ والهول، يرى السعادةَ في أعمالِه، وله قبولٌ عند كلِّ الناسِ في العمل، له عزمٌ شبهُ السهام (من الأبيات).", traits: ["generous", "patient", "affable", "hardworking", "bold"] },
+  الدلو:   { page: 53, text: "تناسبُ الجبالَ الراسياتِ همّتُه… ذو عقلٍ وذو أدب، حائزٌ فنونَ الآخرين والأُوَل، ورأيُه سديدٌ في كلِّ مطلبِه، عند الأكابرِ لا يُثنى على عجل (من الأبيات).", traits: ["ambitious", "clever", "learner", "firm_opinion"] },
+  الحوت:   { page: 55, text: "له كلمةٌ في الحكمِ نافذة، وليس في حضرتِه الهولُ والجدل (من الأبيات).", traits: ["leader", "peacemaker"] },
+};
+
+;__exports["ABUMASHAR_SRC"]=ABUMASHAR_SRC;__exports["ASC_NATURE"]=ASC_NATURE;return __exports;})();
 __M["hal-ibnsina.data"]=(function(){"use strict";const __exports={};
 // data/hal-ibnsina.data.js — دلائلُ الأمزجة عند ابن سينا.
 // المصدر: «القانون في الطب»، الكتاب الأوّل، الفنّ الثاني، التعليم الثالث، «الفصل الثالث: علامات الأمزجة»
@@ -2340,6 +2365,62 @@ const WIT_RULES = {
 };
 
 ;__exports["LILLY_SRC"]=LILLY_SRC;__exports["PLANET_QUALITY"]=PLANET_QUALITY;__exports["MOON_PHASE_QUALITY"]=MOON_PHASE_QUALITY;__exports["SEASON_QUALITY"]=SEASON_QUALITY;__exports["SEASON_AR"]=SEASON_AR;__exports["ELEMENT_QUALITY"]=ELEMENT_QUALITY;__exports["MOIETY"]=MOIETY;__exports["MALEFIC_ASPECTS"]=MALEFIC_ASPECTS;__exports["COMPLEXION"]=COMPLEXION;__exports["COMPLEXION_MANNERS"]=COMPLEXION_MANNERS;__exports["PLANET_MANNERS"]=PLANET_MANNERS;__exports["SIGN_MANNERS"]=SIGN_MANNERS;__exports["WIT_RULES"]=WIT_RULES;return __exports;})();
+__M["hal-ptolemy.data"]=(function(){"use strict";const __exports={};
+// data/hal-ptolemy.data.js — بطليموس، «الأربع مقالات» (Tetrabiblos)، المقالة الثالثة، الفصل ١٣: «في صفات النفس».
+// ترجمة F. E. Robbins (Loeb، ١٩٤٠ — ملكيّةٌ عامّة)، النصُّ في text/sources/mizaj/tetrabiblos/3D.txt.
+// عند بطليموس: الجزءُ العاقلُ من النفسِ يُعرَفُ من عطارد، والحسّيُّ غيرُ العاقلِ من القمر؛ ويُنظَرُ في نوعِ البروجِ
+// التي هما فيها، وفي الكوكبِ «المستولي» عليهما (حاكمِ النفس) وشرفِ موضعِه، وفي حالِ القمر.
+// الترجمةُ العربيّةُ أمينةٌ للمعنى ومختصرةٌ حيث يطولُ السرد؛ الصفاتُ المرتبطةُ بها ممّا في النصِّ نفسِه.
+
+const PTOLEMY_SRC = "بطليموس، الأربع مقالات، م٣ ف١٣ «صفات النفس» (ترجمة Robbins)";
+
+// نوعُ برجِ عطاردَ والقمر (منقلب/ذو جسدين/ثابت)
+const SIGN_TYPE_SOUL = {
+  منقلب: {
+    text: "البروجُ المنقلبةُ تُخرجُ نفوسًا صالحةً لمخالطةِ الناس، محبّةً للحراكِ والشأنِ العامّ، طالبةً للمجد، شريفة، متحرّكة، كثيرةَ السؤال، مبتكرة، حسنةَ الحدس.",
+    traits: ["ambitious", "clever", "restless", "affable"],
+  },
+  "ذو جسدين": {
+    text: "البروجُ ذواتُ الجسدين تجعلُ النفوسَ مركّبةً متقلّبة، صعبةَ الإدراك، خفيفةً غيرَ مستقرّة، متلوّنة، محبّةً للهوى، متعدّدةَ الوجوه، محبّةً للطرب، كسولة، سريعةَ الكسب، كثيرةَ الرجوعِ عن آرائها.",
+    traits: ["changes_opinion", "restless", "lazy", "secretive"],
+  },
+  ثابت: {
+    text: "البروجُ الثابتةُ تجعلُها عادلة، لا يؤثّرُ فيها التملّق، مثابرةً ثابتة، ذكيّة، صبورة، مجتهدة، صارمة، ضابطةً لنفسِها، حافظةً للضغينة، كثيرةَ الخصومة، طموحة، صلبةً لا تلين.",
+    traits: ["firm_opinion", "patient", "hardworking", "clever", "grudge_long", "quarrelsome", "ambitious"],
+  },
+};
+
+// حاكمُ النفسِ وحدَه، في موضعٍ شريفٍ أو ضدِّه
+const RULER_ALONE = {
+  زحل: {
+    honour: { text: "زحلُ حاكمًا للنفسِ في موضعٍ شريف: قويُّ العقل، عميقُ الفكر، صارم، ذو غايةٍ واحدة، كادح، متسلّط، سريعُ المؤاخذة، محبٌّ للمالِ ممسكٌ له، جمّاعٌ للكنوز، غيور.", traits: ["deep_thinker", "firm_opinion", "hardworking", "covetous", "revengeful", "proud"] },
+    dishonour: { text: "وفي ضدِّه: دنيءُ الهمّة، ضيّقُ النفس، غيرُ مكترث، خبيث، جبان، قليلُ الثقةِ بنفسِه، منعزل، كثيرُ البكاء، متطيّر، كادحٌ بلا ثمرة، قاسي القلب، كئيبٌ لا يعتني ببدنِه.", traits: ["low_self", "timid", "solitary", "sorrowful", "fearful", "suspicious"] },
+  },
+  المشتري: {
+    honour: { text: "المشتري حاكمًا للنفسِ في موضعٍ شريف: كبيرُ النفس، كريم، تقيّ، شريف، محبٌّ للّذّةِ المباحة، لطيف، عادل، رفيعُ الهمّة، وقور، مشغولٌ بشأنِه، رحيم، محبٌّ للمناقشة، محسن، ودود، فيه أهليّةُ القيادة.", traits: ["generous", "affable", "leader", "faithful", "hopeful", "peacemaker"] },
+    dishonour: { text: "وفي ضدِّه: صفاتٌ تشبهُها لكن أدنى: الإسرافُ مكانَ الكرم، والتطيّرُ مكانَ التقوى، والجبنُ مكانَ الحياء، والعُجبُ مكانَ الوقار، والسذاجةُ مكانَ اللطف.", traits: ["timid", "proud", "generous"] },
+  },
+  المريخ: {
+    honour: { text: "المريخُ حاكمًا للنفسِ في موضعٍ شريف: شريف، آمر، ذو حميّة، جنديّ، متعدّدُ المواهب، قويّ، مقدام، متهوّر، عصيّ، عنيد، حادّ، متسلّط، نشيط، سريعُ الغضب، فيه أهليّةُ القيادة.", traits: ["bold", "rash", "anger_quick", "energetic", "leader", "proud", "firm_opinion"] },
+    dishonour: { text: "وفي ضدِّه: شرس، وقح، مثيرٌ للفتن، مبذّر، عالي الصوت، سريعُ اليد، مندفع، لا يرحم، مضطرب، يعادي أهلَه.", traits: ["quarrelsome", "anger_quick", "rash", "loud_fast", "restless"] },
+  },
+  الزهرة: {
+    honour: { text: "الزهرةُ حاكمةً للنفسِ في موضعٍ شريف: لطيف، طيّب، مترف، فصيح، أنيق، بشوش، محبٌّ للجمالِ والفنون، يكرهُ الشرّ، متأدّب، صحيح، يرى أحلامًا طيّبة، ودود، محسن، رحيم، سريعُ الرضا.", traits: ["affable", "cheerful", "eloquent", "generous", "grudge_short", "peacemaker"] },
+    dishonour: { text: "وفي ضدِّه: مهمل، شديدُ الميلِ إلى اللذّات، رخو، هيّاب، غيرُ مكترث، عيّاب.", traits: ["timid", "lazy"] },
+  },
+  عطارد: {
+    honour: { text: "عطاردُ حاكمًا للنفسِ في موضعٍ شريف: حكيم، فطن، متأمّل، متعلّم، مبتكر، مجرّب، حاسبٌ ماهر، باحثٌ في الطبيعة، حسنُ الحدس، بالغٌ غايتَه.", traits: ["clever", "learner", "deep_thinker", "eloquent"] },
+    dishonour: { text: "وفي ضدِّه: متعجّل، كثيرُ النسيان، مندفع، خفيفُ العقل، متقلّب، كثيرُ الرجوعِ عن رأيِه، غيرُ مستقرّ، لا يُعتمَدُ عليه، متقلّبُ الحكم.", traits: ["changes_opinion", "rash", "restless"] },
+  },
+};
+
+// حالُ القمرِ نفسِه
+const MOON_STATE = {
+  waxing: { text: "القمرُ في الطلوعِ وزيادةِ النور: يميلُ بالنفسِ إلى مواهبَ طبيعيّةٍ أكبر، وشهرةٍ وثباتٍ وصراحة.", traits: ["open", "firm_opinion"] },
+  waning: { text: "وفي نقصانِ النورِ أو الاحتجاب: إلى تثاقلٍ وبلادة، وقلّةِ ثباتٍ في العزم، وحذرٍ أكثر، وشهرةٍ أقلّ.", traits: ["lazy", "slow_mind", "changes_opinion", "timid"] },
+};
+
+;__exports["PTOLEMY_SRC"]=PTOLEMY_SRC;__exports["SIGN_TYPE_SOUL"]=SIGN_TYPE_SOUL;__exports["RULER_ALONE"]=RULER_ALONE;__exports["MOON_STATE"]=MOON_STATE;return __exports;})();
 __M["hal-traits.data"]=(function(){"use strict";const __exports={};
 // data/hal-traits.data.js — «اللغةُ المشتركة» لقراءةِ الحال: قائمةُ صفاتٍ موحّدة.
 // كلُّ كتابٍ (Lilly، ابن سينا، شمس المعارف، بطليموس…) تُترجَمُ شهادتُه إلى هذه المعرِّفات نفسِها، فيمكنُ
@@ -18580,6 +18661,8 @@ const abjad=__M["abjad"].default;
 const { TRAITS, TRAIT_GROUPS }=__M["hal-traits.data"];
 const L=__M["hal-lilly.data"];
 const IS=__M["hal-ibnsina.data"];
+const PT=__M["hal-ptolemy.data"];
+const AM=__M["hal-abumashar.data"];
 const { MIZAJ }=__M["huruf.data"];
 
 const SHAMS_SRC = "شمس المعارف الكبرى — مزاجُ الطبعِ الغالبِ في حروفِ الاسم";
@@ -18737,8 +18820,32 @@ function witTestimony(sky) {
   return out;
 }
 
+// ── بطليموس م٣ ف١٣: نوعُ برجَي عطاردَ والقمر، وحاكمُ النفس، وحالُ القمر ──
+function ptolemySoul(sky) {
+  const out = [];
+  const modality = (sign) => falak.SIGNS.find((s) => s.name === sign)?.quality;
+  const types = [...new Set(["عطارد", "القمر"].map((n) => modality(sky.planets[n].sign)).filter(Boolean))];
+  for (const ty of types) { const st = PT.SIGN_TYPE_SOUL[ty]; if (st) out.push({ line: "ptol_signs", text: st.text, traits: st.traits }); }
+  // حاكمُ النفس: الكوكبُ الأكثرُ حظوظًا في موضعَي عطاردَ والقمر؛ عند التعادلِ لا يُحكَم
+  const totals = {};
+  for (const n of ["عطارد", "القمر"]) for (const pl of falak.CHALDEAN) totals[pl] = (totals[pl] || 0) + Math.max(0, falak.dignities(pl, sky.planets[n].longitude).score);
+  const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  let ruler = null, rulerStr = null;
+  if (ranked[0][1] > 0 && ranked[0][1] > (ranked[1]?.[1] ?? -1) && PT.RULER_ALONE[ranked[0][0]]) {
+    ruler = ranked[0][0]; rulerStr = strength(ruler, sky);
+    if (rulerStr.level !== "middle") { // المتوسّطُ لا يُحكَمُ له بشرفٍ ولا بضدِّه
+      const side = rulerStr.level === "strong" ? PT.RULER_ALONE[ruler].honour : PT.RULER_ALONE[ruler].dishonour;
+      out.push({ line: "ptol_ruler", text: side.text, traits: side.traits });
+    }
+  }
+  const el = ((sky.planets["القمر"].longitude - sky.planets["الشمس"].longitude) % 360 + 360) % 360;
+  if (el > 12 && el < 168) out.push({ line: "ptol_moon", ...PT.MOON_STATE.waxing });
+  else if (el > 192 && el < 348) out.push({ line: "ptol_moon", ...PT.MOON_STATE.waning });
+  return { testimonies: out, ruler, rulerStrength: rulerStr, totals: ranked };
+}
+
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)" };
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 function reading(c) {
@@ -18773,6 +18880,10 @@ function reading(c) {
     if (sm) testify("sign", `${L.LILLY_SRC}، ف١٠٧`, sm.text, sm.traits);
   }
   for (const w of witTestimony(sky)) testify("wit", `${L.LILLY_SRC}، ف١٠٩`, w.text, w.traits);
+  const am = AM.ASC_NATURE[sky.ascendant.sign];
+  if (am) testify("am_asc", `${AM.ABUMASHAR_SRC}، ص ${am.page}`, am.text, am.traits);
+  const soul = ptolemySoul(sky);
+  for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
   // الحكمُ على كلِّ صفة
   const lines = (t) => new Set((ev[t] || []).map((e) => e.line));
@@ -18805,6 +18916,7 @@ function reading(c) {
   const body = [];
   if (heatAx.agree) body.push({ q: heatAx.k, text: IS.EXCESS_SIGNS[heatAx.k] });
   if (moistAx.agree) body.push({ q: moistAx.k, text: IS.EXCESS_SIGNS[moistAx.k] });
+  if (am && am.body) body.push({ q: "asc", text: am.body, src: `${AM.ABUMASHAR_SRC}، ص ${am.page}` });
 
   return {
     temperament: {
@@ -18813,9 +18925,10 @@ function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
+    soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, SHAMS_SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, SHAMS_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }
@@ -24656,7 +24769,7 @@ PANELS.hal = (main) => {
     ${card({ title: "مزاجُك", cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
       reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
     <div class="grid wide">${groupCards}</div>
-    ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${esc(b.text)}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا: ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
+    ${r.body.length ? card({ title: "ما قد يُتعِبُ بدنَك", body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
       <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}

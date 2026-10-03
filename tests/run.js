@@ -1143,6 +1143,11 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   const tl = a.temperament.chart.tally;
   ok(tl.H === 6 && tl.C === 3 && tl.M === 4 && tl.D === 7 && a.temperament.chart.complexion.key === "choleric", "مزاجُ الخريطةِ بطريقةِ Lilly يطابقُ الحسابَ اليدويّ (حارٌّ يابس ⇒ صفراويّ)");
   ok(a.temperament.chart.testimonies.some((t) => t.who.startsWith("زحل ينظرُ الطالع")), "زحلُ المربّعُ للطالع يُدخِلُ كيفيّتَه (قاعدةُ Lilly)");
+  // أدلّةُ بطليموس وأبي معشر حاضرةٌ ومستقلّة
+  const allFirm = Object.values(a.groups).flatMap((g) => g.firm);
+  const proud = allFirm.find((x) => x.id === "proud");
+  ok(proud && ["chart", "am_asc", "ptol_ruler"].every((l) => proud.lines.includes(l)), "«تعتزُّ برأيك» يشهدُ لها Lilly وأبو معشر وبطليموس معًا");
+  ok(a.soulRuler && a.soulRuler.planet === "المشتري", "حاكمُ النفسِ عند بطليموس: الأكثرُ حظوظًا في موضعَي عطاردَ والقمر (القوس ⇒ المشتري)");
   // اسمٌ متعادلُ الحرارةِ والبرودة لا يُدَّعى له اتّفاقٌ في الحرارة
   ok(a.temperament.name.complexion == null && a.temperament.final.heat.agree === false && /تتعادلُ فيها الحرارةُ والبرودة/.test(a.summary), "اسمٌ متعادلٌ ⇒ لا يُقالُ إنّه وافق الخريطةَ في الحرارة");
   // صفةٌ بدليلين ⇒ مؤكّدة؛ بدليلٍ واحد ⇒ منفردة؛ ضدّان ⇒ «أحيانًا»
