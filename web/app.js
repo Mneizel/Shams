@@ -2035,7 +2035,7 @@ PANELS.kaf = (main) => {
     const f = lastCam ? mergeManual(JSON.parse(JSON.stringify(lastCam)), readManual()) : readManual();
     let r;
     try { r = kaf.read(f); } catch (e) { $("#k-out", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
-    try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
+    try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now(), lines: Object.fromEntries(Object.entries(f.lines || {}).map(([k, v]) => [k, { present: !!v.present, states: v.states || [] }])), thumb: f.thumb || {}, mounts: f.mounts || {} })); } catch {}
     $("#k-out", main).innerHTML = `<div class="grid wide">
       ${card({ title: `قراءةُ الكفِّ ${esc(r.hand)}`, k: `${AR(r.sections.length)} بابًا`,
         body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
@@ -2115,7 +2115,7 @@ PANELS.kaf = (main) => {
             for (const k of rejected) f.lines[k] = { present: false, confidence: 0, states: [], source: "camera" };
             for (const k of confirmed) if (f.lines[k] && f.lines[k].present) f.lines[k] = { ...f.lines[k], confidence: 0.8, weak: false };
             let r; try { r = kaf.read(f); } catch (e) { $("#k-shot", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
-            try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now() })); } catch {}
+            try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now(), lines: Object.fromEntries(Object.entries(f.lines || {}).map(([k, v]) => [k, { present: !!v.present, states: v.states || [] }])), thumb: f.thumb || {}, mounts: f.mounts || {} })); } catch {}
             const hint = f.handHint;
             const typeAr = (k) => (sc.handTypes.find((h) => h.key === k) || {}).ar || k;
             const handLine = f.hand ? `<div class="kv"><b>اليد:</b> ${f.hand === "left" ? "اليسرى" : "اليمنى"} <span class="gloss">— عرفتْها الكاميرا من وضعِ الإبهام${$("#k-hand", main)?.value ? " (أو كما اخترتَ يدويًّا)" : ""}</span></div>` : "";
@@ -2343,7 +2343,8 @@ PANELS.arif = (main) => {
   const c = ctx();
   const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now };
   let R;
-  try { R = arif.read(C, { weights: arifWeights() }); }
+  const palmSaved = lsGet("smk-last-kaf", null);
+  try { R = arif.read(C, { weights: arifWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const MON = arif.MONTHS, F = c.sex === "f";
   let topic = "all", sel = R.months.find((m) => m.now)?.k ?? 0, askBest = null;
@@ -2358,6 +2359,7 @@ PANELS.arif = (main) => {
         <div class="kv" style="font-size:1.06rem">${esc(AR(R.summary))}</div>
         <div class="arif-areas">${areas.map((x) => `<div class="arif-area"><div class="ah"><b>${esc(AR(x.title))}</b><span class="arif-pill ${x.pill.cls}">${esc(AR(x.pill.text))}</span></div><div class="kv">${esc(AR(x.text))}</div><small class="src">${esc(AR(x.src))}</small></div>`).join("")}</div>
         ${R.insights.map((x) => `<div class="arif-insight">${esc(AR(x.text))}<small class="src">${esc(AR(x.src))}</small></div>`).join("")}
+        ${!(palmSaved && palmSaved.lines) ? `<div class="gloss" style="margin-top:.6rem">إن ${F ? "قرأتِ" : "قرأتَ"} كفَّ${F ? "كِ" : "ك"} في «${navLink("kaf", "قراءة الكفّ")}» يضيفُ العارفُ ما في خطوطِ يدِ${F ? "كِ" : "ك"} إلى هذه الخلاصة.</div>` : ""}
       </div>
     </div>
     <div class="card">

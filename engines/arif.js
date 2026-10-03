@@ -279,6 +279,13 @@ function turningPoints(c, ctx, months) {
   return out.sort((a, b) => a.k - b.k).slice(0, 4);
 }
 
+// أقربُ شهرٍ قادمٍ يتبدّلُ فيه حكمُ موضوعٍ تبدّلًا واضحًا
+function R_turn(months, topic) {
+  const fut = months.filter((x) => x.k >= 0);
+  for (let i = 1; i < fut.length; i++) if (Math.abs(fut[i].scores[topic] - fut[i - 1].scores[topic]) >= 0.9) return fut[i].label;
+  return fut[0]?.label || "";
+}
+
 /** الزبدةُ والجوانبُ والاستنتاجات */
 export function read(c, opt = {}) {
   const T = timeline(c, opt);
@@ -325,6 +332,21 @@ export function read(c, opt = {}) {
   else if (!hot && hotPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} يميلُ إلى الهدوء، والفترةُ حارّةٌ تدفعُ${k_("ك", "كِ")} إلى الحركة: استغلَّها في ما كان يحتاجُ جرأة.`, src: `مزاجُ الخريطة + الفترةُ الكبرى لـ${curF.majorLord}` });
   if (L.wealth) insights.push({ text: `رزقُ${k_("ك", "كِ")} ${L.wealth.text.replace(/^يأتي المالُ /, "يأتي ")}، وأحسنُ وقتٍ له بين ${W.money.best.label}${/الأصدقاء|الشراكة|بيتُ الأصدقاء/.test((months.find((x) => x.now)?.voices.map((v) => v.why).join(" ") || "")) ? "، والأنفعُ مع شريكٍ أو صديق" : ""}.`, src: "المال (بطليموس م٤ ف٢) + الخطُّ الزمنيّ للمال" });
   if (A.hits[0]) insights.push({ text: `${k_("بدنُك", "بدنُكِ")} أضعفُ في ${gen(A.hits[0].part)}، وأثقلُ فترةٍ عليه بين ${W.health.worst.label}: ${k_("خفّفْ", "خفّفي")} الحِملَ فيها ولا ${k_("تؤجّلْ", "تؤجّلي")} الكشف إن ${k_("أحسستَ", "أحسستِ")} بشيء.`, src: "آفاتُ البدن (بطليموس م٣ ف١٢) + الخطُّ الزمنيّ للصحّة" });
+
+  // الكفّ (من آخر قراءةٍ محفوظة): خطوطُ اليد مع الخطِّ الزمنيّ — [ب] برنارد الأسطة، فصول الخطوط
+  if (opt.palm && opt.palm.lines) {
+    const st = (k) => (opt.palm.lines[k]?.present ? opt.palm.lines[k].states || [] : []);
+    const has = (k, re) => st(k).some((x) => re.test(x));
+    const SRC = (k, ch) => `خطُّ ${k} في كفّك ([ب] الفصل ${ch}) + الخطُّ الزمنيّ`;
+    if (has("life", /قصير|باهت|سلسل|جزيرة|متقطّع/)) insights.push({ text: `خطُّ الحياة في ${k_("كفّك", "كفّكِ")} يدلُّ على طاقةٍ تحتاجُ إدارة، وأثقلُ فترةٍ على البدن بين ${W.health.worst.label}: ${k_("لا تحمّلْ نفسَك", "لا تحمّلي نفسَكِ")} فيها أكثرَ من طاقتها.`, src: SRC("الحياة", "١١") });
+    else if (has("life", /طويل|عميق|مزدوج/)) insights.push({ text: `خطُّ الحياة في ${k_("كفّك", "كفّكِ")} قويّ، فـ${k_("تتجاوزُ", "تتجاوزين")} الفتراتِ الثقيلة (أثقلُها بين ${W.health.worst.label}) أسرعَ من غيرِ${k_("ك", "كِ")}.`, src: SRC("الحياة", "١١") });
+    if (has("head", /منكسر|متقطّع|باهت|ملتصقٌ بخطِّ الحياةِ مسافةً طويلة/)) insights.push({ text: `خطُّ الرأس يدلُّ على تردّدٍ أو تشتّتٍ عند القرار؛ فلا ${k_("تحسمْ", "تحسمي")} أمرًا كبيرًا في الأشهر الثقيلة، واجعلْ قراراتِ${k_("ك", "كِ")} المهمّةَ بين ${g.best.label}.`, src: SRC("الرأس", "١٠") });
+    else if (has("head", /مستقيم|منفصل/)) insights.push({ text: `خطُّ الرأس يدلُّ على عقلٍ حاسمٍ مستقلّ؛ وهذا أنفعُ ما ${k_("تملكُه", "تملكينه")} في الفترة الثقيلة: ${k_("خطّطْ", "خطّطي")} فيها لما ${k_("ستبدؤه", "ستبدئينه")} بين ${g.best.label}.`, src: SRC("الرأس", "١٠") });
+    if (has("heart", /طويل|صاعدة|يبدأُ عاليًا/)) insights.push({ text: `خطُّ القلب يدلُّ على عاطفةٍ ثابتةٍ وفيّة، وأحسنُ وقتٍ للحبّ والارتباط بين ${W.love.best.label}.`, src: SRC("القلب", "٩") });
+    else if (has("heart", /هابطة|متقطّع|سلسل|قصير/)) insights.push({ text: `خطُّ القلب يدلُّ على خيباتٍ أو تحفّظٍ في العاطفة؛ ${k_("تمهّلْ", "تمهّلي")} في العلاقات بين ${W.love.worst.label}، والأيسرُ بين ${W.love.best.label}.`, src: SRC("القلب", "٩") });
+    if (has("fate", /متقطّع|يتوقّف/)) insights.push({ text: `خطُّ المصير متقطّع: تغيّراتٌ في الشغل متوقَّعة، وأقربُها يوافقُ ${R_turn(months, "work")}.`, src: SRC("المصير", "١٢") });
+    else if (has("fate", /واضحٌ مستقيم|يبدأُ من خطِّ الحياة/)) insights.push({ text: `خطُّ المصير واضح: مسارٌ مهنيٌّ ثابتٌ بجهدِ${k_("ك", "كِ")}، يقوى بين ${W.work.best.label}.`, src: SRC("المصير", "١٢") });
+  }
 
   return { summary, pills, areas, insights, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
 }
