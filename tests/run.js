@@ -1356,6 +1356,7 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(qs.ruler === "المشتري" && qs.sign === "القوس" && qs.partners.includes("عطارد") && arif.qasim(skyN, 30).ruler === "زحل", "القاسم (البيروني §٥٢٣): في الرابعة والثلاثين حدُّ المشتري في القوس وشريكُه عطارد، وفي الثلاثين حدُّ زحل");
   ok(a.months.some((m) => m.voices.some((v) => v.meth === "qisma")), "صوتُ القاسم يدخلُ أزمنةَ العمر");
   ok(a.luckyDays && a.luckyDays.days.join() === "الثلاثاء,الخميس,الجمعة" && a.luckyDays.dates.join() === "9,18,27", "Cheiro: أيّامُ الرقم ٩ الثلاثاء والخميس والجمعة، وتواريخُه ٩ و١٨ و٢٧");
+  ok(q.horary && q.votes.some((v) => v.fam === "horary"), "علمُ المسائل الفلكيّ يدخلُ جوابَ السؤال عائلةً مستقلّة");
   ok(q.bestDay && q.bestDay.label && q.bestDay.date >= new Date(Date.UTC(q.best.from.y, q.best.from.m, 1)), "أنسبُ يومٍ للبدء داخلَ أنسبِ نافذة");
   const fwom = arif.timeline({ ...C, sex: "f" });
   ok(fwom.months.some((m) => m.voices.some((v) => /مريخِك/.test(v.why))) || fwom.months.length === 48, "للمرأة: المريخُ والشمسُ دليلا الزوج في موضوع الحبّ");
