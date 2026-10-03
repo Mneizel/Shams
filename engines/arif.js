@@ -18,6 +18,9 @@ import hal from "./hal.js";
 import life from "./life.js";
 import body from "./body.js";
 import raml from "./raml.js";
+import qura from "./qura.js";
+import jafr from "./jafr.js";
+import * as AE from "../vendor/astronomy-engine.js";
 import { birthNumber } from "./hal.js";
 import { PLANET_GOVERNS } from "../data/falak-ahkam.data.js";
 
@@ -52,6 +55,18 @@ const SIGNS = ["الحمل", "الثور", "الجوزاء", "السرطان", "
 const signIdx = (lon) => Math.floor((((lon % 360) + 360) % 360) / 30);
 const addMonths = (y, m, k) => { const t = y * 12 + m + k; return { y: Math.floor(t / 12), m: ((t % 12) + 12) % 12 }; };
 
+/** الكسوفاتُ والخسوفاتُ (غيرُ شبه الظلّيّة) بين تاريخين، بموضعِها من فلك البروج */
+export function eclipses(from, to) {
+  const out = [];
+  try {
+    let l = AE.SearchLunarEclipse(from);
+    while (l && l.peak.date < to) { if (l.kind !== "penumbral") out.push({ kind: "lunar", date: l.peak.date, lon: falak.planetPositions(l.peak.date)["القمر"].longitude }); l = AE.NextLunarEclipse(l.peak); }
+    let g = AE.SearchGlobalSolarEclipse(from);
+    while (g && g.peak.date < to) { out.push({ kind: "solar", date: g.peak.date, lon: falak.planetPositions(g.peak.date)["الشمس"].longitude }); g = AE.NextGlobalSolarEclipse(g.peak); }
+  } catch {}
+  return out;
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -62,6 +77,9 @@ function natalPoints(sky) {
     { key: "venus", ar: "زهرتِك", lon: sky.planets["الزهرة"].longitude, topics: ["love"] },
   ];
   if (lot) pts.push({ key: "lot", ar: "سهمِ رزقِك", lon: lot.longitude, topics: ["money"] });
+  // عودةُ المشتري وزحل إلى موضعَيهما في الميلاد
+  pts.push({ key: "jup", ar: "مشتريك", lon: sky.planets["المشتري"].longitude, topics: ["all"], only: "jup" });
+  pts.push({ key: "sat", ar: "زحلِك", lon: sky.planets["زحل"].longitude, topics: ["all"], only: "sat" });
   return pts;
 }
 const HOUSE_TOPIC = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 5: ["love"], 6: ["health"], 7: ["love"], 9: ["study"], 10: ["work"], 11: ["money", "all"], 12: ["health"] };
@@ -90,10 +108,21 @@ function monthVoices(ctx, y, m) {
   const pos = falak.planetPositions(date);
   const J = pos["المشتري"].longitude, S = pos["زحل"].longitude, M = pos["المريخ"].longitude;
   for (const pt of ctx.points) {
+    if (pt.only === "jup") { if (aspectOf(J, pt.lon) === "conj") push("sky", 1, "بدايةُ دورةِ خيرٍ جديدة", "المشتري يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
+    if (pt.only === "sat") { if (aspectOf(S, pt.lon) === "conj") push("sky", -1, "مرحلةُ مراجعةٍ وثقلٍ ومسؤوليّة", "زحل يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     const aj = aspectOf(J, pt.lon), as = aspectOf(S, pt.lon), am = aspectOf(M, pt.lon, 3);
     if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" ? "مودّةٌ وقرب" : pt.key === "sun" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
     if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" ? "برودٌ في العلاقة" : pt.key === "sun" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
     if (am && ["conj", "square", "opp"].includes(am) && ["asc", "sun", "moon"].includes(pt.key)) push("sky", -0.5, "توتّرٌ وعصبيّة", `المريخ ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[am]} ${pt.ar}`, pt.topics);
+  }
+  // الكسوف: الشهرُ الذي يقعُ فيه وشهران بعده
+  for (const e of ctx.eclipses) {
+    const dm = (y * 12 + m) - (e.date.getUTCFullYear() * 12 + e.date.getUTCMonth());
+    if (dm < 0 || dm > 2) continue;
+    for (const pt of ctx.points.filter((q) => ["asc", "sun", "moon"].includes(q.key))) {
+      const asp = aspectOf(e.lon, pt.lon, 5);
+      if (asp === "conj" || asp === "opp") push("sky", -1, "تغيّرٌ مفاجئٌ أو انقلابٌ في أمر", `${e.kind === "solar" ? "كسوفٌ للشمس" : "خسوفٌ للقمر"} ${asp === "conj" ? "على" : "مقابلَ"} ${pt.ar} (${e.date.toISOString().slice(0, 10)})`, pt.topics);
+    }
   }
   const hJ = ((signIdx(J) - ctx.ascIdx + 12) % 12) + 1, hS = ((signIdx(S) - ctx.ascIdx + 12) % 12) + 1;
   if (HOUSE_PLAIN.jup[hJ]) push("sky", 0.5, HOUSE_PLAIN.jup[hJ], `المشتري في بيتِك ${hJ}`, HOUSE_TOPIC[hJ] || ["all"]);
@@ -150,6 +179,7 @@ export function timeline(c, opt = {}) {
     bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
+  ctx.eclipses = eclipses(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - past - 3, 1)), new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + future, 1)));
   const months = [];
   for (let k = -past; k < future; k++) {
     const { y, m } = addMonths(now.getUTCFullYear(), now.getUTCMonth(), k);
@@ -213,13 +243,13 @@ export function read(c, opt = {}) {
   const pills = [
     { cls: nowLvl === "good" ? "saad" : nowLvl === "heavy" ? "nahs" : "", text: nowLvl === "good" ? "الآن: فترةٌ طيّبة" : nowLvl === "heavy" ? "الآن: فترةٌ ثقيلة" : "الآن: فترةٌ وسط" },
   ];
-  if (g.relief) pills.push({ cls: "gold", text: `أوّلُ انفراج: ${g.relief.label}` });
+  if (g.relief && nowLvl !== "good") pills.push({ cls: "gold", text: `أوّلُ تحسّن: ${g.relief.label}` });
   pills.push({ cls: "saad", text: `أفضلُ فترة: ${g.best.label}` });
   let summary = nowLvl === "heavy"
     ? `${k_("أنت", "أنتِ")} الآن في فترةٍ ثقيلة${g.heavyUntil ? ` تمتدُّ حتّى ${g.heavyUntil.label}` : ""}: الأمورُ تتأخّرُ ويكثرُ التعب.${g.relief ? ` من ${g.relief.label} تبدأ بالانفراج تدريجيًّا،` : ""} وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}.`
     : nowLvl === "good"
     ? `${k_("أنت", "أنتِ")} الآن في فترةٍ طيّبة، فاستفدْ منها. وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}، وأثقلُ فترةٍ بين ${g.worst.label}.`
-    : `${k_("حالُك", "حالُكِ")} الآن وسط. أحسنُ فترةٍ في السنوات الثلاث بين ${g.best.label}، وأثقلُها بين ${g.worst.label}.`;
+    : `${k_("حالُك", "حالُكِ")} الآن وسط${g.relief ? `، ويبدأ التحسّنُ من ${g.relief.label}` : ""}. أحسنُ فترةٍ في السنوات الثلاث بين ${g.best.label}، وأثقلُها بين ${g.worst.label}.`;
 
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
@@ -234,13 +264,13 @@ export function read(c, opt = {}) {
   // الاستنتاجاتُ المركّبة (قواعدُ من الكتب، مكتوبةٌ صراحةً)
   const insights = [];
   const curF = falak.firdaria(ctx.birth, c.now ? new Date(c.now) : new Date(), { byNight: ctx.byNight });
-  const hot = h.temperament.chart.heat === "H" || h.temperament.final?.heat?.k === "H";
+  const hot = (h.temperament.chart.heat > 0) || h.temperament.final?.heat?.k === "H";
   const hotPeriod = ["المريخ", "الشمس"].includes(curF.majorLord), coldPeriod = ["زحل", "القمر"].includes(curF.majorLord);
   const angry = Object.values(h.groups).some((gr) => gr.firm.some((x) => x.id === "anger_quick" || x.id === "rash"));
   if (hot && hotPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} حارّ${angry ? " سريعُ الغضب" : ""}، والفترةُ التي ${k_("أنت", "أنتِ")} فيها من نفسِ الطبع، فيشتدُّ ${k_("عليك", "عليكِ")} ذلك: أكثرُ ما قد ${k_("يخسّرُك", "يخسّرُكِ")} الآن قرارٌ ${k_("تأخذُه وأنت متضايق", "تأخذينه وأنتِ متضايقة")}.${g.relief ? ` أجّلِ القراراتِ الكبيرةَ إلى ما بعد ${g.relief.label}.` : ""}`, src: `مزاجُ الخريطة (Lilly) + الفترةُ الكبرى لـ${curF.majorLord} — «الطبعُ يشتدُّ إذا وافقه زمانُه» (بطليموس م٤ ف١٠)` });
   else if (hot && coldPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} حارّ، والفترةُ التي ${k_("أنت", "أنتِ")} فيها باردةٌ تُهدّئه: وقتٌ مناسبٌ للتأنّي والتخطيط أكثر من الاندفاع.`, src: `مزاجُ الخريطة + الفترةُ الكبرى لـ${curF.majorLord}` });
   else if (!hot && hotPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} يميلُ إلى الهدوء، والفترةُ حارّةٌ تدفعُ${k_("ك", "كِ")} إلى الحركة: استغلَّها في ما كان يحتاجُ جرأة.`, src: `مزاجُ الخريطة + الفترةُ الكبرى لـ${curF.majorLord}` });
-  if (L.wealth) insights.push({ text: `رزقُ${k_("ك", "كِ")} ${L.wealth.text.replace(/^يأتي المالُ /, "يأتي ")}، وأحسنُ وقتٍ له بين ${W.money.best.label}${/الأصدقاء|الشراكة/.test(L.work.text + (months[0]?.voices.map((v) => v.why).join(" ") || "")) ? "، والأنفعُ مع شريك" : ""}.`, src: "المال (بطليموس م٤ ف٢) + الخطُّ الزمنيّ للمال" });
+  if (L.wealth) insights.push({ text: `رزقُ${k_("ك", "كِ")} ${L.wealth.text.replace(/^يأتي المالُ /, "يأتي ")}، وأحسنُ وقتٍ له بين ${W.money.best.label}${/الأصدقاء|الشراكة|بيتُ الأصدقاء/.test((months.find((x) => x.now)?.voices.map((v) => v.why).join(" ") || "")) ? "، والأنفعُ مع شريكٍ أو صديق" : ""}.`, src: "المال (بطليموس م٤ ف٢) + الخطُّ الزمنيّ للمال" });
   if (A.hits[0]) insights.push({ text: `${k_("بدنُك", "بدنُكِ")} أضعفُ في ${gen(A.hits[0].part)}، وأثقلُ فترةٍ عليه بين ${W.health.worst.label}: ${k_("خفّفْ", "خفّفي")} الحِملَ فيها ولا ${k_("تؤجّلْ", "تؤجّلي")} الكشف إن ${k_("أحسستَ", "أحسستِ")} بشيء.`, src: "آفاتُ البدن (بطليموس م٣ ف١٢) + الخطُّ الزمنيّ للصحّة" });
 
   return { summary, pills, areas, insights, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
@@ -255,12 +285,22 @@ export function ask(c, question, opt = {}) {
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
   const rs = r.score ?? 0;
+  let qv = null, jv = null;
+  try { qv = qura.cast(c.name, c.mother, question, now); } catch {}
+  try { jv = jafr.extractAnswer(question, { name: c.name, mother: c.mother }); } catch {}
+  const qs = [rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0];
+  if (qv) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
+  if (jv?.verdict) qs.push(jv.verdict.direction === "نعم" ? 1 : jv.verdict.direction === "لا" ? -1 : 0);
+  const qAvg = qs.reduce((a, b) => a + b, 0) / qs.length;
   const tl = T.months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[topic], 0) / 12;
-  const votes = [{ fam: "question", s: rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0, why: `الرمل: ${r.verdict}` }, { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${level(tl)}` }];
+  const votes = [
+    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
+    { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${level(tl)}` },
+  ];
   const sum = votes.reduce((a, v) => a + v.s, 0);
   const big = sum >= 2 ? "يتمّ، والوقتُ في صالحك." : sum === 1 ? "يتمّ، لكن لا تستعجل." : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
   const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${r.timing?.text ? `، وأوّلُ ما يظهرُ منه ${r.timing.text.replace("نحوَ", "بعد نحو")}` : ""}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? "وتجنّبْ" : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
-  return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name } };
+  return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { timeline, read, ask, MONTHS, TOPICS, FAMILIES };
+export default { timeline, read, ask, eclipses, MONTHS, TOPICS, FAMILIES };

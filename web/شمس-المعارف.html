@@ -20550,6 +20550,623 @@ __exports.default = {
 };
 
 ;__exports["add"]=add;__exports["figureByRows"]=figureByRows;__exports["figureById"]=figureById;__exports["figureProps"]=figureProps;__exports["elementVictor"]=elementVictor;__exports["areFriends"]=areFriends;__exports["arePlanetOpposed"]=arePlanetOpposed;__exports["houseElement"]=houseElement;__exports["figureInHouse"]=figureInHouse;__exports["figureInHouseNafhat"]=figureInHouseNafhat;__exports["timingFor"]=timingFor;__exports["aspectToHouse"]=aspectToHouse;__exports["mothersFromSeed"]=mothersFromSeed;__exports["mothersFromTaps"]=mothersFromTaps;__exports["chart"]=chart;__exports["houses16"]=houses16;__exports["figureLore"]=figureLore;__exports["figureIskandari"]=figureIskandari;__exports["threePartReading"]=threePartReading;__exports["verdictFromScore"]=verdictFromScore;__exports["reading"]=reading;return __exports;})();
+__M["qura"]=(function(){"use strict";const __exports={};
+// engines/qura.js
+// ─────────────────────────────────────────────────────────────────────────────
+// محرّك القرعة والفأل — «قرعة الإمام جعفر الصادق» (الطوخي)
+//
+// عودٌ رُباعيٌّ على أوجهه «ا ب ج د»، يُرمى ثلاثَ مرّات ⇒ ثلاثيّةٌ ⇒ بابٌ من ٦٤
+// فيه آيةٌ وفأل. الرميُ هنا حتميٌّ من بذرةٍ من (الاسم + الأمّ + السؤال + التاريخ)،
+// فنفسُ المدخلاتِ تُعطي نفسَ القرعةِ أبدًا — وهذا وجهُ المسألة.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const abjad=__M["abjad"].default;
+const {
+  FACES, OPENING_PRAYER, BOOK_INDEX, ANSWERS, QURA_NOTE, SOURCE_META,
+}=__M["qura.data"];
+
+// FNV-1a 32-bit على نقاط اليونيكود — بذرةٌ حتميّة.
+function hashStr(s) {
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+// mulberry32 — مولّدٌ عشوائيٌّ حتميّ من بذرة.
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const B4 = { "ا": 0, "ب": 1, "ج": 2, "د": 3 };
+/** رقمُ الباب: من فهرس الكتاب إن وُجِد، وإلا بترتيبٍ رباعيٍّ قياسيّ. */
+function babNumber(key) {
+  if (BOOK_INDEX[key] != null) return { bab: BOOK_INDEX[key], from: "فهرس الكتاب" };
+  const [a, b, c] = [...key];
+  return { bab: B4[a] * 16 + B4[b] * 4 + B4[c] + 1, from: "ترتيبٌ رباعيٌّ قياسيّ (الفهرس الأصليّ باهتُ المسح)" };
+}
+
+/**
+ * ضربُ القرعة.
+ * @param {string} name    اسمُ السائل
+ * @param {string} mother  اسمُ الأمّ
+ * @param {string} question السؤال (نيّةُ القرعة)
+ * @param {Date|string|number} [when=today] تاريخُ اليوم (يُؤخذ يومُه فقط)
+ * @returns {{throws:string[], key:string, bab:number, verse?:string,
+ *            fortune?:string, tone?:string, transcribed:boolean, trace:string[]}}
+ */
+function cast(name, mother, question, when) {
+  const nName = abjad.normalize(name || "");
+  const nMother = abjad.normalize(mother || "");
+  const q = String(question || "");
+  const day = new Date(when || Date.now());
+  const dayKey = `${day.getUTCFullYear()}-${day.getUTCMonth() + 1}-${day.getUTCDate()}`;
+  const seedStr = `${nName}|${nMother}|${q}|${dayKey}`;
+  const seed = hashStr(seedStr);
+  const rnd = mulberry32(seed);
+
+  const throws = [0, 1, 2].map(() => FACES[Math.floor(rnd() * 4)]);
+  const key = throws.join("");
+  const bn = babNumber(key);
+  const ans = ANSWERS[key] || null;
+
+  const trace = [
+    `البذرة = «${seedStr}» ⇒ FNV = ${seed}`,
+    `رميُ العود ٣ مرّات (حتميٌّ من البذرة) ⇒ ${throws.join(" ، ")} ⇒ الثلاثيّة «${key}»`,
+    `الباب رقم ${bn.bab} (${bn.from}).`,
+    ans ? `نصُّ الباب ${ans.bab} منقولٌ: ${ans.tone}.` : `الباب ${bn.bab} موجودٌ في الكتاب، ولم يُنقَل نصُّه من هذا المسح.`,
+    "لاحظْ: لم يُرمَ عودٌ حقيقيّ؛ الثلاثيّةُ دالّةٌ حتميّةٌ في اسمِك واسمِ أمّك وسؤالِك وتاريخِ يومِ الاستشارة — كرميةٍ فعليّةٍ جديدةٍ في كلِّ جلسة. فسؤالُك اليوم يُعطي نفسَ البابِ لو أعدتَه اليومَ نفسَه (لم ترمِ العودَ مرّتين)، لكنّه يُعطي بابًا آخرَ لو رجعتَ تسألُه غدًا — تمامًا كما لا يُعيد الرامي الحقيقيُّ نفسَ الرمية. والأبوابُ عباراتٌ تصدُقُ على كلّ حال.",
+  ];
+
+  return {
+    input: { name: nName, mother: nMother, question: q, day: dayKey },
+    prayer: OPENING_PRAYER,
+    throws, key,
+    bab: bn.bab, babFrom: bn.from,
+    verse: ans?.verse || null,
+    fortune: ans?.fortune || null,
+    tone: ans?.tone || null,
+    transcribed: !!ans,
+    note: QURA_NOTE,
+    source: SOURCE_META.title,
+    trace,
+  };
+}
+
+const SOURCE = SOURCE_META;
+__exports.default = { cast, babNumber, SOURCE, FACES };
+
+;__exports["babNumber"]=babNumber;__exports["cast"]=cast;__exports["SOURCE"]=SOURCE;return __exports;})();
+__M["jafr"]=(function(){"use strict";const __exports={};
+// engines/jafr.js
+// ─────────────────────────────────────────────────────────────────────────────
+// محرّك الجفر — مزجٌ موزونٌ من كتب الجفر (الجفر الجامع، رسائل التكسير الملحقة
+// بشمس المعارف، وصف ابن خلدون).
+//
+// «علم الجفر» ليس له خوارزمية واحدة معتمدة؛ هذه هي العمليات الميكانيكية
+// الموثّقة: أنواعُ البسط، طرقُ التكسير، الزبر والبيّنات، دوائرُ إبدال الحروف،
+// مثلّثُ الأعداد، والإسقاطُ (طرحٌ مكرّرٌ بقاسم: ٢٨/١٢/٩/٧/٤/٣). ثمّ «استخراجُ
+// الجواب» الذي يركّب هذه العمليات ليخرج حرفًا ← بابًا من جدول.
+//
+// الهدف صريح (وهو قولُ ابن خلدون): كلُّ «استخراج» ينتهي إلى قسمةٍ على عددٍ
+// ثابت واختيارٍ من جدول؛ والمعنى يُقحَم في «قياس الكلام وسياقه». `extractAnswer`
+// تُعيد `trace` كاملًا + تفصيلًا حسب المنهج (byMethod) + جوابًا توافقيًّا.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const abjad=__M["abjad"].default;
+const { ABJAD_ORDER, NURANI, LETTER_PLANET, LETTER_NATURE, LETTER_NAMES, LETTER_PLANET_ORDER }=__M["abjad.data"];
+const {
+  ABWAB, ABWAB_SENTIMENT, ABWAB_PLANET, ABWAB_ELEMENT, YESNO_MUSTUR,
+  BAST_MODES, TAKSIR_METHODS, ISQAT_DIVISORS, SOURCES_META,
+  TIME_LADDER, AR_MONTHS_HIJRI, NOTE: JAMI_NOTE,
+}=__M["jafr-jami.data"];
+
+/**
+ * شكلُ السؤال: أسئلةُ «لماذا/كيف/متى/ما الذي» ليست نعم/لا — فرضُ حكمٍ ثنائيٍّ
+ * عليها تدليسٌ (جوابٌ لا يطابق شكل السؤال). نُصنِّف الشكلَ لنعرضَ حكمًا بصيغةٍ
+ * مناسبة (سببٌ/توجيهٌ/توقيتٌ/وصفٌ) بدل «نعم/لا» حين لا تكون كذلك.
+ */
+function classifyQuestionForm(question) {
+  // \b لا يعمل بين حرفين عربيَّين (ليسا \w في جافاسكربت) — نستعمل حدًّا صريحًا بدلها.
+  const q = String(question || "").trim();
+  const END = "(?=\\s|$|؟|\\?|،|,)";
+  if (new RegExp(`^(لماذا|ليش|لِمَ)${END}`).test(q)) return "why";
+  if (new RegExp(`^كيف${END}`).test(q)) return "how";
+  if (new RegExp(`^متى${END}`).test(q)) return "when";
+  if (new RegExp(`^(ما\\s+الذي|ماذا)${END}`).test(q)) return "what";
+  return "yesno";
+}
+
+const letterAt = (n) => ABJAD_ORDER[((n - 1) % 28 + 28) % 28]; // 1..28 → حرف
+const orderOf = (ch) => ABJAD_ORDER.indexOf(ch) + 1;
+const NUR_SET = new Set(NURANI);
+const MUSTUR_SET = new Set(YESNO_MUSTUR);
+const ELEMENT_ORDER = ["نار", "هواء", "ماء", "تراب"];
+
+/**
+ * الجدول الأعظم للجفر الجامع (٢٨×٢٨) — بديلٌ مُهيكَلٌ بقاعدةٍ معلنة.
+ */
+function grandTable() {
+  const rows = [];
+  for (let r = 0; r < 28; r++) {
+    const row = [];
+    for (let c = 0; c < 28; c++) row.push(letterAt((r * 3 + c * 5 + r * c + 1) % 28 || 28));
+    rows.push(row);
+  }
+  return { rows, note: JAMI_NOTE };
+}
+
+/**
+ * جدولُ الطبائع والكواكب (٤×٧ = ٢٨): صفٌّ لكلِّ عنصر، عمودٌ لكلِّ كوكب،
+ * والخانةُ الحرفُ الذي يجمع تينك الصفة والكوكب. توزيعٌ حقيقيٌّ متعامد.
+ */
+function jafrGrid() {
+  const rows = ELEMENT_ORDER.map((nat) => {
+    const row = LETTER_PLANET_ORDER.map((pl) =>
+      ABJAD_ORDER.find((ch) => LETTER_NATURE[ch] === nat && LETTER_PLANET[ch] === pl) || null);
+    return { element: nat, letters: row };
+  });
+  return { planets: LETTER_PLANET_ORDER, rows };
+}
+
+// ── البسط ────────────────────────────────────────────────────────────────
+/** البسط الذاتيّ: حروف النصّ بترتيبها كما تُكتب. (توافقٌ خلفيّ) */
+function bast(text) {
+  return abjad.letters(text);
+}
+
+function bastModes() {
+  return Object.entries(BAST_MODES).map(([id, m]) => ({ id, ...m }));
+}
+
+/**
+ * البسط بنمطٍ مُختار. يُرجِع سلسلةَ حروفٍ (أو أعداد) قابلةً للتكسير والجُمّل.
+ * @param {string} text
+ * @param {"huruf"|"adadi"|"lafzi"|"jumali"|"tadad"|"tadeef"|"amtizaj"} [mode="huruf"]
+ */
+function bastBy(text, mode = "huruf") {
+  const src = abjad.letters(text);
+  let tokens, out, value;
+  switch (mode) {
+    case "adadi":
+      tokens = src.map((ch) => abjad.jummal(ch));
+      out = tokens.join(" ");
+      value = tokens.reduce((a, n) => a + n, 0);
+      break;
+    case "lafzi":
+      tokens = src.flatMap((ch) => [...(LETTER_NAMES[ch] || ch)]);
+      out = tokens.join("");
+      value = abjad.jummal(out);
+      break;
+    case "jumali":
+      value = abjad.jummal(text);
+      tokens = [value];
+      out = String(value);
+      break;
+    case "tadad":
+      tokens = src.map((ch) => { const o = orderOf(ch); return o > 0 ? letterAt(29 - o) : ch; });
+      out = tokens.join("");
+      value = abjad.jummal(out);
+      break;
+    case "tadeef":
+      tokens = src.flatMap((ch) => [ch, ch]);
+      out = tokens.join("");
+      value = abjad.jummal(out);
+      break;
+    case "amtizaj": {
+      const rev = src.slice().reverse();
+      tokens = [];
+      for (let i = 0; i < src.length; i++) { tokens.push(src[i]); tokens.push(rev[i]); }
+      out = tokens.join("");
+      value = abjad.jummal(out);
+      break;
+    }
+    case "huruf":
+    default:
+      tokens = src;
+      out = src.join("");
+      value = abjad.jummal(out);
+  }
+  return { mode, title: BAST_MODES[mode]?.title || mode, tokens, text: out, value };
+}
+
+// ── التكسير ─────────────────────────────────────────────────────────────
+function taksirTarfeen(arr) {
+  const out = [];
+  let i = 0, j = arr.length - 1;
+  while (i <= j) { out.push(arr[i]); if (i !== j) out.push(arr[j]); i++; j--; }
+  return out;
+}
+function taksirGroups(arr, size, orderIdx) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) {
+    const g = arr.slice(i, i + size);
+    if (g.length === size) orderIdx.forEach((k) => out.push(g[k]));
+    else out.push(...g);
+  }
+  return out;
+}
+function taksirMethods() {
+  return Object.entries(TAKSIR_METHODS).map(([id, m]) => ({ id, ...m }));
+}
+
+/**
+ * التكسير. توافقٌ خلفيّ: إذا كان الوسيطُ الثاني عددًا فهو عددُ مرّاتِ
+ * «التكسير من الطرفين». وإلّا فكائنٌ { method, passes }.
+ * @returns {{method:string, result:string, letters:string[], steps:string[]}}
+ */
+function taksir(text, arg = 1) {
+  const method = typeof arg === "object" && arg ? (arg.method || "tarfeen") : "tarfeen";
+  const passes = typeof arg === "object" && arg ? (arg.passes || 1) : (arg || 1);
+  let arr = abjad.letters(text);
+  const steps = [arr.join("")];
+  for (let p = 0; p < passes; p++) {
+    arr =
+      method === "thulathi" ? taksirGroups(arr, 3, [1, 0, 2]) :
+      method === "rubaee"   ? taksirGroups(arr, 4, [1, 2, 0, 3]) :
+      method === "maqlub"   ? arr.slice().reverse() :
+      taksirTarfeen(arr);
+    steps.push(arr.join(""));
+  }
+  return { method, result: arr.join(""), letters: arr, steps };
+}
+
+// ── الزبر والبيّنات ─────────────────────────────────────────────────────
+/**
+ * الزبر: أوّلُ اسمِ الحرف (الحرف نفسه). البيّنة: باقي اسمِه منطوقًا.
+ * مثال: «ب» زبرها ب، وبيّنتها «اء».
+ */
+function zuburBayyinat(text) {
+  const rows = abjad.letters(text).map((ch) => {
+    const name = LETTER_NAMES[ch] || abjad.bast(ch).parts[0]?.name || ch;
+    const bayyina = [...name].slice(1).join("");
+    return {
+      letter: ch, zabr: ch, name, bayyina,
+      zabrValue: abjad.jummal(ch),
+      bayyinaValue: abjad.jummal(bayyina),
+    };
+  });
+  return {
+    rows,
+    zuburText: rows.map((r) => r.zabr).join(""),
+    bayyinatText: rows.map((r) => r.bayyina).join(""),
+    zuburSum: rows.reduce((a, r) => a + r.zabrValue, 0),
+    bayyinatSum: rows.reduce((a, r) => a + r.bayyinaValue, 0),
+  };
+}
+
+// ── دوائر إبدال الحروف ─────────────────────────────────────────────────
+function circleShift(text, shift = 1) {
+  const mapped = abjad.letters(text).map((ch) => {
+    const o = orderOf(ch);
+    return o > 0 ? letterAt(o + shift) : ch;
+  });
+  return { result: mapped.join(""), letters: mapped, shift };
+}
+
+function circleMap(text, map) {
+  const mapped = abjad.letters(text).map((ch) => map[ch] || ch);
+  return { result: mapped.join(""), letters: mapped };
+}
+
+/** الدوائرُ المسمّاة المشتقّة من تقسيمات الحروف. */
+function circles() {
+  const tadad = {};
+  ABJAD_ORDER.forEach((ch, i) => { tadad[ch] = ABJAD_ORDER[27 - i]; });
+  const group = (fn, keys) => {
+    const g = Object.fromEntries(keys.map((k) => [k, []]));
+    ABJAD_ORDER.forEach((ch) => { const k = fn(ch); if (g[k]) g[k].push(ch); });
+    return g;
+  };
+  return {
+    abjad: ABJAD_ORDER.slice(),
+    tadad,                                   // ا↔غ … دائرةُ العكس
+    kawakib: group((c) => LETTER_PLANET[c], LETTER_PLANET_ORDER),
+    anasir: group((c) => LETTER_NATURE[c], ELEMENT_ORDER),
+    nuraniyya: {
+      nur: ABJAD_ORDER.filter((c) => NUR_SET.has(c)),
+      zulma: ABJAD_ORDER.filter((c) => !NUR_SET.has(c)),
+    },
+  };
+}
+
+/** إبدالُ النصِّ عبر دائرةٍ مسمّاة: "abjad" (بلا تغيير) أو "tadad" (العكس). */
+function circleSubstitute(text, name = "tadad") {
+  if (name === "tadad") {
+    const map = circles().tadad;
+    return circleMap(text, map);
+  }
+  return circleMap(text, {}); // abjad = هويّة
+}
+
+// ── مثلّث الأعداد ───────────────────────────────────────────────────────
+function numberTriangle(text, mod = 0) {
+  const reduce = (x) => (mod ? ((x % mod) + mod) % mod || mod : x);
+  let row = abjad.letters(text).map((ch) => reduce(abjad.jummal(ch)));
+  const rows = [row.slice()];
+  while (row.length > 1) {
+    const next = [];
+    for (let i = 0; i < row.length - 1; i++) next.push(reduce(row[i] + row[i + 1]));
+    row = next;
+    rows.push(row.slice());
+  }
+  const apex = row[0] ?? 0;
+  return { rows, apex, apexLetter: letterAt(mod ? apex : abjad.saghir(apex) || 1) };
+}
+
+// ── الإسقاط ─────────────────────────────────────────────────────────────
+function isqat(value, divisor) {
+  let v = Math.abs(Math.trunc(value));
+  let count = 0;
+  while (v >= divisor) { v -= divisor; count++; }
+  return { remainder: v === 0 ? divisor : v, subtractions: count, divisor, exactZero: v === 0 };
+}
+
+/** الإسقاطُ بكلِّ القواسمِ المعتمدة دفعةً واحدة. */
+function isqatAll(value) {
+  const out = {};
+  for (const d of [28, 12, 9, 7, 4, 3]) out[d] = { ...isqat(value, d), meaning: ISQAT_DIVISORS[d] };
+  return out;
+}
+
+// ── معلوماتُ الحرف ─────────────────────────────────────────────────────
+function letterInfo(ch) {
+  return {
+    letter: ch,
+    order: orderOf(ch),
+    class: NUR_SET.has(ch) ? "نورانيّة" : "ظلمانيّة",
+    planet: LETTER_PLANET[ch] || null,
+    nature: LETTER_NATURE[ch] || null,
+    value: abjad.jummal(ch),
+  };
+}
+
+/** نعم/لا/مستور من صنفِ حرفِ الجواب. */
+function yesNo(letter) {
+  if (MUSTUR_SET.has(letter)) return "مستور — لا يُجزَم فيه";
+  return NUR_SET.has(letter) ? "أقربُ إلى: نعم" : "أقربُ إلى: لا";
+}
+
+// ── التنبؤ: العدد ← زمن ────────────────────────────────────────────────
+/**
+ * @param {number} n
+ * @param {"sullam"|"shahr-yawm"|"sneen"} [mode="sullam"]
+ */
+// صيغُ العدّ العربيّ الصحيحةُ لوحداتِ الزمن (١ / ٢ / ٣–١٠ / ١١+).
+const TIME_UNIT_FORMS = [
+  { one: "يومٌ واحد",    two: "يومان",     few: "أيّامٍ",   many: "يومًا" },
+  { one: "أسبوعٌ واحد",  two: "أسبوعان",   few: "أسابيعَ",  many: "أسبوعًا" },
+  { one: "شهرٌ واحد",    two: "شهران",     few: "أشهرٍ",    many: "شهرًا" },
+  { one: "سنةٌ واحدة",   two: "سنتان",     few: "سنينَ",    many: "سنةً" },
+];
+function arCount(n, f) {
+  if (n === 1) return f.one;
+  if (n === 2) return f.two;
+  if (n >= 3 && n <= 10) return `${toAr(n)} ${f.few}`;
+  return `${toAr(n)} ${f.many}`;
+}
+
+function timeFromNumber(n, mode = "sullam") {
+  const v = Math.abs(Math.trunc(n));
+  if (mode === "sneen") {
+    const years = (v % 100) || 100;
+    return { mode, count: years, unit: "سنون", text: `نحوَ ${arCount(years, TIME_UNIT_FORMS[3])} هجريّةً من وقتِ العمل` };
+  }
+  if (mode === "shahr-yawm") {
+    const month = (v % 12) || 12;
+    const day = (v % 30) || 30;
+    return { mode, month, day, text: `في اليومِ ${toAr(day)} من شهرِ ${AR_MONTHS_HIJRI[month - 1]}` };
+  }
+  const unitIdx = (v % 4); // 0..3
+  const qty = (v % 12) || 12;
+  return { mode, unit: TIME_LADDER[unitIdx], count: qty, text: `نحوَ ${arCount(qty, TIME_UNIT_FORMS[unitIdx])}` };
+}
+
+// ── حرفُ المطلوب ──────────────────────────────────────────────────────
+/** أعلى حروفِ السؤالِ قيمةً هو «حرفُ المطلوب»؛ ومقابلُه في دائرةِ التضادّ. */
+function matlub(question) {
+  const ls = abjad.letters(abjad.normalize(question));
+  if (!ls.length) return null;
+  let best = ls[0];
+  for (const ch of ls) if (abjad.jummal(ch) > abjad.jummal(best)) best = ch;
+  const opp = circles().tadad[best] || best;
+  return {
+    letter: best, value: abjad.jummal(best),
+    opposite: opp, oppositeBab: ABWAB[opp] || null,
+    bab: ABWAB[best] || null,
+  };
+}
+
+// ── استخراج الجواب ────────────────────────────────────────────────────
+function toAr(n) {
+  const d = "٠١٢٣٤٥٦٧٨٩";
+  return String(n).replace(/[0-9]/g, (c) => d[+c]);
+}
+function verdictFromSentiment(s) {
+  return s > 0.3 ? "الميلُ العامّ: إيجابيّ — «نعم» مع سعيٍ وصبر."
+    : s < -0.3 ? "الميلُ العامّ: سلبيّ — الأولى التريّثُ أو تركُ الأمر."
+    : "الميلُ العامّ: مستورٌ لم يتبيّنْ بعد — فاسألْ بنيّةٍ أصفى.";
+}
+
+/**
+ * يركّب العمليات ليخرج «حرف الجواب» وبابَه، مع أثرٍ كامل، ثمّ يُعيد الاستخراجَ
+ * تحت مناهجَ بديلة (بسط/تكسير/بذرة) ويستخرج جوابًا توافقيًّا (الأكثرُ تكرارًا).
+ *
+ * @param {string} question
+ * @param {object} [opt]  { name, mother, seed, taksirPasses, method }
+ */
+function extractAnswer(question, opt = {}) {
+  const method = opt.method || "kabir";
+  const seed = opt.seed ?? "بسم الله الرحمن الرحيم";
+  const trace = [];
+
+  let qText = abjad.normalize(question);
+  if (opt.taksirPasses) {
+    const tk = taksir(qText, opt.taksirPasses);
+    qText = tk.result;
+    trace.push(`تكسير السؤال (${opt.taksirPasses}×): ⇒ «${qText}»`);
+  }
+
+  const qVal = abjad.jummal(qText, method);
+  const seedVal = abjad.jummal(seed, method);
+  trace.push(`جُمّل السؤال = ${qVal}`, `جُمّل البذرة «${seed}» = ${seedVal}`);
+
+  let nameVal = 0, motherVal = 0;
+  if (opt.name) { nameVal = abjad.jummal(opt.name, method); trace.push(`جُمّل «${abjad.normalize(opt.name)}» = ${nameVal}`); }
+  if (opt.mother) { motherVal = abjad.jummal(opt.mother, method); trace.push(`جُمّل «${abjad.normalize(opt.mother)}» = ${motherVal}`); }
+
+  const grand = qVal + seedVal + nameVal + motherVal;
+  trace.push(`المجموع الكلّي = ${qVal} + ${seedVal} + ${nameVal} + ${motherVal} = ${grand}`);
+
+  const all = isqatAll(grand);
+  const h28 = all[28], h12 = all[12], h9 = all[9], h7 = all[7], h4 = all[4], h3 = all[3];
+  const answerLetter = letterAt(h28.remainder);
+  trace.push(
+    `إسقاط بـ٢٨: باقٍ ${h28.remainder} ⇒ حرفُ الجواب «${answerLetter}»`,
+    `إسقاط بـ١٢: باقٍ ${h12.remainder} ⇒ البرج ${h12.remainder}`,
+    `إسقاط بـ٩: باقٍ ${h9.remainder} ⇒ أصلُ العدد`,
+    `إسقاط بـ٧: باقٍ ${h7.remainder} ⇒ الكوكب/اليوم ${h7.remainder}`,
+    `إسقاط بـ٤: باقٍ ${h4.remainder} ⇒ العنصر ${h4.remainder}`,
+    `إسقاط بـ٣: باقٍ ${h3.remainder} ⇒ رتبةُ الأمر (مُلك/ملكوت/جبروت)`
+  );
+
+  // سلسلةُ الجواب (كلمةٌ من ٣ حروف) — كما يفعل بعضُ أهلِ الجفر.
+  const step = (qVal % 28) || 1;
+  const answerLetters = [];
+  let cur = h28.remainder;
+  for (let k = 0; k < 3; k++) { answerLetters.push(letterAt(cur)); cur = ((cur + step - 1) % 28) + 1; }
+  trace.push(`سلسلةُ الجواب: من «${answerLetter}» بخطوة ${step} ⇒ «${answerLetters.join("")}»`);
+
+  const bab = ABWAB[answerLetter] || null;
+  const answerSentiment = ABWAB_SENTIMENT[answerLetter] ?? 0;
+  if (bab) trace.push(`بابُ «${answerLetter}»: ${bab}`);
+
+  // ── إعادةُ الاستخراج تحت مناهجَ بديلة (المزجُ الموزون) ────────────────
+  const recipes = [
+    { id: "أصليّ (ذاتيّ، بلا تكسير)", bast: "huruf", taksir: null, w: SOURCES_META.jami.weight },
+    { id: "تضادّ (عكسُ الحروف)", bast: "tadad", taksir: null, w: SOURCES_META.jami.weight * 0.8 },
+    { id: "تكسيرٌ ثلاثيّ", bast: "huruf", taksir: "thulathi", w: SOURCES_META.shams.weight },
+    { id: "تكسيرٌ من الطرفين", bast: "huruf", taksir: "tarfeen", w: SOURCES_META.shams.weight * 0.9 },
+    { id: "بلا بذرةِ البسملة", bast: "huruf", taksir: null, seed: "", w: SOURCES_META.ibnkh.weight },
+  ];
+  const byMethod = recipes.map((r) => {
+    let t = bastBy(abjad.normalize(question), r.bast).text;
+    if (r.taksir) t = taksir(t, { method: r.taksir }).result;
+    const sv = r.seed === "" ? 0 : seedVal;
+    const total = abjad.jummal(t, method) + sv + nameVal + motherVal;
+    const lt = letterAt(isqat(total, 28).remainder);
+    return { recipe: r.id, weight: r.w, total, letter: lt, bab: ABWAB[lt] || null, sentiment: ABWAB_SENTIMENT[lt] ?? 0 };
+  });
+  // الجوابُ التوافقيّ = الحرفُ الأكثرُ وزنًا مجموعًا
+  const tally = {};
+  for (const m of byMethod) tally[m.letter] = (tally[m.letter] || 0) + m.weight;
+  const consensusLetter = Object.entries(tally).sort((a, b) => b[1] - a[1] ||
+    orderOf(a[0]) - orderOf(b[0]))[0][0];
+  const consensusBab = ABWAB[consensusLetter] || null;
+  const blendSent = byMethod.reduce((a, m) => a + m.sentiment * m.weight, 0) /
+    byMethod.reduce((a, m) => a + m.weight, 0);
+  trace.push(
+    `مناهجُ بديلة ⇒ ${byMethod.map((m) => `${m.letter}(${m.recipe})`).join("، ")}`,
+    `الجوابُ التوافقيّ (الأثقلُ وزنًا) = «${consensusLetter}»${consensusLetter !== answerLetter ? " — يخالفُ المنهجَ الأصليّ" : " — يوافقُ المنهجَ الأصليّ"}`,
+    `مزجُ الميل = ${Math.round(blendSent * 100) / 100} ⇒ ${verdictFromSentiment(blendSent)}`
+  );
+
+  const mt = matlub(question);
+  const tm = timeFromNumber(grand, "sullam");
+  const tmYear = timeFromNumber(grand, "sneen");
+
+  // ── حكمٌ واحدٌ موفَّق (لا ثلاثةُ أحكامٍ متضاربة) ──────────────────────
+  // ثلاثةُ محاورَ: (١) طبعُ بابِ الحرفِ المباشر، (٢) نورانيّة/ظُلمانيّة الحرف،
+  // (٣) مِزجُ الميلِ من المناهجِ الخمسة. تُجمَع موزونةً ⇒ اتّجاهٌ واحدٌ وثقةٌ واحدة.
+  const lumScore = MUSTUR_SET.has(answerLetter) ? 0 : NUR_SET.has(answerLetter) ? 1 : -1;
+  const axisSign = [Math.sign(answerSentiment), lumScore, Math.sign(blendSent)];
+  const rawScore = 0.45 * axisSign[0] + 0.25 * axisSign[1] + 0.30 * axisSign[2];
+  const direction = rawScore > 0.12 ? "نعم" : rawScore < -0.12 ? "لا" : "مستور";
+  const nonZero = axisSign.filter((s) => s !== 0);
+  const aligned = nonZero.length
+    ? nonZero.filter((s) => s === Math.sign(rawScore || 1)).length / nonZero.length : 0;
+  const confidence = direction === "مستور"
+    ? Math.round(20 + 25 * (1 - aligned))
+    : Math.round(45 + 50 * aligned * Math.min(1, Math.abs(rawScore) + 0.25));
+  const verdictText = {
+    "نعم": "الميلُ إلى «نعم» — يتمُّ الأمرُ بعد سعيٍ وصبر.",
+    "لا": "الميلُ إلى «لا» — الأولى التريّثُ أو تركُ الأمر.",
+    "مستور": "الأمرُ مستورٌ لم يتبيّنْ بعد — أعِدِ السؤالَ بنيّةٍ أصفى.",
+  }[direction];
+  const verdict = { direction, confidence, text: verdictText };
+  // «نعم/لا» موحَّدٌ مع الحكم (لا مبنيًّا على النورانيّة وحدها).
+  const yesNoResolved = direction === "مستور" ? "مستور — لا يُجزَم فيه" : `أقربُ إلى: ${direction}`;
+
+  // ── شكلُ السؤال: عرضٌ مناسبٌ لأسئلة لماذا/كيف/متى/ماذا (لا نعم/لا مفروضة) ──
+  const questionForm = classifyQuestionForm(question);
+  const babText = bab || "لم يتّضح بابٌ محدَّد لهذا الحرف.";
+  const formed = {
+    why: { label: "السببُ الأرجح", text: `السببُ الأرجح (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
+    how: { label: "التوجيه", text: `التوجيهُ (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
+    when: { label: "التوقيتُ المرجَّح", text: `التقديرُ الزمنيّ: ${tm.text}. وسياقُ بابِ الحرف «${answerLetter}»: ${babText}` },
+    what: { label: "الوصف", text: `الوصفُ (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
+    yesno: { label: direction, text: verdictText },
+  }[questionForm];
+
+  trace.push(
+    `حرفُ المطلوب (أعلى حروفِ السؤال قيمةً): «${mt?.letter}» ومقابلُه «${mt?.opposite}»`,
+    `المحاورُ الثلاثة: طبعُ الباب ${axisSign[0]} · نورانيّة الحرف ${axisSign[1]} · مزجُ المناهج ${axisSign[2]} ⇒ الدرجة ${Math.round(rawScore * 100) / 100} ⇒ الحكم «${direction}» بثقة ${confidence}٪ (توافقُ المحاور ${Math.round(aligned * 100)}٪).`,
+    `تقديرُ الزمن: ${tm.text}${tmYear.count && Math.abs(tmYear.count) > 24 ? "" : ` (وبعدِّ السنين: ${tmYear.text})`}`,
+    "وكما قال ابن خلدون: لا شيء هنا سوى قسمةٍ وانتقاءٍ من جدول؛ والمعنى يُقحَم في «قياسِ الكلامِ وسياقِه»."
+  );
+
+  return {
+    question: abjad.normalize(question),
+    grandTotal: grand,
+    answerLetter,
+    answerWord: answerLetters.join(""),
+    bab,
+    answerSentiment,
+    letterClass: NUR_SET.has(answerLetter) ? "نورانيّة" : "ظلمانيّة",
+    verdict,                       // ← الحكمُ الموحَّد: { direction, confidence, text }
+    questionForm,                  // yesno | why | how | when | what
+    formed,                        // { label, text } — عرضٌ مناسبٌ لشكل السؤال (لا نعم/لا مفروضة)
+    yesNo: yesNoResolved,          // موافقٌ لـ verdict.direction
+    yesNoByLuminosity: yesNo(answerLetter), // المحورُ الخام (للكشف فقط)
+    burjIndex: h12.remainder,
+    planetIndex: h7.remainder,
+    elementIndex: h4.remainder,
+    nineRoot: h9.remainder,
+    worldRank: h3.remainder,
+    planetAnswer: ABWAB_PLANET[h7.remainder] || null,
+    elementAnswer: ABWAB_ELEMENT[h4.remainder] || null,
+    isqat: { by28: h28, by12: h12, by9: h9, by7: h7, by4: h4, by3: h3 },
+    byMethod,
+    consensusLetter,
+    consensusBab,
+    consensusAgree: consensusLetter === answerLetter,
+    blendSentiment: Math.round(blendSent * 100) / 100,
+    blendVerdict: verdictFromSentiment(blendSent), // محورٌ مساعد (لا يُصدَّر كعنوان)
+    matlub: mt,
+    time: { text: tm.text, unit: tm.unit, count: tm.count, alt: tmYear.text },
+    trace,
+  };
+}
+
+__exports.default = {
+  bast, bastModes, bastBy,
+  taksir, taksirMethods,
+  zuburBayyinat,
+  circleShift, circleMap, circles, circleSubstitute,
+  numberTriangle,
+  isqat, isqatAll,
+  letterInfo, yesNo, timeFromNumber, matlub,
+  extractAnswer, grandTable, jafrGrid, classifyQuestionForm,
+};
+
+;__exports["classifyQuestionForm"]=classifyQuestionForm;__exports["grandTable"]=grandTable;__exports["jafrGrid"]=jafrGrid;__exports["bast"]=bast;__exports["bastModes"]=bastModes;__exports["bastBy"]=bastBy;__exports["taksirMethods"]=taksirMethods;__exports["taksir"]=taksir;__exports["zuburBayyinat"]=zuburBayyinat;__exports["circleShift"]=circleShift;__exports["circleMap"]=circleMap;__exports["circles"]=circles;__exports["circleSubstitute"]=circleSubstitute;__exports["numberTriangle"]=numberTriangle;__exports["isqat"]=isqat;__exports["isqatAll"]=isqatAll;__exports["letterInfo"]=letterInfo;__exports["yesNo"]=yesNo;__exports["timeFromNumber"]=timeFromNumber;__exports["matlub"]=matlub;__exports["extractAnswer"]=extractAnswer;return __exports;})();
 __M["arif"]=(function(){"use strict";const __exports={};
 // engines/arif.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20571,6 +21188,9 @@ const hal=__M["hal"].default;
 const life=__M["life"].default;
 const body=__M["body"].default;
 const raml=__M["raml"].default;
+const qura=__M["qura"].default;
+const jafr=__M["jafr"].default;
+const AE=__M["astronomy-engine"];
 const { birthNumber }=__M["hal"];
 const { PLANET_GOVERNS }=__M["falak-ahkam.data"];
 
@@ -20605,6 +21225,18 @@ const SIGNS = ["الحمل", "الثور", "الجوزاء", "السرطان", "
 const signIdx = (lon) => Math.floor((((lon % 360) + 360) % 360) / 30);
 const addMonths = (y, m, k) => { const t = y * 12 + m + k; return { y: Math.floor(t / 12), m: ((t % 12) + 12) % 12 }; };
 
+/** الكسوفاتُ والخسوفاتُ (غيرُ شبه الظلّيّة) بين تاريخين، بموضعِها من فلك البروج */
+function eclipses(from, to) {
+  const out = [];
+  try {
+    let l = AE.SearchLunarEclipse(from);
+    while (l && l.peak.date < to) { if (l.kind !== "penumbral") out.push({ kind: "lunar", date: l.peak.date, lon: falak.planetPositions(l.peak.date)["القمر"].longitude }); l = AE.NextLunarEclipse(l.peak); }
+    let g = AE.SearchGlobalSolarEclipse(from);
+    while (g && g.peak.date < to) { out.push({ kind: "solar", date: g.peak.date, lon: falak.planetPositions(g.peak.date)["الشمس"].longitude }); g = AE.NextGlobalSolarEclipse(g.peak); }
+  } catch {}
+  return out;
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -20615,6 +21247,9 @@ function natalPoints(sky) {
     { key: "venus", ar: "زهرتِك", lon: sky.planets["الزهرة"].longitude, topics: ["love"] },
   ];
   if (lot) pts.push({ key: "lot", ar: "سهمِ رزقِك", lon: lot.longitude, topics: ["money"] });
+  // عودةُ المشتري وزحل إلى موضعَيهما في الميلاد
+  pts.push({ key: "jup", ar: "مشتريك", lon: sky.planets["المشتري"].longitude, topics: ["all"], only: "jup" });
+  pts.push({ key: "sat", ar: "زحلِك", lon: sky.planets["زحل"].longitude, topics: ["all"], only: "sat" });
   return pts;
 }
 const HOUSE_TOPIC = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 5: ["love"], 6: ["health"], 7: ["love"], 9: ["study"], 10: ["work"], 11: ["money", "all"], 12: ["health"] };
@@ -20643,10 +21278,21 @@ function monthVoices(ctx, y, m) {
   const pos = falak.planetPositions(date);
   const J = pos["المشتري"].longitude, S = pos["زحل"].longitude, M = pos["المريخ"].longitude;
   for (const pt of ctx.points) {
+    if (pt.only === "jup") { if (aspectOf(J, pt.lon) === "conj") push("sky", 1, "بدايةُ دورةِ خيرٍ جديدة", "المشتري يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
+    if (pt.only === "sat") { if (aspectOf(S, pt.lon) === "conj") push("sky", -1, "مرحلةُ مراجعةٍ وثقلٍ ومسؤوليّة", "زحل يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     const aj = aspectOf(J, pt.lon), as = aspectOf(S, pt.lon), am = aspectOf(M, pt.lon, 3);
     if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" ? "مودّةٌ وقرب" : pt.key === "sun" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
     if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" ? "برودٌ في العلاقة" : pt.key === "sun" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
     if (am && ["conj", "square", "opp"].includes(am) && ["asc", "sun", "moon"].includes(pt.key)) push("sky", -0.5, "توتّرٌ وعصبيّة", `المريخ ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[am]} ${pt.ar}`, pt.topics);
+  }
+  // الكسوف: الشهرُ الذي يقعُ فيه وشهران بعده
+  for (const e of ctx.eclipses) {
+    const dm = (y * 12 + m) - (e.date.getUTCFullYear() * 12 + e.date.getUTCMonth());
+    if (dm < 0 || dm > 2) continue;
+    for (const pt of ctx.points.filter((q) => ["asc", "sun", "moon"].includes(q.key))) {
+      const asp = aspectOf(e.lon, pt.lon, 5);
+      if (asp === "conj" || asp === "opp") push("sky", -1, "تغيّرٌ مفاجئٌ أو انقلابٌ في أمر", `${e.kind === "solar" ? "كسوفٌ للشمس" : "خسوفٌ للقمر"} ${asp === "conj" ? "على" : "مقابلَ"} ${pt.ar} (${e.date.toISOString().slice(0, 10)})`, pt.topics);
+    }
   }
   const hJ = ((signIdx(J) - ctx.ascIdx + 12) % 12) + 1, hS = ((signIdx(S) - ctx.ascIdx + 12) % 12) + 1;
   if (HOUSE_PLAIN.jup[hJ]) push("sky", 0.5, HOUSE_PLAIN.jup[hJ], `المشتري في بيتِك ${hJ}`, HOUSE_TOPIC[hJ] || ["all"]);
@@ -20703,6 +21349,7 @@ function timeline(c, opt = {}) {
     bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
+  ctx.eclipses = eclipses(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - past - 3, 1)), new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + future, 1)));
   const months = [];
   for (let k = -past; k < future; k++) {
     const { y, m } = addMonths(now.getUTCFullYear(), now.getUTCMonth(), k);
@@ -20766,13 +21413,13 @@ function read(c, opt = {}) {
   const pills = [
     { cls: nowLvl === "good" ? "saad" : nowLvl === "heavy" ? "nahs" : "", text: nowLvl === "good" ? "الآن: فترةٌ طيّبة" : nowLvl === "heavy" ? "الآن: فترةٌ ثقيلة" : "الآن: فترةٌ وسط" },
   ];
-  if (g.relief) pills.push({ cls: "gold", text: `أوّلُ انفراج: ${g.relief.label}` });
+  if (g.relief && nowLvl !== "good") pills.push({ cls: "gold", text: `أوّلُ تحسّن: ${g.relief.label}` });
   pills.push({ cls: "saad", text: `أفضلُ فترة: ${g.best.label}` });
   let summary = nowLvl === "heavy"
     ? `${k_("أنت", "أنتِ")} الآن في فترةٍ ثقيلة${g.heavyUntil ? ` تمتدُّ حتّى ${g.heavyUntil.label}` : ""}: الأمورُ تتأخّرُ ويكثرُ التعب.${g.relief ? ` من ${g.relief.label} تبدأ بالانفراج تدريجيًّا،` : ""} وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}.`
     : nowLvl === "good"
     ? `${k_("أنت", "أنتِ")} الآن في فترةٍ طيّبة، فاستفدْ منها. وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}، وأثقلُ فترةٍ بين ${g.worst.label}.`
-    : `${k_("حالُك", "حالُكِ")} الآن وسط. أحسنُ فترةٍ في السنوات الثلاث بين ${g.best.label}، وأثقلُها بين ${g.worst.label}.`;
+    : `${k_("حالُك", "حالُكِ")} الآن وسط${g.relief ? `، ويبدأ التحسّنُ من ${g.relief.label}` : ""}. أحسنُ فترةٍ في السنوات الثلاث بين ${g.best.label}، وأثقلُها بين ${g.worst.label}.`;
 
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
@@ -20787,13 +21434,13 @@ function read(c, opt = {}) {
   // الاستنتاجاتُ المركّبة (قواعدُ من الكتب، مكتوبةٌ صراحةً)
   const insights = [];
   const curF = falak.firdaria(ctx.birth, c.now ? new Date(c.now) : new Date(), { byNight: ctx.byNight });
-  const hot = h.temperament.chart.heat === "H" || h.temperament.final?.heat?.k === "H";
+  const hot = (h.temperament.chart.heat > 0) || h.temperament.final?.heat?.k === "H";
   const hotPeriod = ["المريخ", "الشمس"].includes(curF.majorLord), coldPeriod = ["زحل", "القمر"].includes(curF.majorLord);
   const angry = Object.values(h.groups).some((gr) => gr.firm.some((x) => x.id === "anger_quick" || x.id === "rash"));
   if (hot && hotPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} حارّ${angry ? " سريعُ الغضب" : ""}، والفترةُ التي ${k_("أنت", "أنتِ")} فيها من نفسِ الطبع، فيشتدُّ ${k_("عليك", "عليكِ")} ذلك: أكثرُ ما قد ${k_("يخسّرُك", "يخسّرُكِ")} الآن قرارٌ ${k_("تأخذُه وأنت متضايق", "تأخذينه وأنتِ متضايقة")}.${g.relief ? ` أجّلِ القراراتِ الكبيرةَ إلى ما بعد ${g.relief.label}.` : ""}`, src: `مزاجُ الخريطة (Lilly) + الفترةُ الكبرى لـ${curF.majorLord} — «الطبعُ يشتدُّ إذا وافقه زمانُه» (بطليموس م٤ ف١٠)` });
   else if (hot && coldPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} حارّ، والفترةُ التي ${k_("أنت", "أنتِ")} فيها باردةٌ تُهدّئه: وقتٌ مناسبٌ للتأنّي والتخطيط أكثر من الاندفاع.`, src: `مزاجُ الخريطة + الفترةُ الكبرى لـ${curF.majorLord}` });
   else if (!hot && hotPeriod) insights.push({ text: `طبعُ${k_("ك", "كِ")} يميلُ إلى الهدوء، والفترةُ حارّةٌ تدفعُ${k_("ك", "كِ")} إلى الحركة: استغلَّها في ما كان يحتاجُ جرأة.`, src: `مزاجُ الخريطة + الفترةُ الكبرى لـ${curF.majorLord}` });
-  if (L.wealth) insights.push({ text: `رزقُ${k_("ك", "كِ")} ${L.wealth.text.replace(/^يأتي المالُ /, "يأتي ")}، وأحسنُ وقتٍ له بين ${W.money.best.label}${/الأصدقاء|الشراكة/.test(L.work.text + (months[0]?.voices.map((v) => v.why).join(" ") || "")) ? "، والأنفعُ مع شريك" : ""}.`, src: "المال (بطليموس م٤ ف٢) + الخطُّ الزمنيّ للمال" });
+  if (L.wealth) insights.push({ text: `رزقُ${k_("ك", "كِ")} ${L.wealth.text.replace(/^يأتي المالُ /, "يأتي ")}، وأحسنُ وقتٍ له بين ${W.money.best.label}${/الأصدقاء|الشراكة|بيتُ الأصدقاء/.test((months.find((x) => x.now)?.voices.map((v) => v.why).join(" ") || "")) ? "، والأنفعُ مع شريكٍ أو صديق" : ""}.`, src: "المال (بطليموس م٤ ف٢) + الخطُّ الزمنيّ للمال" });
   if (A.hits[0]) insights.push({ text: `${k_("بدنُك", "بدنُكِ")} أضعفُ في ${gen(A.hits[0].part)}، وأثقلُ فترةٍ عليه بين ${W.health.worst.label}: ${k_("خفّفْ", "خفّفي")} الحِملَ فيها ولا ${k_("تؤجّلْ", "تؤجّلي")} الكشف إن ${k_("أحسستَ", "أحسستِ")} بشيء.`, src: "آفاتُ البدن (بطليموس م٣ ف١٢) + الخطُّ الزمنيّ للصحّة" });
 
   return { summary, pills, areas, insights, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
@@ -20808,17 +21455,27 @@ function ask(c, question, opt = {}) {
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
   const rs = r.score ?? 0;
+  let qv = null, jv = null;
+  try { qv = qura.cast(c.name, c.mother, question, now); } catch {}
+  try { jv = jafr.extractAnswer(question, { name: c.name, mother: c.mother }); } catch {}
+  const qs = [rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0];
+  if (qv) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
+  if (jv?.verdict) qs.push(jv.verdict.direction === "نعم" ? 1 : jv.verdict.direction === "لا" ? -1 : 0);
+  const qAvg = qs.reduce((a, b) => a + b, 0) / qs.length;
   const tl = T.months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[topic], 0) / 12;
-  const votes = [{ fam: "question", s: rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0, why: `الرمل: ${r.verdict}` }, { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${level(tl)}` }];
+  const votes = [
+    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
+    { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${level(tl)}` },
+  ];
   const sum = votes.reduce((a, v) => a + v.s, 0);
   const big = sum >= 2 ? "يتمّ، والوقتُ في صالحك." : sum === 1 ? "يتمّ، لكن لا تستعجل." : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
   const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${r.timing?.text ? `، وأوّلُ ما يظهرُ منه ${r.timing.text.replace("نحوَ", "بعد نحو")}` : ""}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? "وتجنّبْ" : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
-  return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name } };
+  return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-__exports.default = { timeline, read, ask, MONTHS, TOPICS, FAMILIES };
+__exports.default = { timeline, read, ask, eclipses, MONTHS, TOPICS, FAMILIES };
 
-;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
+;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
 __M["awfaq"]=(function(){"use strict";const __exports={};
 // engines/awfaq.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22008,529 +22665,6 @@ function assess(opt = {}) {
 __exports.default = { symptomList, forerStats, assess };
 
 ;__exports["symptomList"]=symptomList;__exports["forerStats"]=forerStats;__exports["assess"]=assess;return __exports;})();
-__M["jafr"]=(function(){"use strict";const __exports={};
-// engines/jafr.js
-// ─────────────────────────────────────────────────────────────────────────────
-// محرّك الجفر — مزجٌ موزونٌ من كتب الجفر (الجفر الجامع، رسائل التكسير الملحقة
-// بشمس المعارف، وصف ابن خلدون).
-//
-// «علم الجفر» ليس له خوارزمية واحدة معتمدة؛ هذه هي العمليات الميكانيكية
-// الموثّقة: أنواعُ البسط، طرقُ التكسير، الزبر والبيّنات، دوائرُ إبدال الحروف،
-// مثلّثُ الأعداد، والإسقاطُ (طرحٌ مكرّرٌ بقاسم: ٢٨/١٢/٩/٧/٤/٣). ثمّ «استخراجُ
-// الجواب» الذي يركّب هذه العمليات ليخرج حرفًا ← بابًا من جدول.
-//
-// الهدف صريح (وهو قولُ ابن خلدون): كلُّ «استخراج» ينتهي إلى قسمةٍ على عددٍ
-// ثابت واختيارٍ من جدول؛ والمعنى يُقحَم في «قياس الكلام وسياقه». `extractAnswer`
-// تُعيد `trace` كاملًا + تفصيلًا حسب المنهج (byMethod) + جوابًا توافقيًّا.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const abjad=__M["abjad"].default;
-const { ABJAD_ORDER, NURANI, LETTER_PLANET, LETTER_NATURE, LETTER_NAMES, LETTER_PLANET_ORDER }=__M["abjad.data"];
-const {
-  ABWAB, ABWAB_SENTIMENT, ABWAB_PLANET, ABWAB_ELEMENT, YESNO_MUSTUR,
-  BAST_MODES, TAKSIR_METHODS, ISQAT_DIVISORS, SOURCES_META,
-  TIME_LADDER, AR_MONTHS_HIJRI, NOTE: JAMI_NOTE,
-}=__M["jafr-jami.data"];
-
-/**
- * شكلُ السؤال: أسئلةُ «لماذا/كيف/متى/ما الذي» ليست نعم/لا — فرضُ حكمٍ ثنائيٍّ
- * عليها تدليسٌ (جوابٌ لا يطابق شكل السؤال). نُصنِّف الشكلَ لنعرضَ حكمًا بصيغةٍ
- * مناسبة (سببٌ/توجيهٌ/توقيتٌ/وصفٌ) بدل «نعم/لا» حين لا تكون كذلك.
- */
-function classifyQuestionForm(question) {
-  // \b لا يعمل بين حرفين عربيَّين (ليسا \w في جافاسكربت) — نستعمل حدًّا صريحًا بدلها.
-  const q = String(question || "").trim();
-  const END = "(?=\\s|$|؟|\\?|،|,)";
-  if (new RegExp(`^(لماذا|ليش|لِمَ)${END}`).test(q)) return "why";
-  if (new RegExp(`^كيف${END}`).test(q)) return "how";
-  if (new RegExp(`^متى${END}`).test(q)) return "when";
-  if (new RegExp(`^(ما\\s+الذي|ماذا)${END}`).test(q)) return "what";
-  return "yesno";
-}
-
-const letterAt = (n) => ABJAD_ORDER[((n - 1) % 28 + 28) % 28]; // 1..28 → حرف
-const orderOf = (ch) => ABJAD_ORDER.indexOf(ch) + 1;
-const NUR_SET = new Set(NURANI);
-const MUSTUR_SET = new Set(YESNO_MUSTUR);
-const ELEMENT_ORDER = ["نار", "هواء", "ماء", "تراب"];
-
-/**
- * الجدول الأعظم للجفر الجامع (٢٨×٢٨) — بديلٌ مُهيكَلٌ بقاعدةٍ معلنة.
- */
-function grandTable() {
-  const rows = [];
-  for (let r = 0; r < 28; r++) {
-    const row = [];
-    for (let c = 0; c < 28; c++) row.push(letterAt((r * 3 + c * 5 + r * c + 1) % 28 || 28));
-    rows.push(row);
-  }
-  return { rows, note: JAMI_NOTE };
-}
-
-/**
- * جدولُ الطبائع والكواكب (٤×٧ = ٢٨): صفٌّ لكلِّ عنصر، عمودٌ لكلِّ كوكب،
- * والخانةُ الحرفُ الذي يجمع تينك الصفة والكوكب. توزيعٌ حقيقيٌّ متعامد.
- */
-function jafrGrid() {
-  const rows = ELEMENT_ORDER.map((nat) => {
-    const row = LETTER_PLANET_ORDER.map((pl) =>
-      ABJAD_ORDER.find((ch) => LETTER_NATURE[ch] === nat && LETTER_PLANET[ch] === pl) || null);
-    return { element: nat, letters: row };
-  });
-  return { planets: LETTER_PLANET_ORDER, rows };
-}
-
-// ── البسط ────────────────────────────────────────────────────────────────
-/** البسط الذاتيّ: حروف النصّ بترتيبها كما تُكتب. (توافقٌ خلفيّ) */
-function bast(text) {
-  return abjad.letters(text);
-}
-
-function bastModes() {
-  return Object.entries(BAST_MODES).map(([id, m]) => ({ id, ...m }));
-}
-
-/**
- * البسط بنمطٍ مُختار. يُرجِع سلسلةَ حروفٍ (أو أعداد) قابلةً للتكسير والجُمّل.
- * @param {string} text
- * @param {"huruf"|"adadi"|"lafzi"|"jumali"|"tadad"|"tadeef"|"amtizaj"} [mode="huruf"]
- */
-function bastBy(text, mode = "huruf") {
-  const src = abjad.letters(text);
-  let tokens, out, value;
-  switch (mode) {
-    case "adadi":
-      tokens = src.map((ch) => abjad.jummal(ch));
-      out = tokens.join(" ");
-      value = tokens.reduce((a, n) => a + n, 0);
-      break;
-    case "lafzi":
-      tokens = src.flatMap((ch) => [...(LETTER_NAMES[ch] || ch)]);
-      out = tokens.join("");
-      value = abjad.jummal(out);
-      break;
-    case "jumali":
-      value = abjad.jummal(text);
-      tokens = [value];
-      out = String(value);
-      break;
-    case "tadad":
-      tokens = src.map((ch) => { const o = orderOf(ch); return o > 0 ? letterAt(29 - o) : ch; });
-      out = tokens.join("");
-      value = abjad.jummal(out);
-      break;
-    case "tadeef":
-      tokens = src.flatMap((ch) => [ch, ch]);
-      out = tokens.join("");
-      value = abjad.jummal(out);
-      break;
-    case "amtizaj": {
-      const rev = src.slice().reverse();
-      tokens = [];
-      for (let i = 0; i < src.length; i++) { tokens.push(src[i]); tokens.push(rev[i]); }
-      out = tokens.join("");
-      value = abjad.jummal(out);
-      break;
-    }
-    case "huruf":
-    default:
-      tokens = src;
-      out = src.join("");
-      value = abjad.jummal(out);
-  }
-  return { mode, title: BAST_MODES[mode]?.title || mode, tokens, text: out, value };
-}
-
-// ── التكسير ─────────────────────────────────────────────────────────────
-function taksirTarfeen(arr) {
-  const out = [];
-  let i = 0, j = arr.length - 1;
-  while (i <= j) { out.push(arr[i]); if (i !== j) out.push(arr[j]); i++; j--; }
-  return out;
-}
-function taksirGroups(arr, size, orderIdx) {
-  const out = [];
-  for (let i = 0; i < arr.length; i += size) {
-    const g = arr.slice(i, i + size);
-    if (g.length === size) orderIdx.forEach((k) => out.push(g[k]));
-    else out.push(...g);
-  }
-  return out;
-}
-function taksirMethods() {
-  return Object.entries(TAKSIR_METHODS).map(([id, m]) => ({ id, ...m }));
-}
-
-/**
- * التكسير. توافقٌ خلفيّ: إذا كان الوسيطُ الثاني عددًا فهو عددُ مرّاتِ
- * «التكسير من الطرفين». وإلّا فكائنٌ { method, passes }.
- * @returns {{method:string, result:string, letters:string[], steps:string[]}}
- */
-function taksir(text, arg = 1) {
-  const method = typeof arg === "object" && arg ? (arg.method || "tarfeen") : "tarfeen";
-  const passes = typeof arg === "object" && arg ? (arg.passes || 1) : (arg || 1);
-  let arr = abjad.letters(text);
-  const steps = [arr.join("")];
-  for (let p = 0; p < passes; p++) {
-    arr =
-      method === "thulathi" ? taksirGroups(arr, 3, [1, 0, 2]) :
-      method === "rubaee"   ? taksirGroups(arr, 4, [1, 2, 0, 3]) :
-      method === "maqlub"   ? arr.slice().reverse() :
-      taksirTarfeen(arr);
-    steps.push(arr.join(""));
-  }
-  return { method, result: arr.join(""), letters: arr, steps };
-}
-
-// ── الزبر والبيّنات ─────────────────────────────────────────────────────
-/**
- * الزبر: أوّلُ اسمِ الحرف (الحرف نفسه). البيّنة: باقي اسمِه منطوقًا.
- * مثال: «ب» زبرها ب، وبيّنتها «اء».
- */
-function zuburBayyinat(text) {
-  const rows = abjad.letters(text).map((ch) => {
-    const name = LETTER_NAMES[ch] || abjad.bast(ch).parts[0]?.name || ch;
-    const bayyina = [...name].slice(1).join("");
-    return {
-      letter: ch, zabr: ch, name, bayyina,
-      zabrValue: abjad.jummal(ch),
-      bayyinaValue: abjad.jummal(bayyina),
-    };
-  });
-  return {
-    rows,
-    zuburText: rows.map((r) => r.zabr).join(""),
-    bayyinatText: rows.map((r) => r.bayyina).join(""),
-    zuburSum: rows.reduce((a, r) => a + r.zabrValue, 0),
-    bayyinatSum: rows.reduce((a, r) => a + r.bayyinaValue, 0),
-  };
-}
-
-// ── دوائر إبدال الحروف ─────────────────────────────────────────────────
-function circleShift(text, shift = 1) {
-  const mapped = abjad.letters(text).map((ch) => {
-    const o = orderOf(ch);
-    return o > 0 ? letterAt(o + shift) : ch;
-  });
-  return { result: mapped.join(""), letters: mapped, shift };
-}
-
-function circleMap(text, map) {
-  const mapped = abjad.letters(text).map((ch) => map[ch] || ch);
-  return { result: mapped.join(""), letters: mapped };
-}
-
-/** الدوائرُ المسمّاة المشتقّة من تقسيمات الحروف. */
-function circles() {
-  const tadad = {};
-  ABJAD_ORDER.forEach((ch, i) => { tadad[ch] = ABJAD_ORDER[27 - i]; });
-  const group = (fn, keys) => {
-    const g = Object.fromEntries(keys.map((k) => [k, []]));
-    ABJAD_ORDER.forEach((ch) => { const k = fn(ch); if (g[k]) g[k].push(ch); });
-    return g;
-  };
-  return {
-    abjad: ABJAD_ORDER.slice(),
-    tadad,                                   // ا↔غ … دائرةُ العكس
-    kawakib: group((c) => LETTER_PLANET[c], LETTER_PLANET_ORDER),
-    anasir: group((c) => LETTER_NATURE[c], ELEMENT_ORDER),
-    nuraniyya: {
-      nur: ABJAD_ORDER.filter((c) => NUR_SET.has(c)),
-      zulma: ABJAD_ORDER.filter((c) => !NUR_SET.has(c)),
-    },
-  };
-}
-
-/** إبدالُ النصِّ عبر دائرةٍ مسمّاة: "abjad" (بلا تغيير) أو "tadad" (العكس). */
-function circleSubstitute(text, name = "tadad") {
-  if (name === "tadad") {
-    const map = circles().tadad;
-    return circleMap(text, map);
-  }
-  return circleMap(text, {}); // abjad = هويّة
-}
-
-// ── مثلّث الأعداد ───────────────────────────────────────────────────────
-function numberTriangle(text, mod = 0) {
-  const reduce = (x) => (mod ? ((x % mod) + mod) % mod || mod : x);
-  let row = abjad.letters(text).map((ch) => reduce(abjad.jummal(ch)));
-  const rows = [row.slice()];
-  while (row.length > 1) {
-    const next = [];
-    for (let i = 0; i < row.length - 1; i++) next.push(reduce(row[i] + row[i + 1]));
-    row = next;
-    rows.push(row.slice());
-  }
-  const apex = row[0] ?? 0;
-  return { rows, apex, apexLetter: letterAt(mod ? apex : abjad.saghir(apex) || 1) };
-}
-
-// ── الإسقاط ─────────────────────────────────────────────────────────────
-function isqat(value, divisor) {
-  let v = Math.abs(Math.trunc(value));
-  let count = 0;
-  while (v >= divisor) { v -= divisor; count++; }
-  return { remainder: v === 0 ? divisor : v, subtractions: count, divisor, exactZero: v === 0 };
-}
-
-/** الإسقاطُ بكلِّ القواسمِ المعتمدة دفعةً واحدة. */
-function isqatAll(value) {
-  const out = {};
-  for (const d of [28, 12, 9, 7, 4, 3]) out[d] = { ...isqat(value, d), meaning: ISQAT_DIVISORS[d] };
-  return out;
-}
-
-// ── معلوماتُ الحرف ─────────────────────────────────────────────────────
-function letterInfo(ch) {
-  return {
-    letter: ch,
-    order: orderOf(ch),
-    class: NUR_SET.has(ch) ? "نورانيّة" : "ظلمانيّة",
-    planet: LETTER_PLANET[ch] || null,
-    nature: LETTER_NATURE[ch] || null,
-    value: abjad.jummal(ch),
-  };
-}
-
-/** نعم/لا/مستور من صنفِ حرفِ الجواب. */
-function yesNo(letter) {
-  if (MUSTUR_SET.has(letter)) return "مستور — لا يُجزَم فيه";
-  return NUR_SET.has(letter) ? "أقربُ إلى: نعم" : "أقربُ إلى: لا";
-}
-
-// ── التنبؤ: العدد ← زمن ────────────────────────────────────────────────
-/**
- * @param {number} n
- * @param {"sullam"|"shahr-yawm"|"sneen"} [mode="sullam"]
- */
-// صيغُ العدّ العربيّ الصحيحةُ لوحداتِ الزمن (١ / ٢ / ٣–١٠ / ١١+).
-const TIME_UNIT_FORMS = [
-  { one: "يومٌ واحد",    two: "يومان",     few: "أيّامٍ",   many: "يومًا" },
-  { one: "أسبوعٌ واحد",  two: "أسبوعان",   few: "أسابيعَ",  many: "أسبوعًا" },
-  { one: "شهرٌ واحد",    two: "شهران",     few: "أشهرٍ",    many: "شهرًا" },
-  { one: "سنةٌ واحدة",   two: "سنتان",     few: "سنينَ",    many: "سنةً" },
-];
-function arCount(n, f) {
-  if (n === 1) return f.one;
-  if (n === 2) return f.two;
-  if (n >= 3 && n <= 10) return `${toAr(n)} ${f.few}`;
-  return `${toAr(n)} ${f.many}`;
-}
-
-function timeFromNumber(n, mode = "sullam") {
-  const v = Math.abs(Math.trunc(n));
-  if (mode === "sneen") {
-    const years = (v % 100) || 100;
-    return { mode, count: years, unit: "سنون", text: `نحوَ ${arCount(years, TIME_UNIT_FORMS[3])} هجريّةً من وقتِ العمل` };
-  }
-  if (mode === "shahr-yawm") {
-    const month = (v % 12) || 12;
-    const day = (v % 30) || 30;
-    return { mode, month, day, text: `في اليومِ ${toAr(day)} من شهرِ ${AR_MONTHS_HIJRI[month - 1]}` };
-  }
-  const unitIdx = (v % 4); // 0..3
-  const qty = (v % 12) || 12;
-  return { mode, unit: TIME_LADDER[unitIdx], count: qty, text: `نحوَ ${arCount(qty, TIME_UNIT_FORMS[unitIdx])}` };
-}
-
-// ── حرفُ المطلوب ──────────────────────────────────────────────────────
-/** أعلى حروفِ السؤالِ قيمةً هو «حرفُ المطلوب»؛ ومقابلُه في دائرةِ التضادّ. */
-function matlub(question) {
-  const ls = abjad.letters(abjad.normalize(question));
-  if (!ls.length) return null;
-  let best = ls[0];
-  for (const ch of ls) if (abjad.jummal(ch) > abjad.jummal(best)) best = ch;
-  const opp = circles().tadad[best] || best;
-  return {
-    letter: best, value: abjad.jummal(best),
-    opposite: opp, oppositeBab: ABWAB[opp] || null,
-    bab: ABWAB[best] || null,
-  };
-}
-
-// ── استخراج الجواب ────────────────────────────────────────────────────
-function toAr(n) {
-  const d = "٠١٢٣٤٥٦٧٨٩";
-  return String(n).replace(/[0-9]/g, (c) => d[+c]);
-}
-function verdictFromSentiment(s) {
-  return s > 0.3 ? "الميلُ العامّ: إيجابيّ — «نعم» مع سعيٍ وصبر."
-    : s < -0.3 ? "الميلُ العامّ: سلبيّ — الأولى التريّثُ أو تركُ الأمر."
-    : "الميلُ العامّ: مستورٌ لم يتبيّنْ بعد — فاسألْ بنيّةٍ أصفى.";
-}
-
-/**
- * يركّب العمليات ليخرج «حرف الجواب» وبابَه، مع أثرٍ كامل، ثمّ يُعيد الاستخراجَ
- * تحت مناهجَ بديلة (بسط/تكسير/بذرة) ويستخرج جوابًا توافقيًّا (الأكثرُ تكرارًا).
- *
- * @param {string} question
- * @param {object} [opt]  { name, mother, seed, taksirPasses, method }
- */
-function extractAnswer(question, opt = {}) {
-  const method = opt.method || "kabir";
-  const seed = opt.seed ?? "بسم الله الرحمن الرحيم";
-  const trace = [];
-
-  let qText = abjad.normalize(question);
-  if (opt.taksirPasses) {
-    const tk = taksir(qText, opt.taksirPasses);
-    qText = tk.result;
-    trace.push(`تكسير السؤال (${opt.taksirPasses}×): ⇒ «${qText}»`);
-  }
-
-  const qVal = abjad.jummal(qText, method);
-  const seedVal = abjad.jummal(seed, method);
-  trace.push(`جُمّل السؤال = ${qVal}`, `جُمّل البذرة «${seed}» = ${seedVal}`);
-
-  let nameVal = 0, motherVal = 0;
-  if (opt.name) { nameVal = abjad.jummal(opt.name, method); trace.push(`جُمّل «${abjad.normalize(opt.name)}» = ${nameVal}`); }
-  if (opt.mother) { motherVal = abjad.jummal(opt.mother, method); trace.push(`جُمّل «${abjad.normalize(opt.mother)}» = ${motherVal}`); }
-
-  const grand = qVal + seedVal + nameVal + motherVal;
-  trace.push(`المجموع الكلّي = ${qVal} + ${seedVal} + ${nameVal} + ${motherVal} = ${grand}`);
-
-  const all = isqatAll(grand);
-  const h28 = all[28], h12 = all[12], h9 = all[9], h7 = all[7], h4 = all[4], h3 = all[3];
-  const answerLetter = letterAt(h28.remainder);
-  trace.push(
-    `إسقاط بـ٢٨: باقٍ ${h28.remainder} ⇒ حرفُ الجواب «${answerLetter}»`,
-    `إسقاط بـ١٢: باقٍ ${h12.remainder} ⇒ البرج ${h12.remainder}`,
-    `إسقاط بـ٩: باقٍ ${h9.remainder} ⇒ أصلُ العدد`,
-    `إسقاط بـ٧: باقٍ ${h7.remainder} ⇒ الكوكب/اليوم ${h7.remainder}`,
-    `إسقاط بـ٤: باقٍ ${h4.remainder} ⇒ العنصر ${h4.remainder}`,
-    `إسقاط بـ٣: باقٍ ${h3.remainder} ⇒ رتبةُ الأمر (مُلك/ملكوت/جبروت)`
-  );
-
-  // سلسلةُ الجواب (كلمةٌ من ٣ حروف) — كما يفعل بعضُ أهلِ الجفر.
-  const step = (qVal % 28) || 1;
-  const answerLetters = [];
-  let cur = h28.remainder;
-  for (let k = 0; k < 3; k++) { answerLetters.push(letterAt(cur)); cur = ((cur + step - 1) % 28) + 1; }
-  trace.push(`سلسلةُ الجواب: من «${answerLetter}» بخطوة ${step} ⇒ «${answerLetters.join("")}»`);
-
-  const bab = ABWAB[answerLetter] || null;
-  const answerSentiment = ABWAB_SENTIMENT[answerLetter] ?? 0;
-  if (bab) trace.push(`بابُ «${answerLetter}»: ${bab}`);
-
-  // ── إعادةُ الاستخراج تحت مناهجَ بديلة (المزجُ الموزون) ────────────────
-  const recipes = [
-    { id: "أصليّ (ذاتيّ، بلا تكسير)", bast: "huruf", taksir: null, w: SOURCES_META.jami.weight },
-    { id: "تضادّ (عكسُ الحروف)", bast: "tadad", taksir: null, w: SOURCES_META.jami.weight * 0.8 },
-    { id: "تكسيرٌ ثلاثيّ", bast: "huruf", taksir: "thulathi", w: SOURCES_META.shams.weight },
-    { id: "تكسيرٌ من الطرفين", bast: "huruf", taksir: "tarfeen", w: SOURCES_META.shams.weight * 0.9 },
-    { id: "بلا بذرةِ البسملة", bast: "huruf", taksir: null, seed: "", w: SOURCES_META.ibnkh.weight },
-  ];
-  const byMethod = recipes.map((r) => {
-    let t = bastBy(abjad.normalize(question), r.bast).text;
-    if (r.taksir) t = taksir(t, { method: r.taksir }).result;
-    const sv = r.seed === "" ? 0 : seedVal;
-    const total = abjad.jummal(t, method) + sv + nameVal + motherVal;
-    const lt = letterAt(isqat(total, 28).remainder);
-    return { recipe: r.id, weight: r.w, total, letter: lt, bab: ABWAB[lt] || null, sentiment: ABWAB_SENTIMENT[lt] ?? 0 };
-  });
-  // الجوابُ التوافقيّ = الحرفُ الأكثرُ وزنًا مجموعًا
-  const tally = {};
-  for (const m of byMethod) tally[m.letter] = (tally[m.letter] || 0) + m.weight;
-  const consensusLetter = Object.entries(tally).sort((a, b) => b[1] - a[1] ||
-    orderOf(a[0]) - orderOf(b[0]))[0][0];
-  const consensusBab = ABWAB[consensusLetter] || null;
-  const blendSent = byMethod.reduce((a, m) => a + m.sentiment * m.weight, 0) /
-    byMethod.reduce((a, m) => a + m.weight, 0);
-  trace.push(
-    `مناهجُ بديلة ⇒ ${byMethod.map((m) => `${m.letter}(${m.recipe})`).join("، ")}`,
-    `الجوابُ التوافقيّ (الأثقلُ وزنًا) = «${consensusLetter}»${consensusLetter !== answerLetter ? " — يخالفُ المنهجَ الأصليّ" : " — يوافقُ المنهجَ الأصليّ"}`,
-    `مزجُ الميل = ${Math.round(blendSent * 100) / 100} ⇒ ${verdictFromSentiment(blendSent)}`
-  );
-
-  const mt = matlub(question);
-  const tm = timeFromNumber(grand, "sullam");
-  const tmYear = timeFromNumber(grand, "sneen");
-
-  // ── حكمٌ واحدٌ موفَّق (لا ثلاثةُ أحكامٍ متضاربة) ──────────────────────
-  // ثلاثةُ محاورَ: (١) طبعُ بابِ الحرفِ المباشر، (٢) نورانيّة/ظُلمانيّة الحرف،
-  // (٣) مِزجُ الميلِ من المناهجِ الخمسة. تُجمَع موزونةً ⇒ اتّجاهٌ واحدٌ وثقةٌ واحدة.
-  const lumScore = MUSTUR_SET.has(answerLetter) ? 0 : NUR_SET.has(answerLetter) ? 1 : -1;
-  const axisSign = [Math.sign(answerSentiment), lumScore, Math.sign(blendSent)];
-  const rawScore = 0.45 * axisSign[0] + 0.25 * axisSign[1] + 0.30 * axisSign[2];
-  const direction = rawScore > 0.12 ? "نعم" : rawScore < -0.12 ? "لا" : "مستور";
-  const nonZero = axisSign.filter((s) => s !== 0);
-  const aligned = nonZero.length
-    ? nonZero.filter((s) => s === Math.sign(rawScore || 1)).length / nonZero.length : 0;
-  const confidence = direction === "مستور"
-    ? Math.round(20 + 25 * (1 - aligned))
-    : Math.round(45 + 50 * aligned * Math.min(1, Math.abs(rawScore) + 0.25));
-  const verdictText = {
-    "نعم": "الميلُ إلى «نعم» — يتمُّ الأمرُ بعد سعيٍ وصبر.",
-    "لا": "الميلُ إلى «لا» — الأولى التريّثُ أو تركُ الأمر.",
-    "مستور": "الأمرُ مستورٌ لم يتبيّنْ بعد — أعِدِ السؤالَ بنيّةٍ أصفى.",
-  }[direction];
-  const verdict = { direction, confidence, text: verdictText };
-  // «نعم/لا» موحَّدٌ مع الحكم (لا مبنيًّا على النورانيّة وحدها).
-  const yesNoResolved = direction === "مستور" ? "مستور — لا يُجزَم فيه" : `أقربُ إلى: ${direction}`;
-
-  // ── شكلُ السؤال: عرضٌ مناسبٌ لأسئلة لماذا/كيف/متى/ماذا (لا نعم/لا مفروضة) ──
-  const questionForm = classifyQuestionForm(question);
-  const babText = bab || "لم يتّضح بابٌ محدَّد لهذا الحرف.";
-  const formed = {
-    why: { label: "السببُ الأرجح", text: `السببُ الأرجح (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
-    how: { label: "التوجيه", text: `التوجيهُ (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
-    when: { label: "التوقيتُ المرجَّح", text: `التقديرُ الزمنيّ: ${tm.text}. وسياقُ بابِ الحرف «${answerLetter}»: ${babText}` },
-    what: { label: "الوصف", text: `الوصفُ (من بابِ حرفِ الجواب «${answerLetter}»): ${babText}` },
-    yesno: { label: direction, text: verdictText },
-  }[questionForm];
-
-  trace.push(
-    `حرفُ المطلوب (أعلى حروفِ السؤال قيمةً): «${mt?.letter}» ومقابلُه «${mt?.opposite}»`,
-    `المحاورُ الثلاثة: طبعُ الباب ${axisSign[0]} · نورانيّة الحرف ${axisSign[1]} · مزجُ المناهج ${axisSign[2]} ⇒ الدرجة ${Math.round(rawScore * 100) / 100} ⇒ الحكم «${direction}» بثقة ${confidence}٪ (توافقُ المحاور ${Math.round(aligned * 100)}٪).`,
-    `تقديرُ الزمن: ${tm.text}${tmYear.count && Math.abs(tmYear.count) > 24 ? "" : ` (وبعدِّ السنين: ${tmYear.text})`}`,
-    "وكما قال ابن خلدون: لا شيء هنا سوى قسمةٍ وانتقاءٍ من جدول؛ والمعنى يُقحَم في «قياسِ الكلامِ وسياقِه»."
-  );
-
-  return {
-    question: abjad.normalize(question),
-    grandTotal: grand,
-    answerLetter,
-    answerWord: answerLetters.join(""),
-    bab,
-    answerSentiment,
-    letterClass: NUR_SET.has(answerLetter) ? "نورانيّة" : "ظلمانيّة",
-    verdict,                       // ← الحكمُ الموحَّد: { direction, confidence, text }
-    questionForm,                  // yesno | why | how | when | what
-    formed,                        // { label, text } — عرضٌ مناسبٌ لشكل السؤال (لا نعم/لا مفروضة)
-    yesNo: yesNoResolved,          // موافقٌ لـ verdict.direction
-    yesNoByLuminosity: yesNo(answerLetter), // المحورُ الخام (للكشف فقط)
-    burjIndex: h12.remainder,
-    planetIndex: h7.remainder,
-    elementIndex: h4.remainder,
-    nineRoot: h9.remainder,
-    worldRank: h3.remainder,
-    planetAnswer: ABWAB_PLANET[h7.remainder] || null,
-    elementAnswer: ABWAB_ELEMENT[h4.remainder] || null,
-    isqat: { by28: h28, by12: h12, by9: h9, by7: h7, by4: h4, by3: h3 },
-    byMethod,
-    consensusLetter,
-    consensusBab,
-    consensusAgree: consensusLetter === answerLetter,
-    blendSentiment: Math.round(blendSent * 100) / 100,
-    blendVerdict: verdictFromSentiment(blendSent), // محورٌ مساعد (لا يُصدَّر كعنوان)
-    matlub: mt,
-    time: { text: tm.text, unit: tm.unit, count: tm.count, alt: tmYear.text },
-    trace,
-  };
-}
-
-__exports.default = {
-  bast, bastModes, bastBy,
-  taksir, taksirMethods,
-  zuburBayyinat,
-  circleShift, circleMap, circles, circleSubstitute,
-  numberTriangle,
-  isqat, isqatAll,
-  letterInfo, yesNo, timeFromNumber, matlub,
-  extractAnswer, grandTable, jafrGrid, classifyQuestionForm,
-};
-
-;__exports["classifyQuestionForm"]=classifyQuestionForm;__exports["grandTable"]=grandTable;__exports["jafrGrid"]=jafrGrid;__exports["bast"]=bast;__exports["bastModes"]=bastModes;__exports["bastBy"]=bastBy;__exports["taksirMethods"]=taksirMethods;__exports["taksir"]=taksir;__exports["zuburBayyinat"]=zuburBayyinat;__exports["circleShift"]=circleShift;__exports["circleMap"]=circleMap;__exports["circles"]=circles;__exports["circleSubstitute"]=circleSubstitute;__exports["numberTriangle"]=numberTriangle;__exports["isqat"]=isqat;__exports["isqatAll"]=isqatAll;__exports["letterInfo"]=letterInfo;__exports["yesNo"]=yesNo;__exports["timeFromNumber"]=timeFromNumber;__exports["matlub"]=matlub;__exports["extractAnswer"]=extractAnswer;return __exports;})();
 __M["kaf"]=(function(){"use strict";const __exports={};
 // engines/kaf.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23799,100 +23933,6 @@ function fortune(age, now) {
 __exports.default = { full, ageStage, AGES_LIST };
 
 ;__exports["ageStage"]=ageStage;__exports["full"]=full;__exports["AGES_LIST"]=AGES_LIST;__exports["NATURE"]=NATURE;__exports["fortune"]=fortune;return __exports;})();
-__M["qura"]=(function(){"use strict";const __exports={};
-// engines/qura.js
-// ─────────────────────────────────────────────────────────────────────────────
-// محرّك القرعة والفأل — «قرعة الإمام جعفر الصادق» (الطوخي)
-//
-// عودٌ رُباعيٌّ على أوجهه «ا ب ج د»، يُرمى ثلاثَ مرّات ⇒ ثلاثيّةٌ ⇒ بابٌ من ٦٤
-// فيه آيةٌ وفأل. الرميُ هنا حتميٌّ من بذرةٍ من (الاسم + الأمّ + السؤال + التاريخ)،
-// فنفسُ المدخلاتِ تُعطي نفسَ القرعةِ أبدًا — وهذا وجهُ المسألة.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const abjad=__M["abjad"].default;
-const {
-  FACES, OPENING_PRAYER, BOOK_INDEX, ANSWERS, QURA_NOTE, SOURCE_META,
-}=__M["qura.data"];
-
-// FNV-1a 32-bit على نقاط اليونيكود — بذرةٌ حتميّة.
-function hashStr(s) {
-  let h = 0x811c9dc5 >>> 0;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return h >>> 0;
-}
-
-// mulberry32 — مولّدٌ عشوائيٌّ حتميّ من بذرة.
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const B4 = { "ا": 0, "ب": 1, "ج": 2, "د": 3 };
-/** رقمُ الباب: من فهرس الكتاب إن وُجِد، وإلا بترتيبٍ رباعيٍّ قياسيّ. */
-function babNumber(key) {
-  if (BOOK_INDEX[key] != null) return { bab: BOOK_INDEX[key], from: "فهرس الكتاب" };
-  const [a, b, c] = [...key];
-  return { bab: B4[a] * 16 + B4[b] * 4 + B4[c] + 1, from: "ترتيبٌ رباعيٌّ قياسيّ (الفهرس الأصليّ باهتُ المسح)" };
-}
-
-/**
- * ضربُ القرعة.
- * @param {string} name    اسمُ السائل
- * @param {string} mother  اسمُ الأمّ
- * @param {string} question السؤال (نيّةُ القرعة)
- * @param {Date|string|number} [when=today] تاريخُ اليوم (يُؤخذ يومُه فقط)
- * @returns {{throws:string[], key:string, bab:number, verse?:string,
- *            fortune?:string, tone?:string, transcribed:boolean, trace:string[]}}
- */
-function cast(name, mother, question, when) {
-  const nName = abjad.normalize(name || "");
-  const nMother = abjad.normalize(mother || "");
-  const q = String(question || "");
-  const day = new Date(when || Date.now());
-  const dayKey = `${day.getUTCFullYear()}-${day.getUTCMonth() + 1}-${day.getUTCDate()}`;
-  const seedStr = `${nName}|${nMother}|${q}|${dayKey}`;
-  const seed = hashStr(seedStr);
-  const rnd = mulberry32(seed);
-
-  const throws = [0, 1, 2].map(() => FACES[Math.floor(rnd() * 4)]);
-  const key = throws.join("");
-  const bn = babNumber(key);
-  const ans = ANSWERS[key] || null;
-
-  const trace = [
-    `البذرة = «${seedStr}» ⇒ FNV = ${seed}`,
-    `رميُ العود ٣ مرّات (حتميٌّ من البذرة) ⇒ ${throws.join(" ، ")} ⇒ الثلاثيّة «${key}»`,
-    `الباب رقم ${bn.bab} (${bn.from}).`,
-    ans ? `نصُّ الباب ${ans.bab} منقولٌ: ${ans.tone}.` : `الباب ${bn.bab} موجودٌ في الكتاب، ولم يُنقَل نصُّه من هذا المسح.`,
-    "لاحظْ: لم يُرمَ عودٌ حقيقيّ؛ الثلاثيّةُ دالّةٌ حتميّةٌ في اسمِك واسمِ أمّك وسؤالِك وتاريخِ يومِ الاستشارة — كرميةٍ فعليّةٍ جديدةٍ في كلِّ جلسة. فسؤالُك اليوم يُعطي نفسَ البابِ لو أعدتَه اليومَ نفسَه (لم ترمِ العودَ مرّتين)، لكنّه يُعطي بابًا آخرَ لو رجعتَ تسألُه غدًا — تمامًا كما لا يُعيد الرامي الحقيقيُّ نفسَ الرمية. والأبوابُ عباراتٌ تصدُقُ على كلّ حال.",
-  ];
-
-  return {
-    input: { name: nName, mother: nMother, question: q, day: dayKey },
-    prayer: OPENING_PRAYER,
-    throws, key,
-    bab: bn.bab, babFrom: bn.from,
-    verse: ans?.verse || null,
-    fortune: ans?.fortune || null,
-    tone: ans?.tone || null,
-    transcribed: !!ans,
-    note: QURA_NOTE,
-    source: SOURCE_META.title,
-    trace,
-  };
-}
-
-const SOURCE = SOURCE_META;
-__exports.default = { cast, babNumber, SOURCE, FACES };
-
-;__exports["babNumber"]=babNumber;__exports["cast"]=cast;__exports["SOURCE"]=SOURCE;return __exports;})();
 __M["spirit-art"]=(function(){"use strict";const __exports={};
 // engines/spirit-art.js
 // ─────────────────────────────────────────────────────────────────────────────

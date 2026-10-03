@@ -1321,6 +1321,11 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(JSON.stringify(w.months.map((m) => m.scores.all)) !== JSON.stringify(a.months.map((m) => m.scores.all)), "أوزانُ «صار/لم يصر» تغيّرُ الحساب");
   const q = arif.ask(C, "هل أفتح مشروعًا تجاريًّا؟");
   ok(q.topic === "work" && q.big && q.best && q.best.label, "اسألِ العارف: موضوعُ الشغل وأنسبُ وقت");
+  ok(q.qura && q.jafr && q.votes[0].why.includes("القرعة") && q.votes[0].why.includes("الجفر"), "جوابُ السؤال يجمعُ الرملَ والقرعةَ والجفر (عائلةً واحدة)");
+  const ecl = arif.eclipses(new Date(Date.UTC(2026, 0, 1)), new Date(Date.UTC(2027, 0, 1)));
+  ok(ecl.some((e) => e.kind === "solar" && e.date.toISOString().startsWith("2026-08-12")) && ecl.some((e) => e.kind === "lunar" && e.date.toISOString().startsWith("2026-03-03")), "الكسوفات: كسوفُ ١٢ أغسطس ٢٠٢٦ وخسوفُ ٣ مارس ٢٠٢٦");
+  ok(a.insights[0] && a.insights[0].text.includes("حارّ"), "استنتاجُ «الطبعُ والفترة» يعملُ من مزاجِ الخريطة الفعليّ");
+  ok(a.months.some((m) => m.voices.some((v) => /كسوفٌ للشمس مقابلَ قمرِك/.test(v.why))), "كسوفٌ على موضعٍ في الخريطة يدخلُ شهرَه");
 }
 
 // ── قراءتك الكاملة ──
