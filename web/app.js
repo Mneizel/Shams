@@ -2410,6 +2410,7 @@ PANELS.arif = (main) => {
     md.innerHTML = `<h3><span>${esc(MON[d.m])} ${AR(d.y)}</span><span class="k">${d.past ? "مضى" : d.now ? "الآن" : ""}</span></h3><div class="normal">
       <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? "كان " : ""}شهرًا ${esc(AR(lvl))}</div>
       <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
+      ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
       ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
         : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>

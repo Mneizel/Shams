@@ -87,9 +87,9 @@ export function revolutions(c, natal, fromYear, toYear) {
     const add = (s, plain, why, topics = ["all"]) => V.push({ s, plain, why, topics });
     // ١) طالعُ التحويل بالنسبة إلى طالع الميلاد
     if (natalHouseOfRevAsc === 1) add(1, "سنةُ عافيةٍ ونجاحٍ في المساعي", "طالعُ التحويل هو طالعُ الميلاد نفسُه", ["all", "health"]);
-    else if ([6, 8, 12].includes(natalHouseOfRevAsc)) add(-1, natalHouseOfRevAsc === 8 ? "يُخافُ في هذه السنة خسارةٌ أو خوف" : "يُخافُ في هذه السنة مرضٌ أو ضعفٌ أو عوارض", `طالعُ التحويل يقعُ في البيت ${natalHouseOfRevAsc} من الميلاد`, ["all", "health"]);
+    else if ([6, 8, 12].includes(natalHouseOfRevAsc)) add(-1, natalHouseOfRevAsc === 8 ? "يُخافُ فيها خسارةٌ أو خوف" : "يُخافُ فيها مرضٌ أو ضعفٌ أو عوارض", `طالعُ التحويل يقعُ في البيت ${natalHouseOfRevAsc} من الميلاد`, ["all", "health"]);
     else if (natalHouseOfRevAsc === 7) add(-0.5, "خصوماتٌ، ورغبةٌ في الزواج أو زواج", "طالعُ التحويل هو سابعُ الميلاد", ["love"]);
-    else if ([4, 10].includes(natalHouseOfRevAsc)) add(-0.5, "خسارةٌ أو عناءٌ في شأنِ ذلك البيت", `طالعُ التحويل مربّعٌ لطالع الميلاد (البيت ${natalHouseOfRevAsc})`, HOUSE_BAD_TOPIC[natalHouseOfRevAsc] || ["all"]);
+    else if ([4, 10].includes(natalHouseOfRevAsc)) add(-0.5, natalHouseOfRevAsc === 4 ? "همٌّ أو عناءٌ من جهة البيت والأهل" : "عناءٌ أو عثرةٌ في الشغل", `طالعُ التحويل مربّعٌ لطالع الميلاد (البيت ${natalHouseOfRevAsc})`, HOUSE_BAD_TOPIC[natalHouseOfRevAsc] || ["all"]);
     // ٢) طالعُ التحويل على مواضعِ النحسين في الميلاد
     for (const mal of ["زحل", "المريخ"]) if (signIdx(natal.planets[mal].longitude) === rA) add(-1, "سنةٌ فيها خطرٌ وحذر", `طالعُ التحويل في برجِ ${mal} من الميلاد`, ["all", "health"]);
     // ٣) صاحبُ طالع التحويل محترق
@@ -203,11 +203,14 @@ function scoreFor(V, topic = "all", weights = {}) {
 }
 const level = (s) => s >= 1.2 ? "ممتاز" : s >= 0.45 ? "جيّد" : s <= -1.2 ? "صعب" : s <= -0.45 ? "ثقيل" : "عاديّ";
 function monthText(V, topic, s) {
-  const rel = V.filter((v) => v.plain && (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")));
+  // ما يخصُّ الشهرَ نفسَه أوّلًا (المرور، الكسوف، الأرقام، الاسم)، ومن أحكامِ السنة جملةٌ واحدةٌ فقط (تُذكَرُ كاملةً في «هذه السنة»)
+  const rel0 = V.filter((v) => v.plain && (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")));
+  const spec = rel0.filter((v) => v.fam !== "periods"), per = rel0.filter((v) => v.fam === "periods").sort((a, b) => Math.abs(b.s) - Math.abs(a.s)).slice(0, 1);
+  const rel = spec.length >= 2 ? spec : [...spec, ...per];
   const uniq = (a) => [...new Set(a)];
   const pos = uniq(rel.filter((v) => v.s > 0).map((v) => v.plain)), neg = uniq(rel.filter((v) => v.s < 0).map((v) => v.plain));
   const join = (a) => a.length > 1 ? a.slice(0, -1).join("، ") + " و" + a[a.length - 1] : a[0] || "";
-  if (pos.length && neg.length) return s >= 0 ? `${join(pos.slice(0, 3))}، مع ${join(neg.slice(0, 2))}.` : `${join(neg.slice(0, 3))}، لكن ${join(pos.slice(0, 2))}.`;
+  if (pos.length && neg.length) return s >= 0 ? `${join(pos.slice(0, 3))}، وفيه أيضًا ${join(neg.slice(0, 2))}.` : `${join(neg.slice(0, 3))}، لكن ${join(pos.slice(0, 2))}.`;
   if (pos.length) return `${join(pos.slice(0, 3))}.`;
   if (neg.length) return `${join(neg.slice(0, 3))}.`;
   return "شهرٌ هادئٌ بلا أحداثٍ كبيرة.";
@@ -232,7 +235,10 @@ export function timeline(c, opt = {}) {
     const { y, m } = addMonths(now.getUTCFullYear(), now.getUTCMonth(), k);
     const V = monthVoices(ctx, y, m);
     const scores = Object.fromEntries(Object.keys(TOPICS).map((t) => [t, scoreFor(V, t, opt.weights)]));
-    months.push({ k, y, m, label: `${MONTHS[m]} ${y}`, past: k < 0, now: k === 0, voices: V, scores,
+    const yearV = V.filter((v) => v.fam === "periods" && v.plain);
+    const yp = [...new Set(yearV.filter((v) => v.s > 0).map((v) => v.plain))], yn = [...new Set(yearV.filter((v) => v.s < 0).map((v) => v.plain))];
+    const yearNote = [yp.length ? yp.join("، ") : "", yn.length ? (yp.length ? "وفيها أيضًا " : "") + yn.join("، ") : ""].filter(Boolean).join("، ");
+    months.push({ k, y, m, label: `${MONTHS[m]} ${y}`, past: k < 0, now: k === 0, voices: V, scores, yearNote,
       text: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, monthText(V, t, scores[t])])),
       level: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, level(scores[t])])),
       advice: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, advice(scores[t])])) });

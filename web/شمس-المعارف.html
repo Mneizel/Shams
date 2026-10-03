@@ -21237,6 +21237,49 @@ function eclipses(from, to) {
   return out;
 }
 
+// ── تحويلُ سنة المولد (Lilly، Christian Astrology م٣ «To Judge a Revolution»؛ وهو بابُ أبي معشر في تحاويل السنين) ──
+const HOUSE_GOOD = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 5: ["love"], 7: ["love"], 9: ["study"], 10: ["work"], 11: ["money"] };
+const HOUSE_GOOD_PLAIN = { 1: "سنةُ عافيةٍ وحضور", 2: "زيادةٌ في المال", 4: "خيرٌ في البيت والعائلة", 5: "فرحٌ بالأولاد أو العاطفة", 7: "خيرٌ في الزواج والشراكة", 9: "سفرٌ أو علمٌ نافع", 10: "تقدّمٌ في الشغل والمنزلة", 11: "عونٌ من الأصدقاء ونيلُ أمنية" };
+const HOUSE_BAD_PLAIN = { 1: "تعبٌ في البدن", 2: "نقصٌ في المال", 4: "همٌّ في البيت", 6: "مرضٌ أو تعب", 7: "خصامٌ في الزواج أو الشراكة", 8: "خسارةٌ أو خوف", 10: "عثرةٌ في الشغل", 12: "همومٌ خفيّةٌ وأعداء" };
+const HOUSE_BAD_TOPIC = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 6: ["health"], 7: ["love"], 8: ["money", "health"], 10: ["work"], 12: ["all", "health"] };
+/** خرائطُ التحويل: لحظةُ عودةِ الشمس إلى موضعِها في الميلاد كلَّ سنة، وأحكامُ Lilly عليها */
+function revolutions(c, natal, fromYear, toYear) {
+  const sunL = natal.planets["الشمس"].longitude, ascIdx = signIdx(natal.ascendant.longitude);
+  const out = [];
+  for (let y = fromYear; y <= toYear; y++) {
+    let t;
+    try { t = AE.SearchSunLongitude(sunL, new Date(Date.UTC(y, new Date(c.birth).getUTCMonth(), new Date(c.birth).getUTCDate() - 8)), 20); } catch { t = null; }
+    if (!t) continue;
+    const when = t.date, rev = falak.snapshot(when, c.lat, c.lon);
+    const rA = signIdx(rev.ascendant.longitude);
+    const natalHouseOfRevAsc = ((rA - ascIdx + 12) % 12) + 1;
+    const V = [];
+    const add = (s, plain, why, topics = ["all"]) => V.push({ s, plain, why, topics });
+    // ١) طالعُ التحويل بالنسبة إلى طالع الميلاد
+    if (natalHouseOfRevAsc === 1) add(1, "سنةُ عافيةٍ ونجاحٍ في المساعي", "طالعُ التحويل هو طالعُ الميلاد نفسُه", ["all", "health"]);
+    else if ([6, 8, 12].includes(natalHouseOfRevAsc)) add(-1, natalHouseOfRevAsc === 8 ? "يُخافُ فيها خسارةٌ أو خوف" : "يُخافُ فيها مرضٌ أو ضعفٌ أو عوارض", `طالعُ التحويل يقعُ في البيت ${natalHouseOfRevAsc} من الميلاد`, ["all", "health"]);
+    else if (natalHouseOfRevAsc === 7) add(-0.5, "خصوماتٌ، ورغبةٌ في الزواج أو زواج", "طالعُ التحويل هو سابعُ الميلاد", ["love"]);
+    else if ([4, 10].includes(natalHouseOfRevAsc)) add(-0.5, natalHouseOfRevAsc === 4 ? "همٌّ أو عناءٌ من جهة البيت والأهل" : "عناءٌ أو عثرةٌ في الشغل", `طالعُ التحويل مربّعٌ لطالع الميلاد (البيت ${natalHouseOfRevAsc})`, HOUSE_BAD_TOPIC[natalHouseOfRevAsc] || ["all"]);
+    // ٢) طالعُ التحويل على مواضعِ النحسين في الميلاد
+    for (const mal of ["زحل", "المريخ"]) if (signIdx(natal.planets[mal].longitude) === rA) add(-1, "سنةٌ فيها خطرٌ وحذر", `طالعُ التحويل في برجِ ${mal} من الميلاد`, ["all", "health"]);
+    // ٣) صاحبُ طالع التحويل محترق
+    const lord = SIGN_RULER[SIGNS[rA]], cs = rev.planets[lord] && lord !== "الشمس" ? sepDeg(rev.planets[lord].longitude, rev.planets["الشمس"].longitude) : 99;
+    if (cs < 8.5) add(-1, "متاعبُ من جنسِ صاحبِ السنة", `صاحبُ طالعِ التحويل (${lord}) تحت شعاع الشمس`);
+    // ٤) المشتري وسهمُ السعادة في بيوت التحويل ⇒ زيادةٌ من جهة ذلك البيت
+    const hRev = (lon) => ((signIdx(lon) - rA + 12) % 12) + 1;
+    const hJ = hRev(rev.planets["المشتري"].longitude);
+    if (HOUSE_GOOD[hJ]) add(1, HOUSE_GOOD_PLAIN[hJ], `المشتري في البيت ${hJ} من التحويل`, HOUSE_GOOD[hJ]);
+    const hV = hRev(rev.planets["الزهرة"].longitude);
+    if (HOUSE_GOOD[hV] && hV !== hJ) add(0.5, HOUSE_GOOD_PLAIN[hV], `الزهرة في البيت ${hV} من التحويل`, HOUSE_GOOD[hV]);
+    for (const mal of ["زحل", "المريخ"]) {
+      const hm = hRev(rev.planets[mal].longitude);
+      if ([1, 4, 7, 10, 6, 8, 12, 2].includes(hm)) add(mal === "زحل" ? -1 : -0.5, HOUSE_BAD_PLAIN[hm], `${mal} في البيت ${hm} من التحويل`, HOUSE_BAD_TOPIC[hm] || ["all"]);
+    }
+    out.push({ y, when, asc: SIGNS[rA], natalHouse: natalHouseOfRevAsc, lord, voices: V });
+  }
+  return out;
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -21274,6 +21317,9 @@ function monthVoices(ctx, y, m) {
     const sP = NATURE[P.yearLord] ?? 0;
     push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"]);
   }
+  // ١ب) تحويلُ السنة التي يقعُ فيها هذا الشهر
+  const rv = [...ctx.revs].reverse().find((r) => r.when <= date);
+  if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics);
   // ٢) مرورُ الكواكب على الخريطة
   const pos = falak.planetPositions(date);
   const J = pos["المشتري"].longitude, S = pos["زحل"].longitude, M = pos["المريخ"].longitude;
@@ -21327,11 +21373,14 @@ function scoreFor(V, topic = "all", weights = {}) {
 }
 const level = (s) => s >= 1.2 ? "ممتاز" : s >= 0.45 ? "جيّد" : s <= -1.2 ? "صعب" : s <= -0.45 ? "ثقيل" : "عاديّ";
 function monthText(V, topic, s) {
-  const rel = V.filter((v) => v.plain && (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")));
+  // ما يخصُّ الشهرَ نفسَه أوّلًا (المرور، الكسوف، الأرقام، الاسم)، ومن أحكامِ السنة جملةٌ واحدةٌ فقط (تُذكَرُ كاملةً في «هذه السنة»)
+  const rel0 = V.filter((v) => v.plain && (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")));
+  const spec = rel0.filter((v) => v.fam !== "periods"), per = rel0.filter((v) => v.fam === "periods").sort((a, b) => Math.abs(b.s) - Math.abs(a.s)).slice(0, 1);
+  const rel = spec.length >= 2 ? spec : [...spec, ...per];
   const uniq = (a) => [...new Set(a)];
   const pos = uniq(rel.filter((v) => v.s > 0).map((v) => v.plain)), neg = uniq(rel.filter((v) => v.s < 0).map((v) => v.plain));
   const join = (a) => a.length > 1 ? a.slice(0, -1).join("، ") + " و" + a[a.length - 1] : a[0] || "";
-  if (pos.length && neg.length) return s >= 0 ? `${join(pos.slice(0, 3))}، مع ${join(neg.slice(0, 2))}.` : `${join(neg.slice(0, 3))}، لكن ${join(pos.slice(0, 2))}.`;
+  if (pos.length && neg.length) return s >= 0 ? `${join(pos.slice(0, 3))}، وفيه أيضًا ${join(neg.slice(0, 2))}.` : `${join(neg.slice(0, 3))}، لكن ${join(pos.slice(0, 2))}.`;
   if (pos.length) return `${join(pos.slice(0, 3))}.`;
   if (neg.length) return `${join(neg.slice(0, 3))}.`;
   return "شهرٌ هادئٌ بلا أحداثٍ كبيرة.";
@@ -21349,13 +21398,17 @@ function timeline(c, opt = {}) {
     bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
+  ctx.revs = revolutions(c, sky, now.getUTCFullYear() - Math.ceil(past / 12) - 1, now.getUTCFullYear() + Math.ceil(future / 12) + 1);
   ctx.eclipses = eclipses(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - past - 3, 1)), new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + future, 1)));
   const months = [];
   for (let k = -past; k < future; k++) {
     const { y, m } = addMonths(now.getUTCFullYear(), now.getUTCMonth(), k);
     const V = monthVoices(ctx, y, m);
     const scores = Object.fromEntries(Object.keys(TOPICS).map((t) => [t, scoreFor(V, t, opt.weights)]));
-    months.push({ k, y, m, label: `${MONTHS[m]} ${y}`, past: k < 0, now: k === 0, voices: V, scores,
+    const yearV = V.filter((v) => v.fam === "periods" && v.plain);
+    const yp = [...new Set(yearV.filter((v) => v.s > 0).map((v) => v.plain))], yn = [...new Set(yearV.filter((v) => v.s < 0).map((v) => v.plain))];
+    const yearNote = [yp.length ? yp.join("، ") : "", yn.length ? (yp.length ? "وفيها أيضًا " : "") + yn.join("، ") : ""].filter(Boolean).join("، ");
+    months.push({ k, y, m, label: `${MONTHS[m]} ${y}`, past: k < 0, now: k === 0, voices: V, scores, yearNote,
       text: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, monthText(V, t, scores[t])])),
       level: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, level(scores[t])])),
       advice: Object.fromEntries(Object.keys(TOPICS).map((t) => [t, advice(scores[t])])) });
@@ -21473,9 +21526,9 @@ function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-__exports.default = { timeline, read, ask, eclipses, MONTHS, TOPICS, FAMILIES };
+__exports.default = { timeline, read, ask, eclipses, revolutions, MONTHS, TOPICS, FAMILIES };
 
-;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
+;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["revolutions"]=revolutions;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
 __M["awfaq"]=(function(){"use strict";const __exports={};
 // engines/awfaq.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27666,6 +27719,7 @@ PANELS.arif = (main) => {
     md.innerHTML = `<h3><span>${esc(MON[d.m])} ${AR(d.y)}</span><span class="k">${d.past ? "مضى" : d.now ? "الآن" : ""}</span></h3><div class="normal">
       <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? "كان " : ""}شهرًا ${esc(AR(lvl))}</div>
       <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
+      ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
       ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
         : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
