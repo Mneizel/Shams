@@ -1234,6 +1234,17 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(n.length === 8 && n.find((x) => x.name === "الحكيم") && ab.jummal("حكيم") === 78, "الغزاليّ: ٨ من الأسماء التسعة والتسعين بخواصّها (والمحيط ليس في رواية الترمذي)، و«حكيم» = ٧٨ كما في الكتاب");
 }
 
+// ── الثمرة: الكلمتان ٤٠ و٤٧ ──
+{
+  const halM = (await import("../engines/hal.js")).default;
+  // طالعٌ في الميزان وصاحبُه الزهرة في السنبلة ⇒ كلاهما إنسيّ ⇒ مستأنسٌ بالناس
+  const r = halM.reading({ name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), birthDay: 9, lat: 31.9539, lon: 35.9106 });
+  const ev = Object.values(r.groups).flatMap((g) => [...g.firm, ...g.single, ...g.sometimes]);
+  ok(ev.some((x) => (x.lines || Object.values(x.support || {}).flat()).includes("th_social") && (x.id === "affable" || (x.ids || []).includes("affable"))), "الثمرة ٤٧: طالعٌ إنسيّ (الميزان) وصاحبُه في إنسيّ (السنبلة) ⇒ مستأنسٌ بالناس");
+  const aff = Object.values(r.groups).flatMap((g) => g.firm).find((x) => x.id === "affable");
+  ok(aff && new Set(aff.lines.map((l) => ({ am_asc: "asc", asc_degree: "asc", th_social: "asc", name_sign: "name" })[l] || l)).size >= 2, "طبعُ الطالع (أبو معشر) والثمرة من عائلةٍ واحدة: لا يُعَدّان دليلين");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;
