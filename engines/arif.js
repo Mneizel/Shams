@@ -67,6 +67,49 @@ export function eclipses(from, to) {
   return out;
 }
 
+// ── تحويلُ سنة المولد (Lilly، Christian Astrology م٣ «To Judge a Revolution»؛ وهو بابُ أبي معشر في تحاويل السنين) ──
+const HOUSE_GOOD = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 5: ["love"], 7: ["love"], 9: ["study"], 10: ["work"], 11: ["money"] };
+const HOUSE_GOOD_PLAIN = { 1: "سنةُ عافيةٍ وحضور", 2: "زيادةٌ في المال", 4: "خيرٌ في البيت والعائلة", 5: "فرحٌ بالأولاد أو العاطفة", 7: "خيرٌ في الزواج والشراكة", 9: "سفرٌ أو علمٌ نافع", 10: "تقدّمٌ في الشغل والمنزلة", 11: "عونٌ من الأصدقاء ونيلُ أمنية" };
+const HOUSE_BAD_PLAIN = { 1: "تعبٌ في البدن", 2: "نقصٌ في المال", 4: "همٌّ في البيت", 6: "مرضٌ أو تعب", 7: "خصامٌ في الزواج أو الشراكة", 8: "خسارةٌ أو خوف", 10: "عثرةٌ في الشغل", 12: "همومٌ خفيّةٌ وأعداء" };
+const HOUSE_BAD_TOPIC = { 1: ["all", "health"], 2: ["money"], 4: ["love"], 6: ["health"], 7: ["love"], 8: ["money", "health"], 10: ["work"], 12: ["all", "health"] };
+/** خرائطُ التحويل: لحظةُ عودةِ الشمس إلى موضعِها في الميلاد كلَّ سنة، وأحكامُ Lilly عليها */
+export function revolutions(c, natal, fromYear, toYear) {
+  const sunL = natal.planets["الشمس"].longitude, ascIdx = signIdx(natal.ascendant.longitude);
+  const out = [];
+  for (let y = fromYear; y <= toYear; y++) {
+    let t;
+    try { t = AE.SearchSunLongitude(sunL, new Date(Date.UTC(y, new Date(c.birth).getUTCMonth(), new Date(c.birth).getUTCDate() - 8)), 20); } catch { t = null; }
+    if (!t) continue;
+    const when = t.date, rev = falak.snapshot(when, c.lat, c.lon);
+    const rA = signIdx(rev.ascendant.longitude);
+    const natalHouseOfRevAsc = ((rA - ascIdx + 12) % 12) + 1;
+    const V = [];
+    const add = (s, plain, why, topics = ["all"]) => V.push({ s, plain, why, topics });
+    // ١) طالعُ التحويل بالنسبة إلى طالع الميلاد
+    if (natalHouseOfRevAsc === 1) add(1, "سنةُ عافيةٍ ونجاحٍ في المساعي", "طالعُ التحويل هو طالعُ الميلاد نفسُه", ["all", "health"]);
+    else if ([6, 8, 12].includes(natalHouseOfRevAsc)) add(-1, natalHouseOfRevAsc === 8 ? "يُخافُ في هذه السنة خسارةٌ أو خوف" : "يُخافُ في هذه السنة مرضٌ أو ضعفٌ أو عوارض", `طالعُ التحويل يقعُ في البيت ${natalHouseOfRevAsc} من الميلاد`, ["all", "health"]);
+    else if (natalHouseOfRevAsc === 7) add(-0.5, "خصوماتٌ، ورغبةٌ في الزواج أو زواج", "طالعُ التحويل هو سابعُ الميلاد", ["love"]);
+    else if ([4, 10].includes(natalHouseOfRevAsc)) add(-0.5, "خسارةٌ أو عناءٌ في شأنِ ذلك البيت", `طالعُ التحويل مربّعٌ لطالع الميلاد (البيت ${natalHouseOfRevAsc})`, HOUSE_BAD_TOPIC[natalHouseOfRevAsc] || ["all"]);
+    // ٢) طالعُ التحويل على مواضعِ النحسين في الميلاد
+    for (const mal of ["زحل", "المريخ"]) if (signIdx(natal.planets[mal].longitude) === rA) add(-1, "سنةٌ فيها خطرٌ وحذر", `طالعُ التحويل في برجِ ${mal} من الميلاد`, ["all", "health"]);
+    // ٣) صاحبُ طالع التحويل محترق
+    const lord = SIGN_RULER[SIGNS[rA]], cs = rev.planets[lord] && lord !== "الشمس" ? sepDeg(rev.planets[lord].longitude, rev.planets["الشمس"].longitude) : 99;
+    if (cs < 8.5) add(-1, "متاعبُ من جنسِ صاحبِ السنة", `صاحبُ طالعِ التحويل (${lord}) تحت شعاع الشمس`);
+    // ٤) المشتري وسهمُ السعادة في بيوت التحويل ⇒ زيادةٌ من جهة ذلك البيت
+    const hRev = (lon) => ((signIdx(lon) - rA + 12) % 12) + 1;
+    const hJ = hRev(rev.planets["المشتري"].longitude);
+    if (HOUSE_GOOD[hJ]) add(1, HOUSE_GOOD_PLAIN[hJ], `المشتري في البيت ${hJ} من التحويل`, HOUSE_GOOD[hJ]);
+    const hV = hRev(rev.planets["الزهرة"].longitude);
+    if (HOUSE_GOOD[hV] && hV !== hJ) add(0.5, HOUSE_GOOD_PLAIN[hV], `الزهرة في البيت ${hV} من التحويل`, HOUSE_GOOD[hV]);
+    for (const mal of ["زحل", "المريخ"]) {
+      const hm = hRev(rev.planets[mal].longitude);
+      if ([1, 4, 7, 10, 6, 8, 12, 2].includes(hm)) add(mal === "زحل" ? -1 : -0.5, HOUSE_BAD_PLAIN[hm], `${mal} في البيت ${hm} من التحويل`, HOUSE_BAD_TOPIC[hm] || ["all"]);
+    }
+    out.push({ y, when, asc: SIGNS[rA], natalHouse: natalHouseOfRevAsc, lord, voices: V });
+  }
+  return out;
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -104,6 +147,9 @@ function monthVoices(ctx, y, m) {
     const sP = NATURE[P.yearLord] ?? 0;
     push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"]);
   }
+  // ١ب) تحويلُ السنة التي يقعُ فيها هذا الشهر
+  const rv = [...ctx.revs].reverse().find((r) => r.when <= date);
+  if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics);
   // ٢) مرورُ الكواكب على الخريطة
   const pos = falak.planetPositions(date);
   const J = pos["المشتري"].longitude, S = pos["زحل"].longitude, M = pos["المريخ"].longitude;
@@ -179,6 +225,7 @@ export function timeline(c, opt = {}) {
     bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
+  ctx.revs = revolutions(c, sky, now.getUTCFullYear() - Math.ceil(past / 12) - 1, now.getUTCFullYear() + Math.ceil(future / 12) + 1);
   ctx.eclipses = eclipses(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - past - 3, 1)), new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + future, 1)));
   const months = [];
   for (let k = -past; k < future; k++) {
@@ -303,4 +350,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { timeline, read, ask, eclipses, MONTHS, TOPICS, FAMILIES };
+export default { timeline, read, ask, eclipses, revolutions, MONTHS, TOPICS, FAMILIES };

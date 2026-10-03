@@ -1326,6 +1326,10 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(ecl.some((e) => e.kind === "solar" && e.date.toISOString().startsWith("2026-08-12")) && ecl.some((e) => e.kind === "lunar" && e.date.toISOString().startsWith("2026-03-03")), "الكسوفات: كسوفُ ١٢ أغسطس ٢٠٢٦ وخسوفُ ٣ مارس ٢٠٢٦");
   ok(a.insights[0] && a.insights[0].text.includes("حارّ"), "استنتاجُ «الطبعُ والفترة» يعملُ من مزاجِ الخريطة الفعليّ");
   ok(a.months.some((m) => m.voices.some((v) => /كسوفٌ للشمس مقابلَ قمرِك/.test(v.why))), "كسوفٌ على موضعٍ في الخريطة يدخلُ شهرَه");
+  const falakM = (await import("../engines/falak.js")).default;
+  const revs = arif.revolutions(C, falakM.snapshot(C.birth, C.lat, C.lon), 2026, 2028);
+  ok(revs.length === 3 && revs[0].when.toISOString().startsWith("2026-11-08") && revs[2].asc === "الميزان" && revs[2].voices.some((v) => /طالعُ الميلاد نفسُه/.test(v.why)), "تحويلُ سنة المولد: عودةُ الشمس ٨ نوفمبر، وتحويلُ ٢٠٢٨ طالعُه طالعُ الميلاد (Lilly: سنةُ عافية)");
+  ok(a.months.some((m) => m.voices.some((v) => /^تحويلُ سنة/.test(v.why))), "أصواتُ التحويل تدخلُ أشهرَ سنتِها");
 }
 
 // ── قراءتك الكاملة ──
