@@ -2317,7 +2317,18 @@ PANELS.full = (main) => {
     ${card({ title: "الفترةُ التي أنت فيها", k: `${esc(A.firdaria.majorLord)} / ${esc(A.firdaria.minorLord)}`,
       body: `<div class="kv">أنت في فترةِ <b>${esc(A.firdaria.majorLord)}</b> الكبرى (${esc(A.firdaria.majorGoverns || "")})، والفرعيّةُ الآن لـ<b>${esc(A.firdaria.minorLord)}</b> (${esc(A.firdaria.minorGoverns || "")}).</div>`,
       basis: "الفردارات: تقسيمُ العمر إلى فتراتٍ يحكمُ كلًّا منها كوكب." })}
-    </div>`);
+    </div>
+    ${r.life ? `<h2>٤. شغلُك ورزقُك وزواجُك</h2><div class="grid wide">
+    ${card({ title: "ما يناسبُك من عمل", k: `صاحبُ العمل: ${esc(r.life.work.lords.join(" و"))}`,
+      body: `<div class="kv">${esc(r.life.work.text)}.</div>${r.life.work.signNote ? `<div class="kv" style="margin-top:.35rem">${esc(r.life.work.signNote)} (${esc(r.life.work.lords[0])} في ${esc(r.life.work.sign)}).</div>` : ""}${r.life.work.amplitude ? `<div class="gloss" style="margin-top:.3rem">${esc(r.life.work.amplitude)}.</div>` : ""}`,
+      basis: `${esc(r.life.src)}، ف٤: صاحبُ العمل ${esc(r.life.work.why)}.` })}
+    ${r.life.wealth ? card({ title: "رزقُك", k: `سهمُ السعادة في ${esc(r.life.wealth.lotSign)}`,
+      body: `<div class="kv">صاحبُ سهم السعادة <b>${esc(r.life.wealth.lord)}</b>: ${esc(r.life.wealth.text)}${r.life.wealth.strong ? "." : "، لكنّه زائلٌ عن الأوتاد وما يليها فيقلُّ ذلك أو يتأخّر."}</div>${r.life.wealth.inherit ? `<div class="kv">${esc(r.life.wealth.inherit)}.</div>` : ""}`,
+      basis: `${esc(r.life.src)}، ف٢.` }) : ""}
+    ${card({ title: c.sex === "f" ? "زواجُكِ" : "زواجُك", k: r.life.marriage.quality || (c.sex === "f" ? "من الشمس" : "من القمر"),
+      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${[...r.life.marriage.items, ...r.life.marriage.spouse].map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`,
+      basis: `${esc(r.life.src)}، ف٥: ${c.sex === "f" ? "للمرأة تُنظَرُ الشمس" : "للرجل يُنظَرُ القمر"}: ربعُها (مشرقيّ/مغربيّ)، ونوعُ برجها، والكوكبُ الذي تتّصلُ به.` })}
+    </div>` : ""}`);
 };
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────

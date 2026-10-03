@@ -4836,6 +4836,54 @@ const HURUF_MUQATTAA = {
 };
 
 ;__exports["SURAHS"]=SURAHS;__exports["AYAT"]=AYAT;__exports["HURUF_MUQATTAA"]=HURUF_MUQATTAA;return __exports;})();
+__M["life-ptolemy.data"]=(function(){"use strict";const __exports={};
+// data/life-ptolemy.data.js — بطليموس، «الأربع مقالات» م٤: ف٢ «في المال»، ف٤ «في صفة العمل»، ف٥ «في الزواج»
+// (Robbins، ملكيّةٌ عامّة؛ text/sources/mizaj/tetrabiblos/4A.txt و4B.txt). الترجمةُ مختصرةٌ أمينة.
+
+const LIFE_SRC = "بطليموس، الأربع مقالات م٤ (ترجمة Robbins)";
+
+// ف٢: أصحابُ سهم السعادة إذا قووا أغنوا صاحبَ المولد، كلٌّ من بابه
+const WEALTH_BY = {
+  زحل: "يأتي المالُ من البناء أو الزراعة أو التجارة في البحر",
+  المشتري: "يأتي المالُ من الأمانات والوصايات والمناصب الدينيّة",
+  المريخ: "يأتي المالُ من العمل العسكريّ والقيادة",
+  الزهرة: "يأتي المالُ من هدايا الأصدقاء أو من النساء",
+  عطارد: "يأتي المالُ من الفصاحة والتجارة",
+  الشمس: "النيّرُ صاحبُ السهم: يأتي المالُ من الجاه والمنزلة وأصحاب السلطان",
+  القمر: "النيّرُ صاحبُ السهم: يأتي المالُ من العامّة وتقلّب الأحوال والأسفار",
+};
+
+// ف٤: صفةُ العمل — من عطارد والزهرة والمريخ (منفردين أو مجتمعين)، وشهادةُ زحل أو المشتري
+const ACTION = {
+  عطارد: { base: "كاتب، رجلُ أعمال، محاسب، معلّم، تاجر، صرّاف، وعمومًا من يعملون بالوثائق والتفسير والأخذ والعطاء", saturn: "مدبّرٌ لأملاك غيره، أو مفسّرٌ للأحلام", jupiter: "مشرّعٌ أو خطيبٌ أو مجادل، يخالطُ العظماء" },
+  الزهرة: { base: "من يعملون في العطور والأزهار والأصباغ والتوابل والزينة: عطّار، بائعُ ملابس، صبّاغ، رسّام، نسّاج", saturn: "تاجرٌ في سلع اللهو والزينة", jupiter: "صاحبُ تكريمٍ وجوائز، ويترقّى من جهة النساء" },
+  المريخ: { base: "من يعملون بالحديد: بنّاءُ سفن، نجّار، مزارع، نحّات حجارة، صائغ", sun: "من يستعملون النارَ في صنعتهم: طبّاخ، سبّاك، حدّاد، عاملُ مناجم", saturn: "بحّارٌ أو حفّارٌ أو رسّامٌ أو طبّاخ", jupiter: "جنديٌّ أو خادمٌ أو صاحبُ نُزُل" },
+  "عطارد+الزهرة": { base: "فنونُ الإلهام: الموسيقى والآلات والألحان والشعر والإيقاع؛ ممثّل، صانعُ آلات، رسّام، راقص، نسّاج", jupiter: "محامٍ، مشرفٌ على الحسابات، موظّفٌ عامّ، معلّمُ أطفال، قائدٌ للناس" },
+  "عطارد+المريخ": { base: "نحّات، صانعُ أسلحة، طبيب، جرّاح", jupiter: "رجلُ سلاح، نشيطٌ ذكيٌّ يتدخّلُ في شؤون غيره ويكسبُ منها" },
+  "الزهرة+المريخ": { base: "صبّاغ، عطّار، عاملٌ في القصدير والرصاص والذهب والفضّة، مزارع، صيدلانيّ، طبيبٌ يداوي بالعقاقير", jupiter: "خادمُ معابد، مفسّرُ فأل، مشرفٌ على الزيجات" },
+};
+const ACTION_SIGNS = {
+  human: "البروجُ الإنسيّةُ تعينُ على العلوم وما ينفعُ الناس",
+  quadruped: "البروجُ ذواتُ الأربع تعينُ على المناجم والتجارة والبناء والنجارة",
+  tropical: "البروجُ المنقلبةُ والاعتداليّةُ تعينُ على التفسير والمقايضة والقياس والزراعة والدين",
+  watery: "البروجُ الترابيّةُ والمائيّةُ تعينُ على ما يكونُ في السوائل والنبات وبناء السفن",
+};
+const ACTION_AMPLITUDE = { strong: "إذا كانوا طالعين أو في الأوتاد كانت أعمالُهم مستقلّة", weak: "وإذا كانوا غاربين أو زائلين كانت أعمالُهم تابعةً لغيرهم" };
+
+// ف٥: الزواج — للرجل القمر، وللمرأة الشمس
+const MARRIAGE = {
+  east_m: "يتزوّجُ صغيرًا، أو يتزوّجُ امرأةً أصغرَ منه",
+  west_m: "يتزوّجُ متأخّرًا، أو يتزوّجُ امرأةً أكبرَ منه",
+  east_f: "تتزوّجُ صغيرةً، أو تتزوّجُ رجلًا أصغرَ منها",
+  west_f: "تتزوّجُ متأخّرةً، أو تتزوّجُ رجلًا أكبرَ منها",
+  single: "زواجٌ واحد",
+  multi: "يتزوّجُ أكثرَ من مرّة",
+  none: "القمرُ تحت شعاع الشمس وزحلُ ينظرُه: لا يتزوّجُ أصلًا",
+  wife: { زحل: "زوجةٌ مجتهدةٌ في العمل صارمة", المشتري: "زوجةٌ وقورٌ حسنةُ التدبير", المريخ: "زوجةٌ جريئةٌ عصيّة", الزهرة: "زوجةٌ بشوشةٌ جميلةٌ لطيفة", عطارد: "زوجةٌ ذكيّةٌ حادّةُ الذهن" },
+  husband: { زحل: "زوجٌ رزينٌ نافعٌ مجتهد", المشتري: "زوجٌ وقورٌ كريمُ النفس", المريخ: "زوجٌ رجلُ عمل، قليلُ العاطفة، عصيّ", الزهرة: "زوجٌ أنيقٌ حسنُ المظهر", عطارد: "زوجٌ مقتصدٌ عمليّ" },
+};
+
+;__exports["LIFE_SRC"]=LIFE_SRC;__exports["WEALTH_BY"]=WEALTH_BY;__exports["ACTION"]=ACTION;__exports["ACTION_SIGNS"]=ACTION_SIGNS;__exports["ACTION_AMPLITUDE"]=ACTION_AMPLITUDE;__exports["MARRIAGE"]=MARRIAGE;return __exports;})();
 __M["mansion-angels.data"]=(function(){"use strict";const __exports={};
 // data/mansion-angels.data.js
 // ملائكة/أعوان منازل القمر الـ٢٨.
@@ -21899,6 +21947,89 @@ __exports.default = {
 };
 
 ;__exports["names"]=names;__exports["nameByIndex"]=nameByIndex;__exports["namesByValue"]=namesByValue;__exports["matchName"]=matchName;__exports["nameForPerson"]=nameForPerson;__exports["futuhRabbani"]=futuhRabbani;__exports["surahs"]=surahs;__exports["ayat"]=ayat;__exports["hurufMuqattaa"]=hurufMuqattaa;__exports["adiya"]=adiya;__exports["materia"]=materia;__exports["toxicList"]=toxicList;__exports["search"]=search;return __exports;})();
+__M["life"]=(function(){"use strict";const __exports={};
+// engines/life.js — شغلُك ورزقُك وزواجُك من الخريطة، على قواعد بطليموس م٤ (ف٢، ف٤، ف٥). حتميّ.
+
+const LP=__M["life-ptolemy.data"];
+
+const BENEFIC = ["المشتري", "الزهرة"];
+const QUAD = ["الحمل", "الثور", "الأسد", "القوس", "الجدي"]; // ذواتُ الأربع (تقريبًا كما عند بطليموس)
+const HUMAN = ["الجوزاء", "السنبلة", "الميزان", "الدلو"];
+const TROP = ["الحمل", "السرطان", "الميزان", "الجدي"];
+const WET = ["السرطان", "العقرب", "الحوت", "الثور", "السنبلة"];
+
+const aspected = (sky, a, b) => (sky.aspects || []).some((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a));
+const houseOf = (sky, p) => (sky.houses || []).find((h) => h.planets.includes(p))?.n;
+
+function work(sky) {
+  const THREE = ["عطارد", "الزهرة", "المريخ"];
+  // صاحبُ العمل: ما في وسط السماء (العاشر) أوّلًا، ثمّ أقربُ المشرِّقين إلى الشمس
+  let lords = THREE.filter((p) => houseOf(sky, p) === 10);
+  let why = "في وسط السماء";
+  if (!lords.length) {
+    const sun = sky.planets["الشمس"].longitude;
+    const orient = THREE.filter((p) => /مشرِّق/.test(sky.orientalOccidental?.[p]?.side || ""))
+      .map((p) => ({ p, d: ((sun - sky.planets[p].longitude) + 360) % 360 })).filter((x) => x.d >= 15 && x.d <= 180).sort((a, b) => a.d - b.d); // تحت الشعاع (<١٥°) لم «يظهر»
+    if (orient.length) { lords = [orient[0].p]; why = "أقربُ الكواكب ظهورًا صباحيًّا قبل الشمس"; }
+  }
+  if (!lords.length) {
+    const mc = sky.houses?.[9]?.ruler;
+    lords = [THREE.includes(mc) ? mc : "عطارد"];
+    why = THREE.includes(mc) ? "صاحبُ وسط السماء" : "لا ظاهرَ ولا عاشرَ: بطليموس يقول إنّ أصحابَ هذه المواليد أكثرُهم قليلُ العمل، ويُنظَرُ في عطارد";
+  }
+  const key = lords.length > 1 ? [...lords].sort().join("+") : lords[0];
+  const A = LP.ACTION[key] || LP.ACTION[lords[0]];
+  const parts = [A.base];
+  const lead = lords[0];
+  if (lead === "المريخ" && aspected(sky, "المريخ", "الشمس") && A.sun) parts.splice(0, 1, A.sun);
+  const sat = lords.some((p) => aspected(sky, p, "زحل")), jup = lords.some((p) => aspected(sky, p, "المشتري"));
+  if (sat && A.saturn) parts.push(`وبشهادة زحل: ${A.saturn}`);
+  if (jup && A.jupiter) parts.push(`وبشهادة المشتري: ${A.jupiter}`);
+  const sg = sky.planets[lead].sign;
+  const signNote = HUMAN.includes(sg) ? LP.ACTION_SIGNS.human : TROP.includes(sg) ? LP.ACTION_SIGNS.tropical : WET.includes(sg) ? LP.ACTION_SIGNS.watery : QUAD.includes(sg) ? LP.ACTION_SIGNS.quadruped : null;
+  const h = houseOf(sky, lead);
+  const amp = [1, 4, 7, 10].includes(h) ? LP.ACTION_AMPLITUDE.strong : [3, 6, 9, 12].includes(h) ? LP.ACTION_AMPLITUDE.weak : null;
+  return { lords, why, text: parts.join("؛ "), signNote, amplitude: amp, sign: sg };
+}
+
+function wealth(sky) {
+  const lot = sky.lots?.lots?.["سهم السعادة"];
+  if (!lot) return null;
+  const SIGN_RULER = { الحمل: "المريخ", الثور: "الزهرة", الجوزاء: "عطارد", السرطان: "القمر", الأسد: "الشمس", السنبلة: "عطارد", الميزان: "الزهرة", العقرب: "المريخ", القوس: "المشتري", الجدي: "زحل", الدلو: "زحل", الحوت: "المشتري" };
+  const lord = SIGN_RULER[lot.sign];
+  const lh = houseOf(sky, lord);
+  const strong = [1, 4, 7, 10, 2, 5, 8, 11].includes(lh);
+  return { lotSign: lot.sign, lotHouse: lot.house, lord, lordHouse: lh, strong, text: LP.WEALTH_BY[lord],
+    inherit: lord === "زحل" && aspected(sky, "زحل", "المشتري") ? "زحلُ صاحبُ السهم ينظرُه المشتري: سببٌ للميراث" : null };
+}
+
+function marriage(sky, sex = "m") {
+  const M = LP.MARRIAGE, f = sex === "f";
+  const lum = f ? "الشمس" : "القمر";
+  const p = sky.planets[lum];
+  let east;
+  if (!f) { const el = sky.moon?.elongation ?? 0; east = (el < 90) || (el >= 180 && el < 270); }
+  else { const h = houseOf(sky, "الشمس"); east = [12, 11, 10, 6, 5, 4].includes(h); }
+  const out = [];
+  if (!f && sky.moon && sky.moon.elongation < 12 && aspected(sky, "القمر", "زحل")) out.push(M.none);
+  out.push(east ? (f ? M.east_f : M.east_m) : (f ? M.west_f : M.west_m));
+  const bi = p.signInfo?.quality === "ذو جسدين";
+  out.push(bi ? (f ? "تتزوّجُ أكثرَ من مرّة" : M.multi) : M.single);
+  const partners = ["زحل", "المشتري", "المريخ", "الزهرة", "عطارد"].filter((q) => aspected(sky, lum, q));
+  const next = !f ? sky.moon?.nextAspectWith : null;
+  const who = next && M.wife[next] ? [next] : partners;
+  const spouse = who.map((q) => (f ? M.husband : M.wife)[q]).filter(Boolean);
+  const good = who.some((q) => BENEFIC.includes(q)), bad = who.some((q) => ["زحل", "المريخ"].includes(q));
+  return { luminary: lum, east, multi: bi, items: out, spouse, partners: who, quality: good && !bad ? "زواجٌ حسن" : bad && !good ? "فيه مشقّة" : null };
+}
+
+function all(sky, sex = "m") {
+  return { work: work(sky), wealth: wealth(sky), marriage: marriage(sky, sex), src: LP.LIFE_SRC };
+}
+
+__exports.default = { work, wealth, marriage, all };
+
+;__exports["work"]=work;__exports["wealth"]=wealth;__exports["marriage"]=marriage;__exports["all"]=all;return __exports;})();
 __M["zairja"]=(function(){"use strict";const __exports={};
 // engines/zairja.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22768,6 +22899,7 @@ __M["qiraa"]=(function(){"use strict";const __exports={};
 const falak=__M["falak"].default;
 const ak=__M["asma-khuddam"].default;
 const hal=__M["hal"].default;
+const life=__M["life"].default;
 const { AGES, AGES_SRC }=__M["ages-ptolemy.data"];
 const { DAY_ANGELS, BUNI_ANGELS_SRC }=__M["angels-buni.data"];
 
@@ -22800,7 +22932,7 @@ function full(c) {
     profection: falak.annualProfection(c.birth, now, sky.ascendant.longitude),
     firdaria: falak.firdaria(c.birth, now, { byNight }),
   };
-  return { hal: h, identity, natal, age };
+  return { hal: h, identity, natal, age, life: life.all(sky, c.sex === "f" ? "f" : "m") };
 }
 
 const AGES_LIST = AGES;
@@ -27007,7 +27139,18 @@ PANELS.full = (main) => {
     ${card({ title: "الفترةُ التي أنت فيها", k: `${esc(A.firdaria.majorLord)} / ${esc(A.firdaria.minorLord)}`,
       body: `<div class="kv">أنت في فترةِ <b>${esc(A.firdaria.majorLord)}</b> الكبرى (${esc(A.firdaria.majorGoverns || "")})، والفرعيّةُ الآن لـ<b>${esc(A.firdaria.minorLord)}</b> (${esc(A.firdaria.minorGoverns || "")}).</div>`,
       basis: "الفردارات: تقسيمُ العمر إلى فتراتٍ يحكمُ كلًّا منها كوكب." })}
-    </div>`);
+    </div>
+    ${r.life ? `<h2>٤. شغلُك ورزقُك وزواجُك</h2><div class="grid wide">
+    ${card({ title: "ما يناسبُك من عمل", k: `صاحبُ العمل: ${esc(r.life.work.lords.join(" و"))}`,
+      body: `<div class="kv">${esc(r.life.work.text)}.</div>${r.life.work.signNote ? `<div class="kv" style="margin-top:.35rem">${esc(r.life.work.signNote)} (${esc(r.life.work.lords[0])} في ${esc(r.life.work.sign)}).</div>` : ""}${r.life.work.amplitude ? `<div class="gloss" style="margin-top:.3rem">${esc(r.life.work.amplitude)}.</div>` : ""}`,
+      basis: `${esc(r.life.src)}، ف٤: صاحبُ العمل ${esc(r.life.work.why)}.` })}
+    ${r.life.wealth ? card({ title: "رزقُك", k: `سهمُ السعادة في ${esc(r.life.wealth.lotSign)}`,
+      body: `<div class="kv">صاحبُ سهم السعادة <b>${esc(r.life.wealth.lord)}</b>: ${esc(r.life.wealth.text)}${r.life.wealth.strong ? "." : "، لكنّه زائلٌ عن الأوتاد وما يليها فيقلُّ ذلك أو يتأخّر."}</div>${r.life.wealth.inherit ? `<div class="kv">${esc(r.life.wealth.inherit)}.</div>` : ""}`,
+      basis: `${esc(r.life.src)}، ف٢.` }) : ""}
+    ${card({ title: c.sex === "f" ? "زواجُكِ" : "زواجُك", k: r.life.marriage.quality || (c.sex === "f" ? "من الشمس" : "من القمر"),
+      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${[...r.life.marriage.items, ...r.life.marriage.spouse].map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`,
+      basis: `${esc(r.life.src)}، ف٥: ${c.sex === "f" ? "للمرأة تُنظَرُ الشمس" : "للرجل يُنظَرُ القمر"}: ربعُها (مشرقيّ/مغربيّ)، ونوعُ برجها، والكوكبُ الذي تتّصلُ به.` })}
+    </div>` : ""}`);
 };
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────

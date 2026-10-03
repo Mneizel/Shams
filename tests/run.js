@@ -1276,6 +1276,16 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(m.rank === (m.total % 9 || 9) && m.text && f.text && m.text !== f.text && ["ناريّ", "هوائيّ", "مائيّ", "ترابيّ"].includes(m.tab), "دليل الحيران: مرتبةٌ من ٩ بحسب الجنس، وطبعٌ من ٤");
 }
 
+// ── بطليموس م٤: العمل والمال والزواج ──
+{
+  const [falakM, lifeM] = await Promise.all([import("../engines/falak.js"), import("../engines/life.js")]);
+  const s = falakM.default.snapshot(new Date(Date.UTC(1991, 10, 9, 2, 35)), 31.9539, 35.9106);
+  const w = lifeM.default.work(s);
+  ok(w.lords[0] === "الزهرة" && !w.lords.includes("المريخ"), "صاحبُ العمل: الزهرةُ المشرِّقة الظاهرة (المريخُ تحت الشعاع لا يُعَدّ)");
+  const wl = lifeM.default.wealth(s), m = lifeM.default.marriage(s), f = lifeM.default.marriage(s, "f");
+  ok(wl.lotSign === "السنبلة" && wl.lord === "عطارد" && m.luminary === "القمر" && f.luminary === "الشمس" && m.items.length >= 2, "المالُ من صاحب سهم السعادة، والزواجُ من القمر للرجل والشمس للمرأة");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

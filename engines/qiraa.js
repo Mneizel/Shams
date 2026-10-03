@@ -5,6 +5,7 @@
 import falak from "./falak.js";
 import ak from "./asma-khuddam.js";
 import hal from "./hal.js";
+import life from "./life.js";
 import { AGES, AGES_SRC } from "../data/ages-ptolemy.data.js";
 import { DAY_ANGELS, BUNI_ANGELS_SRC } from "../data/angels-buni.data.js";
 
@@ -37,7 +38,7 @@ export function full(c) {
     profection: falak.annualProfection(c.birth, now, sky.ascendant.longitude),
     firdaria: falak.firdaria(c.birth, now, { byNight }),
   };
-  return { hal: h, identity, natal, age };
+  return { hal: h, identity, natal, age, life: life.all(sky, c.sex === "f" ? "f" : "m") };
 }
 
 export const AGES_LIST = AGES;
