@@ -2290,6 +2290,7 @@ PANELS.full = (main) => {
     <div class="grid wide">
     ${card({ title: "من تاريخِ ميلادك", body: `<div class="kv">برجُ ميلادِك (موضعُ الشمس) <b>${esc(N.sunSign)}</b>، وطالعُك <b>${esc(N.ascendant)}</b>، وقمرُك في <b>${esc(N.moonSign)}</b>، ووُلدتَ في يومٍ ربُّه <b>${esc(N.dayRuler)}</b>.</div>` })}
     ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "للمعرفة", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وطبعُه <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
+      ${I.angelDesc ? `<div class="kv" style="margin-top:.4rem">ويصفُ البونيّ ${esc(I.angelDesc.angel)} (ملَكَ يوم ${esc(I.angelDesc.day)}) بأنّه ${esc(I.angelDesc.desc)}، ويخدمُه من الملوك السفليّة ${esc(I.angelDesc.servant)}. <span class="gloss">— ${esc(I.angelDesc.src)}</span></div>` : ""}
       <div class="gloss" style="margin-top:.4rem">هذه أسماءٌ تُستخرَجُ بالحساب من الاسم كما في الكتب، تُذكَرُ هنا للمعرفة. ما يتعلّقُ بالعمل بها في أدواتِه: ${navLink("asma", "الأسماء والخدّام")}.</div>` }) : ""}
     ${kafCard}
     </div>

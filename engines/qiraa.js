@@ -6,6 +6,7 @@ import falak from "./falak.js";
 import ak from "./asma-khuddam.js";
 import hal from "./hal.js";
 import { AGES, AGES_SRC } from "../data/ages-ptolemy.data.js";
+import { DAY_ANGELS, BUNI_ANGELS_SRC } from "../data/angels-buni.data.js";
 
 /** مرحلةُ العمر عند بطليموس */
 export function ageStage(years) {
@@ -25,6 +26,7 @@ export function full(c) {
   const identity = id ? {
     planet: id.planet.name, element: id.element, nameSign: id.sign.name, mansion: id.mansion.name,
     angel: id.servant.angelOfPlanet, servant: id.servant.derivedServantName,
+    angelDesc: DAY_ANGELS[id.planet.name] ? { ...DAY_ANGELS[id.planet.name], src: BUNI_ANGELS_SRC } : null,
   } : null;
   const natal = { sunSign: sky.planets["الشمس"].sign, ascendant: sky.ascendant.sign, moonSign: sky.planets["القمر"].sign, dayRuler: sky.day.planet };
   const years = (now - new Date(c.birth)) / (365.2422 * 86400000);
