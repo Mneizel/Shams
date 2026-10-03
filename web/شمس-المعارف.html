@@ -25039,6 +25039,30 @@ function loadCtx() {
   } catch {}
 }
 
+
+// أسماءُ البروج كما يعرفُها الناس: الكتبُ القديمةُ تسمّي العذراءَ «السنبلة». يُبدَّلُ الاسمُ في العرض فقط
+// (البياناتُ مفهرسةٌ بالاسم القديم)، ويبقى في نصوصِ الكشف (.reveal/.basis) لأنّها نقلٌ عن الكتب.
+const POPULAR_NAMES = [[/السنبلة/g, "العذراء"]];
+function popularNames(root) {
+  if (!root || typeof document === "undefined" || !document.createTreeWalker) return;
+  const w = document.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */);
+  const todo = [];
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (!/السنبلة/.test(n.nodeValue)) continue;
+    const p = n.parentElement;
+    if (p && p.closest && p.closest(".reveal, .basis, textarea, script")) continue;
+    todo.push(n);
+  }
+  for (const n of todo) { let v = n.nodeValue; for (const [re, to] of POPULAR_NAMES) v = v.replace(re, to); n.nodeValue = v; }
+}
+let _popObs = null;
+function watchPopularNames(root) {
+  popularNames(root);
+  if (_popObs || typeof MutationObserver === "undefined" || !root) return;
+  _popObs = new MutationObserver((ms) => { for (const m of ms) for (const nd of m.addedNodes) if (nd.nodeType === 1) popularNames(nd); else if (nd.nodeType === 3 && nd.parentElement) popularNames(nd.parentElement); });
+  _popObs.observe(root, { childList: true, subtree: true });
+}
+
 // بطاقة عامّة
 function card({ title, k = "", body, basis, reveal, vs, cls = "" }) {
   return `<div class="card ${cls}">
@@ -25348,6 +25372,7 @@ function renderDeco() {
     h = generic();
   }
   box.innerHTML = h;
+  try { popularNames(box); } catch {}
 }
 
 // ── الدرج والبحث (وضع التطبيق) ──
@@ -25386,6 +25411,7 @@ function route(id) {
     main.innerHTML = `<div class="warn">تعذّر عرضُ هذا القسم بسبب خطأٍ غيرِ متوقَّع: ${esc(e.message || String(e))}<br>جرّبِ التبديلَ لقسمٍ آخرَ ثمّ العودةَ، أو أعِدْ تحميلَ الصفحة.</div>`;
   }
   try { wireCards(main); } catch {}
+  try { watchPopularNames(main); } catch {}
   try { sessionStorage.setItem("smk-panel", id); } catch {}
   done();
 }
