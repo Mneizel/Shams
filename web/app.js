@@ -1368,6 +1368,7 @@ PANELS.raml = (main) => {
           <div class="kv" style="margin-top:.4rem"><b>بصراحة:</b> صيغةُ حكم الرمل ثابتةٌ («يتمّ الأمر / لا يتمّ») لأنّها مبنيّةٌ لأسئلة «هل يحدُث كذا؟» — إن كان سؤالُك تشخيصيًّا («هل سببُه كذا؟») فاقرأ «يتمّ» على أنّه «الاحتمالُ قائمٌ ويُرجَّح» و«لا يتمّ» على أنّه «الاحتمالُ ضعيف»، لا حرفيًّا.</div>
           <div class="kv" style="margin-top:.5rem">شكلُ بيت المسألة: <b>${esc(r.house.figure.ar)}</b><br>
           ${esc(r.houseFigureMeaning)}<br>
+          ${r.houseFigureIskandari ? `<span class="gloss">وعند الإسكندريّ («${esc(r.houseFigureIskandari.name)}»): ${esc(r.houseFigureIskandari.nature)}، دليلُه ${esc(r.houseFigureIskandari.sign)}.</span><br>` : ""}
           ${r.houseFigureNafhat ? `<span class="gloss">وفي «نفحات الأسرار» («${esc(r.houseFigureNafhat.name)}» في هذا البيت): ${esc(r.houseFigureNafhat.text)}</span><br>` : ""}
           القاضي: <b>${esc(r.judge.ar)}</b> — ${esc(r.judgeMeaning)}<br>
           الشاهدان: ${esc(ch.witnesses.right.ar)} / ${esc(ch.witnesses.left.ar)} — ${esc(r.witnessNote)}<br>

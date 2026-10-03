@@ -1201,7 +1201,8 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(Object.keys(NAFHAT_HOUSES).length === 16 && Object.values(NAFHAT_HOUSES).reduce((n, h) => n + Object.keys(h).length, 0) === 255, "نفحات الأسرار: ١٦ شكلًا × ١٦ بيتًا (عدا بيتٍ واحدٍ لم يُنقل)");
   ok(raml.figureInHouseNafhat("habs", 12).text.includes("السجن") && raml.figureInHouseNafhat("humra", 9) === null, "العقلة = الحبس: في الثاني عشر «السجن والقيد»؛ والبيتُ الناقصُ null");
   const r = raml.reading({ name: "محمد", mother: "سميرة", question: "هل أسافر؟", when: new Date(Date.UTC(2026, 0, 1)) });
-  ok("houseFigureNafhat" in r, "قراءةُ الرمل تحملُ شاهدَ نفحات الأسرار");
+  ok(raml.figureIskandari("habs").name === "العقلة" && raml.figureByRows([1,2,2,1]).id === "habs" && raml.figureByRows([1,2,2,1]).mashriqi.startsWith("عقلة"), "العقلة (ستّ نقاط) = الحبس عند الإسكندريّ ونفحات الأسرار");
+  ok("houseFigureNafhat" in r && r.houseFigureIskandari && r.houseFigureIskandari.sign, "قراءةُ الرمل تحملُ شاهدَ نفحات الأسرار");
 }
 
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──

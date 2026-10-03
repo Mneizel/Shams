@@ -4808,6 +4808,36 @@ const SOURCE_META = {
 };
 
 ;__exports["FACES"]=FACES;__exports["OPENING_PRAYER"]=OPENING_PRAYER;__exports["ANSWERS"]=ANSWERS;__exports["BOOK_INDEX"]=BOOK_INDEX;__exports["MISSING_BABS"]=MISSING_BABS;__exports["QURA_NOTE"]=QURA_NOTE;__exports["SOURCE_META"]=SOURCE_META;return __exports;})();
+__M["raml-iskandari.data"]=(function(){"use strict";const __exports={};
+// data/raml-iskandari.data.js — «الرمل» (المنسوب إلى الإسكندريّ؛ مخطوطٌ مصوَّر بجامعة الملك سعود، ١٤٠ صفحة،
+// text/sources/hekma2/alramol_alsekandri). مجموعٌ مغربيٌّ زناتيّ كبيرٌ من «النكت» لمسائلَ مخصوصة؛ أُخذ منه هنا فصلُ
+// «أوّل ما أنزل اللهُ على دانيال» (ص١٦–١٨): نعتُ كلِّ شكلٍ (محمود/غير محمود، مشترك/غير مشترك) ودليلُه.
+// فائدةٌ للمقابلة: يعدُّ الأشكالَ بنقاطها — ٨: الجماعة؛ ٧: الأحيان (اللحيان) والأنكيس والبياض والحمرة؛ ٦: القبضان والنصرتان
+// والعقلة والاجتماع؛ ٥: الجودلة والنقيّ والعتبتان؛ ٤: الطريق. فالعقلة ذاتُ ستّ نقاطٍ = الحبس (Carcer) لا الاجتماع،
+// والجودلة = الغلام (Puer)، والنقيّ = الجارية — موافقًا لـ«نفحات الأسرار». ص١٧–١٨ مقروءةٌ بوضوح.
+
+const ISKANDARI_SRC = "الرمل (مخطوط الإسكندريّ)، فصل «أوّل ما أنزل الله على دانيال» ص١٧–١٨";
+
+const FIGURE_NATURE = {
+  jamaa:         { name: "الجماعة", nature: "قويٌّ مشتركٌ مائلٌ إلى كلِّ طرف", sign: "الجموع" },
+  farah:         { name: "الأحيان (اللحيان)", nature: "قويٌّ غيرُ مشترك", sign: "القضاء وأرباب الطيلسان، ورجلٌ خالطه شيب" },
+  ankis:         { name: "الأنكيس", nature: "غيرُ مشترك", sign: "الضالّة ووصول الرحل والرسائل، ورجلٌ قصيرٌ متغيّرُ اللون يميل إلى السواد" },
+  humra:         { name: "الحمرة", nature: "غيرُ محمودٍ غيرُ مشتركٍ خارج", sign: "التغيّرات" },
+  bayad:         { name: "البياض", nature: "محمودٌ غيرُ مشترك", sign: "الخلفاء والأنصار والكساوي، والفرجُ بعد الشدّة" },
+  nusra_kharija: { name: "النصرة الخارجة", nature: "محمود", sign: "الخلفاء والسلاطين وأرباب السيوف" },
+  nusra_dakhila: { name: "النصرة الداخلة", nature: "محمودٌ غيرُ مشترك", sign: "النساء وأرباب القرآن" },
+  qabid_kharij:  { name: "القبض الخارج", nature: "غيرُ محمودٍ مشترك", sign: "خروجُ جميع الأشياء" },
+  qabid_dakhil:  { name: "القبض الداخل", nature: "مشتركٌ مائلٌ مع كلِّ طبع", sign: "الدخولُ في جميع الأشياء" },
+  ijtimaa:       { name: "الاجتماع", nature: "مشترك", sign: "الاجتماعُ بكلِّ شيء، وورودُ الرسل والرسائل وكلِّ خبرٍ يرد" },
+  habs:          { name: "العقلة", nature: "خيرٌ مشترك", sign: "الأمّة والدين والمساجد والصوم، ولكلِّ ما يُضمره السائل" },
+  ghulam:        { name: "الجودلة", nature: "محمودٌ مشترك", sign: "الأمور والأخبار والضمانات، وكلُّ ما يرجوه السائل" },
+  jariya:        { name: "النقيّ (نقيّ الخدّ)", nature: "مليح", sign: "النساءُ الملاح، والصبيُّ الذي لا نباتَ بعارضه، والمولودُ والمماليك" },
+  dhanab:        { name: "العتبة الخارجة", nature: "غيرُ محمود", sign: "الخارجُ من اليد، والنقلةُ من عتبةٍ إلى عتبة" },
+  raas:          { name: "العتبة الداخلة", nature: "مشترك", sign: "الفرجُ والسرور والعروس واللعب والانشراح، لأنّها بيتُ الدخول والسكن" },
+  tariq:         { name: "الطريق", nature: "—", sign: "إقبالُ الغائب، والسفر، ودخولُ المكاسب" },
+};
+
+;__exports["ISKANDARI_SRC"]=ISKANDARI_SRC;__exports["FIGURE_NATURE"]=FIGURE_NATURE;return __exports;})();
 __M["raml-muthallath.data"]=(function(){"use strict";const __exports={};
 // data/raml-muthallath.data.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5192,7 +5222,7 @@ const FIGURES = [
     meaning: "فَقْدٌ وذهابٌ وخروجٌ من اليد؛ لا يُرجى ردُّه.",
     goodFor: ["ردّ الضالّة لصاحبها","التخلّص من ثقيل","خروج المحبوس"],
     badFor: ["المكسب","الزواج","حفظ المال","بقاء النعمة"] },
-  { id: "farah", ar: "الفرح (اللحيان)", mashriqi: "راية الفرح / لحيان", lat: "Laetitia",
+  { id: "farah", ar: "الفرح (اللحيان)", mashriqi: "لحيان (الأحيان)", lat: "Laetitia",
     rows: [1,2,2,2], element: "هواء", planet: "المشتري", zodiac: "الحوت", nature: "سعد",
     meaning: "فرحٌ وصعودٌ وصحّةٌ وبشارةٌ؛ خيرُ الأشكال للصعود.",
     goodFor: ["البشارة","الشفاء","الرفعة","الزواج","كلّ خير"],
@@ -5227,7 +5257,7 @@ const FIGURES = [
     meaning: "كثرةٌ واجتماعُ ناسٍ؛ حكمُه من حكمِ ما جاوره.",
     goodFor: ["ما يخصّ الجموع والعامّة","المجالس"],
     badFor: ["الانفراد","السرّ","ما يحتاج خصوصيّة"] },
-  { id: "ijtimaa", ar: "الاجتماع (القرنة)", mashriqi: "عقلة", lat: "Conjunctio",
+  { id: "ijtimaa", ar: "الاجتماع (القرنة)", mashriqi: "اجتماع", lat: "Conjunctio",
     rows: [2,1,1,2], element: "هواء", planet: "عطارد", zodiac: "العذراء", nature: "وسط",
     meaning: "اقترانٌ ولقاءٌ وجمعُ أمرين؛ نتيجتُه بحسبِ قرينِه.",
     goodFor: ["اللقاء","الشركة","عقد النكاح","جمع المتفرّق","استرداد الضائع"],
@@ -5247,17 +5277,17 @@ const FIGURES = [
     meaning: "خروجٌ ونهايةٌ وعتبةٌ إلى خارج؛ شرٌّ في أواخرِ الأمور، خيرٌ للفكاك.",
     goodFor: ["الفكاك من ضِيق","الطلاق","إنهاء أمرٍ","الخروج من ورطة"],
     badFor: ["أوائل الأمور","الابتداء","بقاء الشيء"] },
-  { id: "ghulam", ar: "الغلام (البِيَاض الأحمر)", mashriqi: "حمرة داخلة / غلام", lat: "Puer",
+  { id: "ghulam", ar: "الغلام (البِيَاض الأحمر)", mashriqi: "فرح / جودلة (غلام)", lat: "Puer",
     rows: [1,1,2,1], element: "نار", planet: "المريخ", zodiac: "الحمل", nature: "نحس",
     meaning: "اندفاعٌ وطيشٌ وخصامٌ وسلاح؛ جيّدٌ للحربِ والجرأةِ فقط.",
     goodFor: ["الجرأة","الخصام والغلبة فيه","السلاح","الرياضة والقوّة"],
     badFor: ["الصلح","اللطائف","الأمور التي تحتاج أناة"] },
-  { id: "jariya", ar: "الجارية (النقاء)", mashriqi: "نقي / جارية", lat: "Puella",
+  { id: "jariya", ar: "الجارية (النقاء)", mashriqi: "نقيّ الخدّ (جارية)", lat: "Puella",
     rows: [1,2,1,1], element: "ماء", planet: "الزهرة", zodiac: "الميزان", nature: "سعد",
     meaning: "صفاءٌ وطهارةٌ ومحبّةٌ وموافقة؛ حسنٌ لكلِّ أمرٍ لطيف.",
     goodFor: ["المحبّة","الصلح","الجمال والزينة","الولد الأنثى","اللطائف"],
     badFor: ["الحرب","الأمور الخشنة","ما يحتاج بطشًا"] },
-  { id: "habs", ar: "العتبة (الحبس)", mashriqi: "قيد / حبس", lat: "Carcer",
+  { id: "habs", ar: "العتبة (الحبس)", mashriqi: "عقلة (قيد / حبس)", lat: "Carcer",
     rows: [1,2,2,1], element: "تراب", planet: "زحل", zodiac: "الجدي", nature: "نحس",
     meaning: "حبسٌ وتضييقٌ وتأخيرٌ وانغلاق؛ الأمرُ مسدود.",
     goodFor: ["تعطيل العدوّ وحبسه","كتم السرّ","تثبيت الهارب","المنع"],
@@ -22306,6 +22336,7 @@ __M["raml"]=(function(){"use strict";const __exports={};
 // ١٦ «ضربة» يدويًّا. لا رملَ ولا غيب — كلّه جمعُ أنماطٍ من بذرةٍ ثابتة.
 // ─────────────────────────────────────────────────────────────────────────────
 
+const { FIGURE_NATURE: ISK_NATURE, ISKANDARI_SRC }=__M["raml-iskandari.data"];
 const { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC }=__M["raml-nafhat.data"];
 const abjad=__M["abjad"].default;
 const {
@@ -22563,6 +22594,12 @@ function figureLore(figId) {
   return MUTHALLATH_LORE[id] || null;
 }
 
+/** نعتُ الشكلِ ودليلُه في مخطوط الإسكندريّ (المدرسة المغربيّة) */
+function figureIskandari(figId) {
+  const id = typeof figId === "string" ? figId : figId?.id;
+  return ISK_NATURE[id] ? { ...ISK_NATURE[id], src: ISKANDARI_SRC } : null;
+}
+
 /**
  * القراءةُ الثلاثيّةُ (المثلث): تقسيمُ الطالع ماضيًا وحاضرًا ومستقبلًا.
  *   الماضي   = الأمّهات + الشاهد الأيمن.
@@ -22700,7 +22737,7 @@ function reading(opt = {}, cfg = {}) {
     judgeOverride,
     figureMeaning: hf.meaning,
     judgeMeaning: judge.meaning,
-    houseFigureMeaning, houseFigureNafhat,
+    houseFigureMeaning, houseFigureNafhat, houseFigureIskandari: figureIskandari(hf),
     aspect,
     witnessNote,
     timing,
@@ -22739,12 +22776,12 @@ __exports.default = {
   FIGURES, HOUSES,
   add, figureByRows, figureById, figureProps,
   elementVictor, areFriends, arePlanetOpposed, houseElement,
-  figureInHouse, figureInHouseNafhat, timingFor, aspectToHouse, verdictFromScore, houses16,
+  figureInHouse, figureInHouseNafhat, figureIskandari, timingFor, aspectToHouse, verdictFromScore, houses16,
   figureLore, threePartReading,
   mothersFromSeed, mothersFromTaps, chart, reading,
 };
 
-;__exports["add"]=add;__exports["figureByRows"]=figureByRows;__exports["figureById"]=figureById;__exports["figureProps"]=figureProps;__exports["elementVictor"]=elementVictor;__exports["areFriends"]=areFriends;__exports["arePlanetOpposed"]=arePlanetOpposed;__exports["houseElement"]=houseElement;__exports["figureInHouse"]=figureInHouse;__exports["figureInHouseNafhat"]=figureInHouseNafhat;__exports["timingFor"]=timingFor;__exports["aspectToHouse"]=aspectToHouse;__exports["mothersFromSeed"]=mothersFromSeed;__exports["mothersFromTaps"]=mothersFromTaps;__exports["chart"]=chart;__exports["houses16"]=houses16;__exports["figureLore"]=figureLore;__exports["threePartReading"]=threePartReading;__exports["verdictFromScore"]=verdictFromScore;__exports["reading"]=reading;return __exports;})();
+;__exports["add"]=add;__exports["figureByRows"]=figureByRows;__exports["figureById"]=figureById;__exports["figureProps"]=figureProps;__exports["elementVictor"]=elementVictor;__exports["areFriends"]=areFriends;__exports["arePlanetOpposed"]=arePlanetOpposed;__exports["houseElement"]=houseElement;__exports["figureInHouse"]=figureInHouse;__exports["figureInHouseNafhat"]=figureInHouseNafhat;__exports["timingFor"]=timingFor;__exports["aspectToHouse"]=aspectToHouse;__exports["mothersFromSeed"]=mothersFromSeed;__exports["mothersFromTaps"]=mothersFromTaps;__exports["chart"]=chart;__exports["houses16"]=houses16;__exports["figureLore"]=figureLore;__exports["figureIskandari"]=figureIskandari;__exports["threePartReading"]=threePartReading;__exports["verdictFromScore"]=verdictFromScore;__exports["reading"]=reading;return __exports;})();
 __M["spirit-art"]=(function(){"use strict";const __exports={};
 // engines/spirit-art.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25436,6 +25473,7 @@ PANELS.raml = (main) => {
           <div class="kv" style="margin-top:.4rem"><b>بصراحة:</b> صيغةُ حكم الرمل ثابتةٌ («يتمّ الأمر / لا يتمّ») لأنّها مبنيّةٌ لأسئلة «هل يحدُث كذا؟» — إن كان سؤالُك تشخيصيًّا («هل سببُه كذا؟») فاقرأ «يتمّ» على أنّه «الاحتمالُ قائمٌ ويُرجَّح» و«لا يتمّ» على أنّه «الاحتمالُ ضعيف»، لا حرفيًّا.</div>
           <div class="kv" style="margin-top:.5rem">شكلُ بيت المسألة: <b>${esc(r.house.figure.ar)}</b><br>
           ${esc(r.houseFigureMeaning)}<br>
+          ${r.houseFigureIskandari ? `<span class="gloss">وعند الإسكندريّ («${esc(r.houseFigureIskandari.name)}»): ${esc(r.houseFigureIskandari.nature)}، دليلُه ${esc(r.houseFigureIskandari.sign)}.</span><br>` : ""}
           ${r.houseFigureNafhat ? `<span class="gloss">وفي «نفحات الأسرار» («${esc(r.houseFigureNafhat.name)}» في هذا البيت): ${esc(r.houseFigureNafhat.text)}</span><br>` : ""}
           القاضي: <b>${esc(r.judge.ar)}</b> — ${esc(r.judgeMeaning)}<br>
           الشاهدان: ${esc(ch.witnesses.right.ar)} / ${esc(ch.witnesses.left.ar)} — ${esc(r.witnessNote)}<br>

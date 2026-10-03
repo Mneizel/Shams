@@ -17,6 +17,7 @@
 // ١٦ «ضربة» يدويًّا. لا رملَ ولا غيب — كلّه جمعُ أنماطٍ من بذرةٍ ثابتة.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { FIGURE_NATURE as ISK_NATURE, ISKANDARI_SRC } from "../data/raml-iskandari.data.js";
 import { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC } from "../data/raml-nafhat.data.js";
 import abjad from "./abjad.js";
 import {
@@ -274,6 +275,12 @@ export function figureLore(figId) {
   return MUTHALLATH_LORE[id] || null;
 }
 
+/** نعتُ الشكلِ ودليلُه في مخطوط الإسكندريّ (المدرسة المغربيّة) */
+export function figureIskandari(figId) {
+  const id = typeof figId === "string" ? figId : figId?.id;
+  return ISK_NATURE[id] ? { ...ISK_NATURE[id], src: ISKANDARI_SRC } : null;
+}
+
 /**
  * القراءةُ الثلاثيّةُ (المثلث): تقسيمُ الطالع ماضيًا وحاضرًا ومستقبلًا.
  *   الماضي   = الأمّهات + الشاهد الأيمن.
@@ -411,7 +418,7 @@ export function reading(opt = {}, cfg = {}) {
     judgeOverride,
     figureMeaning: hf.meaning,
     judgeMeaning: judge.meaning,
-    houseFigureMeaning, houseFigureNafhat,
+    houseFigureMeaning, houseFigureNafhat, houseFigureIskandari: figureIskandari(hf),
     aspect,
     witnessNote,
     timing,
@@ -450,7 +457,7 @@ export default {
   FIGURES, HOUSES,
   add, figureByRows, figureById, figureProps,
   elementVictor, areFriends, arePlanetOpposed, houseElement,
-  figureInHouse, figureInHouseNafhat, timingFor, aspectToHouse, verdictFromScore, houses16,
+  figureInHouse, figureInHouseNafhat, figureIskandari, timingFor, aspectToHouse, verdictFromScore, houses16,
   figureLore, threePartReading,
   mothersFromSeed, mothersFromTaps, chart, reading,
 };
