@@ -1194,6 +1194,16 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(s1.rem === (s1.total % 7 || 7) && s1.day === SANUSI_DAYS[s1.rem - 1].day && JSON.stringify(s1) === JSON.stringify(s2), "السنوسيّ: (الاسم + الأمّ + اليوم) ÷ ٧ ⇒ يومٌ ثابت");
 }
 
+// ── نفحات الأسرار: الشكل في البيت ──
+{
+  const raml = (await import("../engines/raml.js")).default;
+  const { NAFHAT_HOUSES } = await import("../data/raml-nafhat.data.js");
+  ok(Object.keys(NAFHAT_HOUSES).length === 16 && Object.values(NAFHAT_HOUSES).reduce((n, h) => n + Object.keys(h).length, 0) === 255, "نفحات الأسرار: ١٦ شكلًا × ١٦ بيتًا (عدا بيتٍ واحدٍ لم يُنقل)");
+  ok(raml.figureInHouseNafhat("habs", 12).text.includes("السجن") && raml.figureInHouseNafhat("humra", 9) === null, "العقلة = الحبس: في الثاني عشر «السجن والقيد»؛ والبيتُ الناقصُ null");
+  const r = raml.reading({ name: "محمد", mother: "سميرة", question: "هل أسافر؟", when: new Date(Date.UTC(2026, 0, 1)) });
+  ok("houseFigureNafhat" in r, "قراءةُ الرمل تحملُ شاهدَ نفحات الأسرار");
+}
+
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
 {
   const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");

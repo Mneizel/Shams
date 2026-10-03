@@ -17,6 +17,7 @@
 // ١٦ «ضربة» يدويًّا. لا رملَ ولا غيب — كلّه جمعُ أنماطٍ من بذرةٍ ثابتة.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC } from "../data/raml-nafhat.data.js";
 import abjad from "./abjad.js";
 import {
   FIGURES, HOUSES, TOPIC_HOUSE,
@@ -114,6 +115,13 @@ export function figureInHouse(fig, houseNo, opt = {}) {
   const dur = p.stability === "ثابت" ? "ثابتُ الأثر" : p.stability === "منقلب" ? "سريعُ الزوال" : "متوسّطُ البقاء";
   return `${f.ar} في «${house.name}»: يقعُ الأمرُ ${temper}، وهو ${harmony}؛ ${speed}، ${dur}. ` +
     `أصلُ الشكل: ${f.meaning}`;
+}
+
+/** دلالةُ الشكلِ في البيت عند «نفحات الأسرار» (مصدرٌ ثانٍ مستقلّ، بنصِّه)؛ null إن لم يُنقل ذلك البيت. */
+export function figureInHouseNafhat(fig, houseNo) {
+  const f = typeof fig === "string" ? BY_ID.get(fig) : fig;
+  const t = NAFHAT_HOUSES[f?.id]?.[String(houseNo)];
+  return t ? { text: t, name: NAFHAT_NAMES[f.id], src: NAFHAT_SRC } : null;
 }
 
 /** تقديرُ زمنِ الوقوع من عنصرِ الشكلِ وعددِ نقاطه، ومن «مدّة» المثلث إن وُجدت. */
@@ -366,6 +374,7 @@ export function reading(opt = {}, cfg = {}) {
     verdict = "الأمرُ يتمُّ بعد سعيٍ وتأخير — القاضي سعدٌ يرجّحُ التمام.";
   }
   const houseFigureMeaning = figureInHouse(hf, houseNo);
+  const houseFigureNafhat = figureInHouseNafhat(hf, houseNo);
   const aspect = aspectToHouse(houseNo);
   const _t = timingFor(hf);
   const timing = {
@@ -402,7 +411,7 @@ export function reading(opt = {}, cfg = {}) {
     judgeOverride,
     figureMeaning: hf.meaning,
     judgeMeaning: judge.meaning,
-    houseFigureMeaning,
+    houseFigureMeaning, houseFigureNafhat,
     aspect,
     witnessNote,
     timing,
@@ -441,7 +450,7 @@ export default {
   FIGURES, HOUSES,
   add, figureByRows, figureById, figureProps,
   elementVictor, areFriends, arePlanetOpposed, houseElement,
-  figureInHouse, timingFor, aspectToHouse, verdictFromScore, houses16,
+  figureInHouse, figureInHouseNafhat, timingFor, aspectToHouse, verdictFromScore, houses16,
   figureLore, threePartReading,
   mothersFromSeed, mothersFromTaps, chart, reading,
 };
