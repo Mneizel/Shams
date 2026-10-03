@@ -1259,6 +1259,15 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(f.sex === "f" && Object.values(f.groups)[0].title.includes("كِ") && /ميلادِكِ/.test(f.summary), "النصُّ بصيغة المخاطَبة المؤنّثة");
 }
 
+// ── شكلُ البدن ──
+{
+  const halM = (await import("../engines/hal.js")).default;
+  const r = halM.reading({ name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), birthDay: 9, lat: 31.9539, lon: 35.9106 });
+  const B = r.bodyForm;
+  ok(B.sign === "الميزان" && B.ptolemy[0].who.startsWith("الزهرة صاحبُ الطالع") && B.ptolemy.some((x) => x.who.includes("ربع الخريف")), "شكلُ البدن (بطليموس): صاحبُ الطالع الزهرةُ مشرِّقة + ربعُ الخريف");
+  ok(B.lilly[0].text.startsWith("معتدلُ القامة") && B.lilly[1].who.includes("النصفُ الثاني"), "Lilly: القامةُ من الميزان، والبدنُ من نصفِه الثاني (الطالع ٢٧°)");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

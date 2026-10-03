@@ -24,6 +24,7 @@ import darj from "./darj.js";
 import * as CH from "../data/hal-cheiro.data.js";
 import * as TH from "../data/hal-thamara.data.js";
 import * as WM from "../data/hal-women.data.js";
+import bodyM from "./body.js";
 import * as AM from "../data/hal-abumashar.data.js";
 import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
@@ -348,7 +349,7 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
+    nameSign, degrees, bodyForm: bodyM.form(sky), birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,

@@ -1323,6 +1323,66 @@ const QUDRA_PROPERTIES = [
 ];
 
 ;__exports["TRIANGLE_SQUARES"]=TRIANGLE_SQUARES;__exports["TRIANGLE_ORIENT_NOTE"]=TRIANGLE_ORIENT_NOTE;__exports["GEOMETRIC_TRIANGLE"]=GEOMETRIC_TRIANGLE;__exports["GEOMETRIC_PRODUCT"]=GEOMETRIC_PRODUCT;__exports["TRIANGLE_HOLLOW"]=TRIANGLE_HOLLOW;__exports["classifyNumber"]=classifyNumber;__exports["acceptsJabr"]=acceptsJabr;__exports["QUDRA_FIGURES"]=QUDRA_FIGURES;__exports["QUDRA_FIGURES_NOTE"]=QUDRA_FIGURES_NOTE;__exports["SOURCE_META"]=SOURCE_META;__exports["QUDRA_PROPERTIES"]=QUDRA_PROPERTIES;return __exports;})();
+__M["body-form.data"]=(function(){"use strict";const __exports={};
+// data/body-form.data.js — شكلُ البدن من خريطة الميلاد، من كتابين:
+// (١) بطليموس، الأربع مقالات م٣ ف١١ «في هيئة البدن ومزاجه» (Robbins، ملكيّةٌ عامّة؛ text/sources/mizaj/tetrabiblos/3C.txt):
+//     الكوكبُ الحاكمُ على الأفق الشرقيّ (الذي في الطالع أو صاحبُه) مشرِّقًا أو مغرِّبًا، وربعُ الفلك الذي فيه الطالع، وصورةُ البرج.
+// (٢) Lilly، Christian Astrology م٣ ف١١٠–١١٢ (text/sources/mizaj/lilly_CA_vol3_djvu.txt): القامةُ بالبرج الطالع، والسِّمَنُ والنحافةُ
+//     بنصفِ البرج، والوجهُ بالبروج الإنسيّة.
+
+const PTOLEMY_FORM_SRC = "بطليموس، الأربع مقالات م٣ ف١١ (ترجمة Robbins)";
+const LILLY_FORM_SRC = "Lilly، Christian Astrology م٣ ف١١١–١١٢";
+
+// الكوكبُ مشرِّقًا (orient) أو مغرِّبًا (occident)
+const PLANET_FORM = {
+  زحل:     { orient: "أسمرُ اللون، قويُّ البنية، أسودُ الشعر جعدُه، كثيفُ شعرِ الصدر، معتدلُ العينين، متوسّطُ القامة؛ مزاجُه رطبٌ بارد.",
+             occident: "أسمر، نحيلٌ صغيرُ الجسم، سبطُ الشعر قليلُه على البدن، فيه رشاقة، أسودُ العينين؛ مزاجُه باردٌ يابس." },
+  المشتري: { orient: "أبيضُ البشرة حسنُ اللون، معتدلُ جعودةِ الشعر، واسعُ العينين، طويلٌ مهيب؛ مزاجُه حارٌّ رطب.",
+             occident: "أبيضُ لكن دون ذلك الحُسن، سبطُ الشعر وقد يصلعُ مقدَّمُ رأسه، متوسّطُ القامة؛ مزاجُه رطب." },
+  المريخ:  { orient: "أحمرُ وأبيضُ اللون، طويلٌ قويّ، أشهلُ العينين، كثيفُ الشعر مع جعودةٍ يسيرة؛ مزاجُه حارٌّ يابس.",
+             occident: "أحمرُ اللون، متوسّطُ القامة، صغيرُ العينين، قليلُ شعرِ البدن، أصفرُ الشعر سبطُه؛ مزاجُه يابس." },
+  الزهرة:  { orient: "كالمشتري (أبيضُ حسنُ اللون مهيب) لكن أحسنُ تناسبًا وألطفُ وأنعم، ممتلئُ الجسم، برّاقُ العينين جميلُهما.",
+             occident: "كالمشتري مغرِّبًا لكن ألطفُ وأنعم، برّاقُ العينين جميلُهما." },
+  عطارد:   { orient: "أصفرُ اللون، متوسّطُ القامة، رشيق، صغيرُ العينين، معتدلُ جعودةِ الشعر؛ مزاجُه حارّ.",
+             occident: "فاتحُ اللون غيرُ مشرقه، سبطُ الشعر زيتونيُّ البشرة، نحيلٌ ضامر، لامعُ العينين، مائلٌ إلى الحمرة؛ مزاجُه يابس." },
+};
+
+// ربعُ الفلك الذي فيه الطالع
+const QUADRANT_FORM = {
+  spring: { signs: ["الحمل", "الثور", "الجوزاء"], text: "حسنُ اللون والقامة والقوّة والعينين؛ مزاجُه رطبٌ حارّ." },
+  summer: { signs: ["السرطان", "الأسد", "السنبلة"], text: "معتدلُ حُسنِ اللون والقامة، قويّ، واسعُ العينين، كثيفُ الشعر جعدُه؛ مزاجُه حارٌّ يابس." },
+  autumn: { signs: ["الميزان", "العقرب", "القوس"], text: "مائلٌ إلى الصفرة، ضامرٌ نحيل، معتدلُ جعودةِ الشعر، حسنُ العينين؛ مزاجُه يابسٌ بارد." },
+  winter: { signs: ["الجدي", "الدلو", "الحوت"], text: "أسمرُ اللون، متوسّطُ القامة، سبطُ الشعر قليلُه على البدن، فيه رشاقة؛ مزاجُه باردٌ رطب." },
+};
+
+// صورةُ البرج: الكِبَرُ والصِّغَر والتناسب
+const SIGN_SHAPE = {
+  larger: ["الأسد", "السنبلة", "القوس"], smaller: ["الحوت", "السرطان", "الجدي"],
+  graceful: ["السنبلة", "الميزان", "القوس"], awkward: ["العقرب", "الحوت", "الثور"],
+};
+
+// Lilly: القامة
+const LILLY_STATURE = {
+  الحمل: "معتدلُ القامة مائلٌ إلى الطول", الثور: "معتدلُ القامة مائلٌ إلى الطول", الميزان: "معتدلُ القامة مائلٌ إلى الطول", العقرب: "معتدلُ القامة مائلٌ إلى الطول",
+  الأسد: "طويلُ القامة", السنبلة: "طويلُ القامة", القوس: "طويلُ القامة",
+  السرطان: "قصيرُ القامة", الجدي: "قصيرُ القامة", الحوت: "قصيرُ القامة",
+  الجوزاء: "متوسّطُ القامة", الدلو: "معتدلُ التناسب",
+};
+// Lilly: السِّمَنُ والنحافة بعد الثلاثين — [النصف الأوّل، النصف الثاني]
+const LILLY_BUILD = {
+  الحمل: ["ممتلئُ الجسم", "نحيل"], الثور: ["ممتلئُ الجسم", "نحيل"], الأسد: ["ممتلئُ الجسم", "نحيل"],
+  الجوزاء: ["نحيل", "ممتلئُ الجسم"], العقرب: ["نحيل", "ممتلئُ الجسم"],
+  السرطان: ["معتدلٌ مائلٌ إلى النحافة", "مائلٌ إلى الامتلاء"], الجدي: ["معتدلٌ مائلٌ إلى النحافة", "مائلٌ إلى الامتلاء"],
+  القوس: ["نحيل", "ممتلئُ الجسم"],
+  الدلو: ["معتدلُ الجسم", "مائلٌ إلى النحافة"], الحوت: ["معتدلُ الجسم", "معتدلُ الجسم"], الميزان: ["معتدلُ الجسم", "معتدلُ الجسم"], السنبلة: ["معتدلُ الجسم", "معتدلُ الجسم"],
+};
+// Lilly: الوجه
+const LILLY_FACE = {
+  fair: { signs: ["الجوزاء", "السنبلة"], half1: ["القوس", "الدلو"], text: "البروجُ الإنسيّةُ طالعةً تدلُّ على وجهٍ حسنٍ صافي اللون." },
+  plain: { signs: ["الثور", "السرطان", "العقرب", "الحوت"], half2: ["الحمل", "الأسد"], text: "تدلُّ على قلّةِ حُسنٍ في الوجه." },
+};
+
+;__exports["PTOLEMY_FORM_SRC"]=PTOLEMY_FORM_SRC;__exports["LILLY_FORM_SRC"]=LILLY_FORM_SRC;__exports["PLANET_FORM"]=PLANET_FORM;__exports["QUADRANT_FORM"]=QUADRANT_FORM;__exports["SIGN_SHAPE"]=SIGN_SHAPE;__exports["LILLY_STATURE"]=LILLY_STATURE;__exports["LILLY_BUILD"]=LILLY_BUILD;__exports["LILLY_FACE"]=LILLY_FACE;return __exports;})();
 __M["chapters.data"]=(function(){"use strict";const __exports={};
 // data/chapters.data.js
 // خريطة أبواب شمس المعارف الكبرى موضوعيًّا، وربط كل باب بالمحرّك الذي يطبّقه.
@@ -8908,6 +8968,59 @@ __exports.default = {
 };
 
 ;__exports["magicConstant"]=magicConstant;__exports["baseSquare"]=baseSquare;__exports["transform"]=transform;__exports["makeSquare"]=makeSquare;__exports["wafqForTarget"]=wafqForTarget;__exports["PLANET_ORDERS"]=PLANET_ORDERS;__exports["planetSquare"]=planetSquare;__exports["verify"]=verify;__exports["toText"]=toText;__exports["buduh"]=buduh;__exports["orderNature"]=orderNature;__exports["orderNatures"]=orderNatures;__exports["letterWafq"]=letterWafq;__exports["nameWafq"]=nameWafq;__exports["listPurposes"]=listPurposes;__exports["operation"]=operation;__exports["buildMethods"]=buildMethods;__exports["borderedSquare"]=borderedSquare;__exports["triangleSquare"]=triangleSquare;__exports["geometricTriangle"]=geometricTriangle;__exports["hollowTriangle"]=hollowTriangle;__exports["classifyNumber"]=classifyNumber;__exports["jabrOf"]=jabrOf;__exports["bookFigure"]=bookFigure;__exports["SOURCES"]=SOURCES;__exports["WAFQ_PROPERTIES"]=WAFQ_PROPERTIES;return __exports;})();
+__M["body"]=(function(){"use strict";const __exports={};
+// engines/body.js
+// شكلُ البدن من الخريطة: بطليموس (الكوكبُ الحاكم على الأفق مشرِّقًا/مغرِّبًا، وربعُ الطالع، وصورةُ البرج) وLilly (القامة،
+// السِّمَن/النحافة، الوجه). حيث يتّفقُ الكتابان في القامة يُقال ذلك، وحيث يختلفان يُذكَرُ كلٌّ بنسبته. حتميّ.
+
+const BF=__M["body-form.data"];
+
+const QUAD = (sign) => Object.entries(BF.QUADRANT_FORM).find(([, q]) => q.signs.includes(sign));
+
+/** @param sky falak.snapshot */
+function form(sky) {
+  const asc = sky.ascendant, sign = asc.sign, half = asc.degreeInSign < 15 ? 0 : 1;
+  const out = { ptolemy: [], lilly: [] };
+
+  // بطليموس: الكواكبُ في الطالع (البيت الأوّل)، وإلّا صاحبُ الطالع
+  const inAsc = (sky.houses?.[0]?.planets || []).filter((p) => BF.PLANET_FORM[p]);
+  const lord = asc.signInfo?.ruler;
+  const rulers = inAsc.length ? inAsc : (BF.PLANET_FORM[lord] ? [lord] : []);
+  for (const p of rulers) {
+    const oo = sky.orientalOccidental?.[p];
+    const side = oo && /مشرِّق/.test(oo.side) ? "orient" : "occident";
+    out.ptolemy.push({ who: `${p} ${inAsc.length ? "في الطالع" : "صاحبُ الطالع"} (${side === "orient" ? "مشرِّق" : "مغرِّب"})`, text: BF.PLANET_FORM[p][side] });
+  }
+  if (!rulers.length && lord) out.ptolemy.push({ who: `صاحبُ الطالع ${lord}`, text: "النيّرُ يعينُ الكوكبَ ولا يصفُ وحدَه: الشمسُ تُعطي هيبةً وقوّة، والقمرُ تناسبًا ونحافةً ورطوبة." });
+  const q = QUAD(sign);
+  if (q) out.ptolemy.push({ who: `الطالعُ في ربع ${({ spring: "الربيع", summer: "الصيف", autumn: "الخريف", winter: "الشتاء" })[q[0]]}`, text: q[1].text });
+  const sh = [];
+  if (BF.SIGN_SHAPE.larger.includes(sign)) sh.push("أكبرُ جسمًا");
+  if (BF.SIGN_SHAPE.smaller.includes(sign)) sh.push("أصغرُ جسمًا");
+  if (BF.SIGN_SHAPE.graceful.includes(sign)) sh.push("حسنُ التناسب رشيق");
+  if (BF.SIGN_SHAPE.awkward.includes(sign)) sh.push("أقلُّ تناسبًا");
+  if (sh.length) out.ptolemy.push({ who: `صورةُ برج ${sign}`, text: sh.join("، ") + "." });
+
+  // Lilly
+  out.lilly.push({ who: `القامة (${sign})`, text: BF.LILLY_STATURE[sign] + "." });
+  const b = BF.LILLY_BUILD[sign];
+  if (b) out.lilly.push({ who: `البدنُ بعد الثلاثين (${half ? "النصفُ الثاني" : "النصفُ الأوّل"} من ${sign})`, text: b[half] + "." });
+  const F = BF.LILLY_FACE;
+  if (F.fair.signs.includes(sign) || (half === 0 && F.fair.half1.includes(sign))) out.lilly.push({ who: "الوجه", text: F.fair.text });
+  else if (F.plain.signs.includes(sign) || (half === 1 && F.plain.half2.includes(sign))) out.lilly.push({ who: "الوجه", text: F.plain.text });
+
+  // اتّفاقُ الكتابين في القامة
+  const tallP = BF.SIGN_SHAPE.larger.includes(sign), shortP = BF.SIGN_SHAPE.smaller.includes(sign);
+  const st = BF.LILLY_STATURE[sign];
+  const tallL = /طويل/.test(st) && !/معتدل/.test(st), shortL = /قصير/.test(st);
+  const agree = (tallP && tallL) ? "يتّفقُ الكتابان على طولِ القامة" : (shortP && shortL) ? "يتّفقُ الكتابان على قِصَرِ القامة" : null;
+
+  return { sign, ...out, agree, src: [BF.PTOLEMY_FORM_SRC, BF.LILLY_FORM_SRC] };
+}
+
+__exports.default = { form };
+
+;__exports["form"]=form;return __exports;})();
 __M["corpus.data"]=(function(){"use strict";const __exports={};
 // مُولَّد آليًّا عبر tools/build-corpus.js — لا تُحرّره يدويًّا.
 // مصدران: نصّ الشاملة المكتوب (2483 مقطع، دقيق) + نسخ OCR (4423 مقطع، تقاطعيّ).
@@ -20465,6 +20578,7 @@ const darj=__M["darj"].default;
 const CH=__M["hal-cheiro.data"];
 const TH=__M["hal-thamara.data"];
 const WM=__M["hal-women.data"];
+const bodyM=__M["body"].default;
 const AM=__M["hal-abumashar.data"];
 const BR=__M["hal-biruni.data"];
 const { MIZAJ }=__M["huruf.data"];
@@ -20789,7 +20903,7 @@ function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
-    nameSign, degrees, birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
+    nameSign, degrees, bodyForm: bodyM.form(sky), birthNumber: cb ? { n: bn, ...cb, src: CH.CHEIRO_SRC } : null,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
@@ -26729,6 +26843,11 @@ function halHTML(r) {
     ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
       body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
       basis: esc(r.birthNumber.src) }) : ""}
+    ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: r.bodyForm.agree || "من الطالع",
+      body: `<div class="kv"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="kv"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="gloss">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
+      basis: r.bodyForm.src.map(esc).join(" · ") }) : ""}
     ${r.body.length ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>

@@ -2254,6 +2254,11 @@ function halHTML(r) {
     ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
       body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
       basis: esc(r.birthNumber.src) }) : ""}
+    ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: r.bodyForm.agree || "من الطالع",
+      body: `<div class="kv"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="kv"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="gloss">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
+      basis: r.bodyForm.src.map(esc).join(" · ") }) : ""}
     ${r.body.length ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
