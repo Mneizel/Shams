@@ -1226,6 +1226,14 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(firm.every((x) => x.lines.filter((l) => l !== "birth_number" && l !== "name_sign").length >= 1), "Cheiro ثانويّ: لا يؤكّدُ صفةً مع مصدرٍ ثانويٍّ آخرَ وحدَهما");
 }
 
+// ── أوفاق الغزاليّ: خواصّ الأسماء ──
+{
+  const kh = (await import("../engines/khawass.js")).default;
+  const n = kh.names().filter((x) => x.ghazali);
+  const ab = (await import("../engines/abjad.js")).default;
+  ok(n.length === 8 && n.find((x) => x.name === "الحكيم") && ab.jummal("حكيم") === 78, "الغزاليّ: ٨ من الأسماء التسعة والتسعين بخواصّها (والمحيط ليس في رواية الترمذي)، و«حكيم» = ٧٨ كما في الكتاب");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

@@ -1779,7 +1779,7 @@ PANELS.khawass = (main) => {
     <p class="kv">اسمُك الموافق ظهر في البطاقة الأولى فوق؛ هذا الجدولُ الكاملُ (${AR(names.length)} اسمًا) مطويٌّ لأنّك عادةً لا تحتاج إلّا اسمَك — افتحه فقط لو أردت اختيارَ اسمٍ آخر بنفسك لغرضٍ معيّن، أو لمعرفة معنى «الخاصّة» التي تظهر باسمٍ ورد بنتيجةٍ أخرى بالموقع.</p>
     <details><summary class="kv" style="cursor:pointer">اعرض الأسماء الحسنى الـ${AR(names.length)} كاملةً</summary>
     <div style="overflow-x:auto;margin-top:.5rem"><table class="tbl"><tr><th>#</th><th>الاسم</th><th>كبير</th><th>صغير</th><th>الخاصّة</th></tr>
-      ${names.map((n) => `<tr><td>${AR(n.index)}</td><td>${esc(n.name)}</td><td>${AR(n.value)}</td><td>${AR(n.saghir)}</td><td>${esc(n.khassa)}</td></tr>`).join("")}</table></div></details>
+      ${names.map((n) => `<tr><td>${AR(n.index)}</td><td>${esc(n.name)}</td><td>${AR(n.value)}</td><td>${AR(n.saghir)}</td><td>${esc(n.khassa)}${n.ghazali ? `<br><span class="gloss">وعند الغزاليّ (ص${AR(n.ghazali.page)}): ${esc(n.ghazali.text)}</span>` : ""}</td></tr>`).join("")}</table></div></details>
     <h2>خواصّ السور والآيات</h2><div class="grid">
       ${khawass.surahs().map((s) => card({ title: s.ref, k: s.also || "", body: `<div class="kv">${esc(s.uses)}</div>` })).join("")}</div>
     <h2>الأدعية والأحزاب</h2>

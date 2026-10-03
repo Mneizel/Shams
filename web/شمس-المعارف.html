@@ -836,6 +836,26 @@ const NOTE =
   "إسقاطِ الكعبِ غيرُ مُصرَّحٍ بها في الأصل.";
 
 ;__exports["HEADING"]=HEADING;__exports["PREMISE"]=PREMISE;__exports["TWO_METHODS"]=TWO_METHODS;__exports["ELEVEN_NAMES"]=ELEVEN_NAMES;__exports["TWELFTH_NAME_NOTE"]=TWELFTH_NAME_NOTE;__exports["KAAB_METHOD"]=KAAB_METHOD;__exports["DAY_SERVANTS"]=DAY_SERVANTS;__exports["SOURCE_META"]=SOURCE_META;__exports["NOTE"]=NOTE;return __exports;})();
+__M["asma-ghazali.data"]=(function(){"use strict";const __exports={};
+// data/asma-ghazali.data.js — «الأوفاق» المنسوب للإمام الغزاليّ (طبعة لبنانيّة مصوَّرة، ١١٠ ص؛ text/sources/hekma2/AL_AWFA2)،
+// ص٣–٦: خواصُّ أسماءٍ من الأسماء الحسنى ووفقُها. مصدرٌ ثانٍ يُعرَضُ بجانب الخاصّة المشهورة. أُخذت الخواصُّ وحدَها؛ ما بقي من
+// الكتاب أعمالٌ وعزائمُ ومربّعاتٌ مكرّرةٌ ممّا في «قدرة الخلّاق» فلم يُنقل.
+
+const GHAZALI_SRC = "الأوفاق المنسوب للغزاليّ";
+
+const KHASSA_GHAZALI = {
+  "اللطيف":  { page: 3, text: "من أكثر من ذكره كان ملاطَفًا في جميع أموره، ملطوفًا به في حركاته وسكناته، ووسّع اللهُ عليه الرزق." },
+  "الحكيم":  { page: 3, text: "من أكثر من ذكره (عددُه ٧٨) ألهمه اللهُ الحكمةَ وعلّمه دقائقَ العلوم ورقائقَ المعاني." },
+  "المعيد":  { page: 4, text: "من أكثر من ذكره أصلح به كلَّ فاسد واسترجع كلَّ ذاهب؛ قال البونيّ: من أكثر من ذكره استرجع كلَّ ما نسيه." },
+  "المجيد":  { page: 4, text: "يصلحُ ذكرًا للملوك والأقطاب، يتّسعُ ملكُهم به." },
+  "المبدئ":  { page: 4, text: "له شرفُ الحكم والبلاغة؛ من أكثر من ذكره أنطقه اللهُ بالفنون الحكميّة، وفيه معنًى بديعٌ لطلّاب البلاغة العربيّة." },
+  "الحفيظ":  { page: 5, text: "لحفظِ كلِّ شيء، حرزٌ عجيب." },
+  "المحيط":  { page: 5, text: "يصلحُ لقطع الفزع، ويُعلَّقُ على الصبيّ كثيرِ البكاء." },
+  "الودود":  { page: 6, text: "يُجمَعُ مع «الكافي» و«الوليّ» (عددُها ١٧٧) في وفقٍ واحد." },
+  "الواسع":  { page: 6, text: "يُجمَعُ مع «العزيز» (عددُهما ٣٣١ كعدد اسم «أبو بكر») في وفقٍ واحد." },
+};
+
+;__exports["GHAZALI_SRC"]=GHAZALI_SRC;__exports["KHASSA_GHAZALI"]=KHASSA_GHAZALI;return __exports;})();
 __M["asma-husna.data"]=(function(){"use strict";const __exports={};
 // data/asma-husna.data.js
 // الأسماء الحسنى (القائمة المشهورة، رواية الترمذي). القيمة العددية تُحسب في
@@ -21389,6 +21409,7 @@ __M["khawass"]=(function(){"use strict";const __exports={};
 
 const abjad=__M["abjad"].default;
 const { NAMES }=__M["asma-husna.data"];
+const { KHASSA_GHAZALI, GHAZALI_SRC }=__M["asma-ghazali.data"];
 const { SURAHS, AYAT, HURUF_MUQATTAA }=__M["khawass-quran.data"];
 const { INCENSE, HERBS, STONES, SAFETY }=__M["materia.data"];
 const { ADIYA, NOTE: ADIYA_NOTE }=__M["adiya.data"];
@@ -21400,7 +21421,8 @@ const NAMES_V = NAMES.map((n, i) => ({
   name: n.name,
   value: abjad.jummal(n.name),
   saghir: abjad.saghir(abjad.jummal(n.name)),
-  khassa: n.khassa
+  khassa: n.khassa,
+  ghazali: KHASSA_GHAZALI[n.name] ? { ...KHASSA_GHAZALI[n.name], src: GHAZALI_SRC } : null,
 }));
 
 function names() { return NAMES_V.slice(); }
@@ -26075,7 +26097,7 @@ PANELS.khawass = (main) => {
     <p class="kv">اسمُك الموافق ظهر في البطاقة الأولى فوق؛ هذا الجدولُ الكاملُ (${AR(names.length)} اسمًا) مطويٌّ لأنّك عادةً لا تحتاج إلّا اسمَك — افتحه فقط لو أردت اختيارَ اسمٍ آخر بنفسك لغرضٍ معيّن، أو لمعرفة معنى «الخاصّة» التي تظهر باسمٍ ورد بنتيجةٍ أخرى بالموقع.</p>
     <details><summary class="kv" style="cursor:pointer">اعرض الأسماء الحسنى الـ${AR(names.length)} كاملةً</summary>
     <div style="overflow-x:auto;margin-top:.5rem"><table class="tbl"><tr><th>#</th><th>الاسم</th><th>كبير</th><th>صغير</th><th>الخاصّة</th></tr>
-      ${names.map((n) => `<tr><td>${AR(n.index)}</td><td>${esc(n.name)}</td><td>${AR(n.value)}</td><td>${AR(n.saghir)}</td><td>${esc(n.khassa)}</td></tr>`).join("")}</table></div></details>
+      ${names.map((n) => `<tr><td>${AR(n.index)}</td><td>${esc(n.name)}</td><td>${AR(n.value)}</td><td>${AR(n.saghir)}</td><td>${esc(n.khassa)}${n.ghazali ? `<br><span class="gloss">وعند الغزاليّ (ص${AR(n.ghazali.page)}): ${esc(n.ghazali.text)}</span>` : ""}</td></tr>`).join("")}</table></div></details>
     <h2>خواصّ السور والآيات</h2><div class="grid">
       ${khawass.surahs().map((s) => card({ title: s.ref, k: s.also || "", body: `<div class="kv">${esc(s.uses)}</div>` })).join("")}</div>
     <h2>الأدعية والأحزاب</h2>

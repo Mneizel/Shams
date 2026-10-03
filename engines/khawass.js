@@ -10,6 +10,7 @@
 
 import abjad from "./abjad.js";
 import { NAMES } from "../data/asma-husna.data.js";
+import { KHASSA_GHAZALI, GHAZALI_SRC } from "../data/asma-ghazali.data.js";
 import { SURAHS, AYAT, HURUF_MUQATTAA } from "../data/khawass-quran.data.js";
 import { INCENSE, HERBS, STONES, SAFETY } from "../data/materia.data.js";
 import { ADIYA, NOTE as ADIYA_NOTE } from "../data/adiya.data.js";
@@ -21,7 +22,8 @@ const NAMES_V = NAMES.map((n, i) => ({
   name: n.name,
   value: abjad.jummal(n.name),
   saghir: abjad.saghir(abjad.jummal(n.name)),
-  khassa: n.khassa
+  khassa: n.khassa,
+  ghazali: KHASSA_GHAZALI[n.name] ? { ...KHASSA_GHAZALI[n.name], src: GHAZALI_SRC } : null,
 }));
 
 export function names() { return NAMES_V.slice(); }
