@@ -1330,6 +1330,9 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   const revs = arif.revolutions(C, falakM.snapshot(C.birth, C.lat, C.lon), 2026, 2028);
   ok(revs.length === 3 && revs[0].when.toISOString().startsWith("2026-11-08") && revs[2].asc === "الميزان" && revs[2].voices.some((v) => /طالعُ الميلاد نفسُه/.test(v.why)), "تحويلُ سنة المولد: عودةُ الشمس ٨ نوفمبر، وتحويلُ ٢٠٢٨ طالعُه طالعُ الميلاد (Lilly: سنةُ عافية)");
   ok(a.months.some((m) => m.voices.some((v) => /^تحويلُ سنة/.test(v.why))), "أصواتُ التحويل تدخلُ أشهرَ سنتِها");
+  ok(arif.abjadDate(2026) === "بغكو" && arif.abjadDate(1991) === "غظصا", "التأريخُ بالجُمّل: ٢٠٢٦ ⇒ بغكو");
+  const dv = a.months.map((m) => m.voices.filter((v) => v.fam === "divination").map((v) => Math.sign(v.s)).join(""));
+  ok(dv.filter(Boolean).length > 30 && new Set(dv).size >= 4, "الرملُ والجفر يدخلان كلَّ شهرٍ ويتغيّران من شهرٍ لآخر");
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

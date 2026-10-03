@@ -25,7 +25,7 @@ import { birthNumber } from "./hal.js";
 import { PLANET_GOVERNS } from "../data/falak-ahkam.data.js";
 
 export const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-export const FAMILIES = { periods: "أزمنةُ العمر", sky: "مرورُ الكواكب", numbers: "علمُ الأرقام", name: "الاسم", question: "لحظةُ السؤال" };
+export const FAMILIES = { periods: "أزمنةُ العمر", sky: "مرورُ الكواكب", numbers: "علمُ الأرقام", name: "الاسم", divination: "الرملُ والجفر", question: "لحظةُ السؤال" };
 export const TOPICS = { all: "الكلّ", work: "الشغل", money: "المال", love: "الحبّ والعائلة", health: "الصحّة", study: "العلم والسفر" };
 
 const NATURE = { المشتري: 1, الزهرة: 1, زحل: -1, المريخ: -1, الشمس: 0, القمر: 0, عطارد: 0 };
@@ -131,6 +131,13 @@ const HOUSE_PLAIN = {
   sat: { 1: "ثقلٌ على النفس والبدن", 2: "ضيقٌ في المال", 4: "همٌّ من جهة البيت أو الأهل", 7: "برودٌ أو تعبٌ في العلاقة", 10: "ضغطٌ وتأخيرٌ في الشغل", 6: "تعبٌ في البدن", 12: "عزلةٌ وهمٌّ خفيّ" },
 };
 
+// التأريخُ بالجُمّل: العددُ حروفًا (٢٠٢٦ ⇒ بغكو)
+const ABJ = { 1: "ا", 2: "ب", 3: "ج", 4: "د", 5: "ه", 6: "و", 7: "ز", 8: "ح", 9: "ط", 10: "ي", 20: "ك", 30: "ل", 40: "م", 50: "ن", 60: "س", 70: "ع", 80: "ف", 90: "ص", 100: "ق", 200: "ر", 300: "ش", 400: "ت", 500: "ث", 600: "خ", 700: "ذ", 800: "ض", 900: "ظ" };
+export function abjadDate(n) {
+  const th = Math.floor(n / 1000), h = Math.floor((n % 1000) / 100) * 100, t = Math.floor((n % 100) / 10) * 10, u = n % 10;
+  return (th ? (th > 1 ? ABJ[th] : "") + "غ" : "") + (h ? ABJ[h] : "") + (t ? ABJ[t] : "") + (u ? ABJ[u] : "");
+}
+
 /** أصواتُ شهرٍ واحد */
 function monthVoices(ctx, y, m) {
   const date = new Date(Date.UTC(y, m, 15, 12));
@@ -173,6 +180,21 @@ function monthVoices(ctx, y, m) {
   const hJ = ((signIdx(J) - ctx.ascIdx + 12) % 12) + 1, hS = ((signIdx(S) - ctx.ascIdx + 12) % 12) + 1;
   if (HOUSE_PLAIN.jup[hJ]) push("sky", 0.5, HOUSE_PLAIN.jup[hJ], `المشتري في بيتِك ${hJ}`, HOUSE_TOPIC[hJ] || ["all"]);
   if (HOUSE_PLAIN.sat[hS]) push("sky", -0.5, HOUSE_PLAIN.sat[hS], `زحل في بيتِك ${hS}`, HOUSE_TOPIC[hS] || ["all"]);
+  // ٢ب) الرملُ والجفر: «طالعُ الشهر» — ضربُ الرمل لأوّلِ الشهر، والجفرُ لاسمِ الشهرِ وسنتِه بالجُمّل (عائلةٌ واحدة)
+  if (ctx.name && ctx.mother) {
+    const first = new Date(Date.UTC(y, m, 1, 12));
+    const ask0 = `كيف يكون حالي في ${MONTHS[m]} ${abjadDate(y)}`;
+    try {
+      const rr = raml.reading({ name: ctx.name, mother: ctx.mother, question: ask0, when: first });
+      const s = (rr.score ?? 0) > 0.5 ? 1 : (rr.score ?? 0) < -0.5 ? -1 : 0;
+      if (s) push("divination", s, s > 0 ? "تيسيرٌ وقبول" : "تعسّرٌ وتعطيل", `الرمل لأوّلِ الشهر: ${rr.house?.figure?.ar || ""} — ${rr.verdict}`);
+    } catch {}
+    try {
+      const jj = jafr.extractAnswer(ask0, { name: ctx.name, mother: ctx.mother });
+      const s = jj?.verdict?.direction === "نعم" ? 0.8 : jj?.verdict?.direction === "لا" ? -0.8 : 0;
+      if (s) push("divination", s, s > 0 ? "الأمورُ تنفتح" : "الأمورُ تنغلقُ قليلًا", `الجفر («${ask0}»): ${jj.verdict.text}`);
+    } catch {}
+  }
   // ٣) علمُ الأرقام
   if (ctx.bn) {
     const yr = reduce(String(y).split("").reduce((a, d) => a + +d, 0));
@@ -225,7 +247,7 @@ export function timeline(c, opt = {}) {
   const sky = falak.snapshot(c.birth, c.lat, c.lon);
   const ctx = {
     birth: new Date(c.birth), sky, byNight: sky.lots?.sect === "ليليّ", points: natalPoints(sky), ascIdx: signIdx(sky.ascendant.longitude),
-    bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
+    name: c.name, mother: c.mother, bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
   ctx.revs = revolutions(c, sky, now.getUTCFullYear() - Math.ceil(past / 12) - 1, now.getUTCFullYear() + Math.ceil(future / 12) + 1);
@@ -378,4 +400,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { timeline, read, ask, eclipses, revolutions, MONTHS, TOPICS, FAMILIES };
+export default { timeline, read, ask, eclipses, revolutions, abjadDate, MONTHS, TOPICS, FAMILIES };
