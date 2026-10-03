@@ -1142,6 +1142,16 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   // الشهاداتُ الخمسُ على خريطةٍ معروفة (حُسِبت يدويًّا من جدولِ Lilly): ميزانٌ طالع، الزهرةُ مشرّقةٌ في السنبلة، القمرُ هلالٌ في القوس
   const tl = a.temperament.chart.tally;
   ok(tl.H === 6 && tl.C === 3 && tl.M === 4 && tl.D === 7 && a.temperament.chart.complexion.key === "choleric", "مزاجُ الخريطةِ بطريقةِ Lilly يطابقُ الحسابَ اليدويّ (حارٌّ يابس ⇒ صفراويّ)");
+  {
+    const { TRAITS: TT } = await import("../data/hal-traits.data.js");
+    const { NAME_SIGN_MAN } = await import("../data/hal-kashf.data.js");
+    ok(Object.keys(NAME_SIGN_MAN).length === 12 && Object.values(NAME_SIGN_MAN).every((v) => v.page && v.traits.every((x) => TT[x])), "كشف المكتوم: ١٢ برجًا، لكلٍّ صفحةٌ وصفاتٌ معرَّفة");
+    ok(a.nameSign === "الدلو" && Object.values(a.groups).some((g) => [...g.firm, ...g.single, ...g.sometimes].some((x) => (x.lines || Object.values(x.support).flat()).includes("name_sign"))), "برجُ الاسم (٤٠٧ ÷ ١٢ ⇒ الدلو) يدخلُ شاهدًا من كشف المكتوم");
+    const gl = Object.values(a.groups).flatMap((g) => g.firm).find((x) => x.id === "grudge_long");
+    ok(gl && gl.dissent && gl.dissent.every((e) => e.line === "name_sign"), "اعتراضُ المصدرِ الثانويّ وحدَه لا يقلبُ ما اتّفق عليه دليلان أصليّان (يُسجَّلُ خلافًا)");
+    const fam = Object.values(a.groups).flatMap((g) => g.firm);
+    ok(fam.every((x) => new Set(x.lines.map((l) => (l === "name_sign" ? "name" : l))).size >= 2), "الاسمُ وبرجُ الاسم عائلةٌ واحدة: لا يؤكّدان صفةً وحدَهما");
+  }
   ok(a.temperament.chart.testimonies.some((t) => t.who.startsWith("زحل ينظرُ الطالع")), "زحلُ المربّعُ للطالع يُدخِلُ كيفيّتَه (قاعدةُ Lilly)");
   // أدلّةُ بطليموس وأبي معشر حاضرةٌ ومستقلّة
   const allFirm = Object.values(a.groups).flatMap((g) => g.firm);

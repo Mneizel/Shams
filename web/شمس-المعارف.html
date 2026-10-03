@@ -2195,6 +2195,25 @@ const ASC_NATURE = {
 };
 
 ;__exports["ABUMASHAR_SRC"]=ABUMASHAR_SRC;__exports["ASC_NATURE"]=ASC_NATURE;return __exports;})();
+__M["hal-biruni.data"]=(function(){"use strict";const __exports={};
+// data/hal-biruni.data.js — البيروني، «التفهيم لأوائل صناعة التنجيم» (٤٢٠هـ)، §٤٢٩: «دلالاتُ الكواكب على الصفات»
+// (Disposition and manners)، من ترجمة R. Ramsay Wright (١٩٣٤) المقابلةِ للنصِّ العربيّ، ص ٢٤٨ تقريبًا.
+// يُستعمَلُ مؤيِّدًا لا دليلًا: البيرونيُّ يصفُ معنى الكوكبِ نفسِه، فإذا شهد دليلٌ (حاكمُ النفس، دليلُ الأخلاق) بصفةٍ
+// ووصف البيرونيُّ ذلك الكوكبَ بها أُضيفَ إلى شهودِ الصفةِ كتابًا، دون أن يُنشِئَ صفةً جديدةً أو يزيدَ عددَ الأدلّة.
+
+const BIRUNI_SRC = "البيروني، التفهيم لأوائل صناعة التنجيم، §٤٢٩ «دلالات الكواكب على الصفات»";
+
+const PLANET_DISPOSITION = {
+  زحل:     { text: "زحل: خائف، هيّاب، قلِق، كثيرُ الريبة، بخيل، ماكرٌ خبيث، عابسٌ متكبّر، سوداويّ، صادقُ القول، رزين، أمين، لا يصدّقُ الخيرَ عن أحد، منشغلٌ بشأنِه.", traits: ["fearful", "timid", "suspicious", "covetous", "proud", "sorrowful", "faithful", "solitary", "open"] },
+  المشتري: { text: "المشتري: حسنُ الخُلُق، صبور، رفيعُ الهمّة، متديّن، عفيف، عادل، صادق، عالم، كريم، شريف، حذرٌ في الصداقة، محبٌّ لحسنِ التدبيرِ وللتعلّم، أمينٌ مسؤول.", traits: ["affable", "patient", "ambitious", "generous", "faithful", "learner", "open"] },
+  المريخ:  { text: "المريخ: مضطربُ الرأي، متهوّر، سيّءُ السيرة، جريء، مخاصم، غيرُ ثابت، عنيف، قليلُ الحياء… سريعُ التوبة، بشوش، مشرق، ودودٌ طلقُ الوجه.", traits: ["changes_opinion", "rash", "bold", "quarrelsome", "restless", "cheerful", "affable"] },
+  الشمس:   { text: "الشمس: ذكيٌّ عالم، صبور، عفيف، شغوفٌ بالعلمِ والسلطانِ والغلبة، طالبٌ لحسنِ الذكرِ بإعانةِ الناس، ودود، حادُّ الطبعِ سريعُ الرجوعِ إلى السكينة.", traits: ["clever", "patient", "learner", "ambitious", "affable", "anger_quick", "grudge_short", "generous"] },
+  الزهرة:  { text: "الزهرة: حسنُ الخُلُق، طيّبُ الطبع، ميّالٌ إلى المحبّةِ واللذّة، ودود، كريم، حنونٌ على الأولادِ والأصدقاء، فيه كِبرٌ وفرحٌ وصبر.", traits: ["affable", "generous", "proud", "cheerful", "patient"] },
+  عطارد:   { text: "عطارد: حادُّ الذكاءِ والفهم، لطيفُ المعشر، ليّن، طلقُ الوجه، أنيق، بعيدُ النظر، متقلّب، شديدُ الاهتمامِ بالعمل، كتومٌ للأسرار، طالبٌ لمودّةِ الناس، توّاقٌ إلى السلطانِ والسمعة، يحفظُ صادقَ الأصدقاءِ ويبتعدُ عن الأشرار والمكرِ والخصام.", traits: ["clever", "affable", "changes_opinion", "hardworking", "secretive", "ambitious", "faithful", "peacemaker"] },
+  القمر:   { text: "القمر: بسيط، متكيّف — ملكٌ مع الملوكِ وخادمٌ مع الخدم — كثيرُ الكلام، هيّاب، يُفشي الأسرار، محبٌّ للأناقة، محترمٌ بين الناس، بشوش، ليس قويَّ العقل، نقيُّ القلب.", traits: ["affable", "timid", "open", "cheerful", "slow_mind", "eloquent"] },
+};
+
+;__exports["BIRUNI_SRC"]=BIRUNI_SRC;__exports["PLANET_DISPOSITION"]=PLANET_DISPOSITION;return __exports;})();
 __M["hal-ibnsina.data"]=(function(){"use strict";const __exports={};
 // data/hal-ibnsina.data.js — دلائلُ الأمزجة عند ابن سينا.
 // المصدر: «القانون في الطب»، الكتاب الأوّل، الفنّ الثاني، التعليم الثالث، «الفصل الثالث: علامات الأمزجة»
@@ -2244,6 +2263,32 @@ const EXCESS_SIGNS = {
 };
 
 ;__exports["IBNSINA_SRC"]=IBNSINA_SRC;__exports["SOUL_SIGNS"]=SOUL_SIGNS;__exports["SLEEP_SIGNS"]=SLEEP_SIGNS;__exports["ACTION_SIGNS"]=ACTION_SIGNS;__exports["DREAM_SIGNS"]=DREAM_SIGNS;__exports["EXCESS_SIGNS"]=EXCESS_SIGNS;return __exports;})();
+__M["hal-kashf.data"]=(function(){"use strict";const __exports={};
+// data/hal-kashf.data.js — عبد الله بن محمد بن عباس الزاهد، «كشف المكتوم بالطالع والرمل والنجوم» (مؤلّفٌ معاصر).
+// الملفّ: text/sources/mizaj/kashf_maktum.pdf. يُستعمَلُ لكلِّ برجٍ فصلُ «الرجل» (أوّلُ صفحتين منه)، ويُدخَلُ بـ«برجِ الاسم»
+// المحسوبِ كما في بقيّةِ الموقع: (جُمّلُ الاسمِ + جُمّلُ اسمِ الأمّ) ÷ ١٢. لأنّه كتابٌ متأخّرٌ بلغةٍ معاصرة يُعدُّ مصدرًا ثانويًّا،
+// ولأنّه مأخوذٌ من الاسم أيضًا فهو ودليلُ «مزاجِ حروفِ الاسم» من عائلةٍ واحدة: لا يجعلان صفةً «مؤكّدةً» وحدَهما.
+// النصوصُ مختصرةٌ بألفاظِ الكتاب (حُذفت الحشوُ والوعظ)، والصفاتُ ممّا في النصِّ نفسِه فقط. حيث يتناقضُ الفصلُ نفسُه
+// (العقرب: «سريعُ الغضبِ والرضا» ثمّ «لا يغضبُ إلّا نادرًا… ولا يهدأُ إلّا بعد فترةٍ طويلة») أُخذ الوصفُ المفصَّل.
+
+const KASHF_SRC = "الزاهد، كشف المكتوم بالطالع والرمل والنجوم (معاصر)";
+
+const NAME_SIGN_MAN = {
+  الحمل:   { page: 37, text: "سريعُ الغضبِ لمن عاداك، شديدُ الحبِّ لمن هواك، تبدأُ كلَّ أمرٍ بعزمٍ ولكن تجعلُه مبتورًا لأنّك لا تدومُ على الأمور… تساعدُ القريبَ والبعيدَ ولا تنتظرُ منهم جزاءً… لا يُفشي سرَّه لأيّ إنسان… يحبُّ السفرَ والنظرَ إلى ما هو جديد، يفتخرُ أحيانًا بقدرتِه.", traits: ["anger_quick", "starts_not_finish", "generous", "secretive", "restless", "proud"] },
+  الثور:   { page: 54, text: "صاحبُ عقلٍ منيرٍ وفكرٍ بصير، إلّا أنّ تصرّفَك في بعضِ الأوقاتِ يسبقُ التفكير… أحيانًا تميلُ إلى الكسلِ وكثرةِ النوم، وترجّحُ الوحدةَ والعزلة… تقولُ الحقَّ وتكرهُ الباطل… باردُ الأعصاب يتغاضى عن كثيرِ الزلّات، وإذا غضب هدأ بعد فترةٍ قصيرة… له قوّةٌ في الصبرِ وتحمّلِ العملِ ساعاتٍ عديدة.", traits: ["clever", "rash", "lazy", "sleep_much", "solitary", "open", "anger_slow", "grudge_short", "patient", "hardworking"] },
+  الجوزاء: { page: 67, text: "سخيٌّ عطوف، تغضبُ لأتفهِ الأسباب وتحلُمُ بقليلٍ من الاعتذار، حلوُ الكلام، صاحبُ صوتٍ جهوريّ، تقابلُ كلَّ الناسِ دون خوفٍ ورهبة… تتصرّفُ بسرعةٍ في أغلبِ الأحيانِ ممّا يجعلُك بعدها في ندم… عزيزُ النفس لا يطلبُ مساعدةً من أحد، يسعى دائمًا في تحصيلِ العلوم.", traits: ["generous", "anger_quick", "grudge_short", "eloquent", "loud_fast", "bold", "rash", "proud", "learner"] },
+  السرطان: { page: 81, text: "ذو عقلٍ نشطٍ مبتكرٍ وذكاءٍ خارق، يكتمُ في قلبِه أسرارَه… يهتمُّ بإصلاحِ الخلافاتِ ولمِّ الشمل… يقدّسُ الواجبَ العائليَّ وواجبَ الرفاقةِ والصداقة… يصلُ إلى ما يريدُ بالمثابرةِ والجهد… عزيزُ النفس يستحيلُ أن يطلبَ مساعدةً من أحد.", traits: ["clever", "secretive", "peacemaker", "faithful", "hardworking", "proud"] },
+  الأسد:   { page: 90, text: "عاقلٌ لبيبٌ رزين، ذو لسانٍ ذي حجّةٍ وبيان، يحبُّ التحدّيَ والخوضَ في صعابِ الأعمال، يجهدُ نفسَه في أن يكونَ القائدَ والأفضل… يمتازُ بقلّةِ الكلامِ وكثرةِ العملِ والنشاط… لا يتراجعُ عن رأيِه ولا يسمحُ لمخلوقٍ بجرحِ كرامتِه… شجاعٌ ثابتٌ أمامَ الأزمات، سريعُ الغضبِ سريعُ الصفحِ والنسيان.", traits: ["clever", "eloquent", "bold", "leader", "ambitious", "energetic", "hardworking", "firm_opinion", "proud", "anger_quick", "grudge_short"] },
+  السنبلة: { page: 102, text: "ذو عقلٍ وتدبيرٍ وحنكة، يحبُّ أكثرَ الناسِ دون سبب ويقابلُهم بصدرٍ رحب… لا يستمرُّ حتّى نهايةِ الأعمالِ التي تتطلّبُ نشاطًا وقوّة… يبحثُ عن مبهماتِ الأمورِ وغوامضِها… لا يهتمُّ بآراءِ الآخرين… يتردّدُ ويعيدُ ويكرّر، وحين يبدأُ العملَ يكونُ في بطءٍ وحرصٍ شديد… صريحٌ يتحدّثُ عمّا يختلجُ في نفسِه.", traits: ["clever", "affable", "starts_not_finish", "deep_thinker", "proud", "slow_decide", "open"] },
+  الميزان: { page: 118, text: "لا يعرفُ الخوفَ في مواجهةِ الأخطار، صاحبُ روحٍ متفائلةٍ طامحة وعزيمةٍ قويّة… لا يبوحُ بسرِّه إلى أحد… متقلّبٌ كالهواء، تارةً خفيفُ الظلِّ لطيف وتارةً ثائرٌ غاضب، لا يثبتُ على حال… يحبُّ المرحَ والسرور، محبوبٌ عند أغلبِ الناس، يشتهرُ بالكرمِ والعطاء ويكونُ من أهلِ الصفحِ والتسامح.", traits: ["bold", "hopeful", "ambitious", "secretive", "changes_opinion", "restless", "cheerful", "affable", "generous", "grudge_short"] },
+  العقرب:  { page: 134, text: "صادقٌ في العملِ والحديث، لا يعرفُ المللَ والكلل… إن أحبَّ أحاط حبيبَه بكلِّ ما يملك، يعطي الكثيرَ من مالِه… يحبُّ المرحَ والمزاح… كتومٌ جدًّا على أسرارِه وأسرارِ غيرِه، قليلُ الكلامِ كثيرُ التفكير… لا يغضبُ إلّا نادرًا وبعد صبرٍ طويل، وإن غضب لا يهدأُ إلّا بعد فترةٍ طويلة، مغامرٌ جريء، كريمٌ إلى حدِّ الإسراف، صبورٌ على المكاره.", traits: ["faithful", "hardworking", "generous", "cheerful", "secretive", "deep_thinker", "anger_slow", "grudge_long", "bold", "patient"] },
+  القوس:   { page: 145, text: "قلبٌ لا يعرفُ الضغينةَ والحقد، يعملُ المعروف، طويلُ الصبرِ والبال، يميلُ لصحبتِه الصغارُ والكبارُ لأُنسِ حديثِه، يحبُّ العملَ السهلَ الخفيف… طيّبُ القلب، ذو نفسٍ سهلةِ الإغراء سريعةِ التأثّرِ بالأصدقاء، يسعى للتغييرِ والانتقال وجمعِ المعلوماتِ بالقراءةِ والبحث… جريءٌ في الانتقامِ ممّن يسلبُه حقَّه.", traits: ["grudge_short", "generous", "patient", "affable", "eloquent", "trusting", "restless", "learner", "revengeful"] },
+  الجدي:   { page: 165, text: "يطمحُ في النجاحِ بكلِّ الأحوال، عنيفٌ على من يتعمّدُ إثارتَه، لطيفٌ رحيمٌ لمن أحسَّ منه الإخلاص، يملكُ شجاعةً ولا يخافُ المواقفَ الحاسمة… وإن أحبَّ فحبُّه صادقٌ مخلص… جوادٌ كريمٌ إلى حدِّ الاستدانة، لا يخلو مجلسُه من الفكاهة… يميلُ إلى الأعمالِ التي تحتاجُ إلى الصبرِ والدقّة، يحبُّ الجدالَ في البيعِ والشراء، لا يندمُ على عملٍ أتمَّه لأنّه يعلمُ أنّه على حقّ.", traits: ["ambitious", "revengeful", "bold", "faithful", "generous", "cheerful", "patient", "quarrelsome", "firm_opinion"] },
+  الدلو:   { page: 185, text: "كثيرُ الحركةِ جمُّ النشاط، يملُّ المكوثَ في مكانٍ واحد، ذو فكرٍ غزيرٍ عميق… شجاعةٌ معنويّةٌ عظيمة… يبذلُ كلَّ قوّتِه وفكرِه في العمل… من أكثرِ البروجِ أصدقاءً ويحرصُ على استمرارِ علاقاتِهم… سريعُ الغضبِ لمن يستهزئُ به، ولكنّه يرضى سريعًا ويعفو ويسامح… لا يبالغُ ولا يراوغ، سريعُ الفهمِ والإدراك.", traits: ["energetic", "restless", "deep_thinker", "bold", "hardworking", "affable", "faithful", "anger_quick", "grudge_short", "open", "clever"] },
+  الحوت:   { page: 205, text: "يحملُ في قلبِه غموضًا وأسرارًا، خجولٌ حسّاس، كثيرُ التفكيرِ في أحلامِ اليقظة، يحبُّ الطموحَ والعلوّ ولكن يسودُه الخجلُ عندما تتهيّأُ له الفرصة… لا يقومُ بعملٍ إلّا بعد إحكامِه ودرسِه، ومتى أحكمه سار فيه حتّى نهايتِه… يملُّ من التكرارِ والروتين، خدومٌ لا يتباطأُ عن مساعدةِ غيرِه، لا يبخلُ بالمال.", traits: ["secretive", "timid", "deep_thinker", "ambitious", "slow_decide", "hardworking", "restless", "generous"] },
+};
+
+;__exports["KASHF_SRC"]=KASHF_SRC;__exports["NAME_SIGN_MAN"]=NAME_SIGN_MAN;return __exports;})();
 __M["hal-lilly.data"]=(function(){"use strict";const __exports={};
 // data/hal-lilly.data.js — قواعدُ William Lilly في المواليد: المزاجُ والأخلاقُ والعقل.
 // المصدر: Christian Astrology (London, 1647)، الكتاب الثالث: الفصل ١٠٦ (المزاج)، ١٠٧ (الأخلاق)،
@@ -18662,7 +18707,10 @@ const { TRAITS, TRAIT_GROUPS }=__M["hal-traits.data"];
 const L=__M["hal-lilly.data"];
 const IS=__M["hal-ibnsina.data"];
 const PT=__M["hal-ptolemy.data"];
+const KF=__M["hal-kashf.data"];
+const ak=__M["asma-khuddam"].default;
 const AM=__M["hal-abumashar.data"];
+const BR=__M["hal-biruni.data"];
 const { MIZAJ }=__M["huruf.data"];
 
 const SHAMS_SRC = "شمس المعارف الكبرى — مزاجُ الطبعِ الغالبِ في حروفِ الاسم";
@@ -18845,7 +18893,11 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)" };
+// خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
+const FAMILY = { name_sign: "name" };
+// مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
+const SECONDARY = new Set(["name_sign"]);
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 function reading(c) {
@@ -18882,25 +18934,47 @@ function reading(c) {
   for (const w of witTestimony(sky)) testify("wit", `${L.LILLY_SRC}، ف١٠٩`, w.text, w.traits);
   const am = AM.ASC_NATURE[sky.ascendant.sign];
   if (am) testify("am_asc", `${AM.ABUMASHAR_SRC}، ص ${am.page}`, am.text, am.traits);
+  // برجُ الاسم بالحساب (كما في بقيّةِ الموقع) ⇒ فصلُ «الرجل» من كشف المكتوم — مصدرٌ ثانويٌّ معاصر
+  let nameSign = null;
+  if (c.mother) { try { nameSign = ak.reading(c.name, c.mother).sign.name; } catch {} }
+  const kf = nameSign && KF.NAME_SIGN_MAN[nameSign];
+  if (kf) testify("name_sign", `${KF.KASHF_SRC}، ص ${kf.page}`, kf.text, kf.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
+  // المؤيِّدون (يصفون معنى الكوكبِ نفسِه): يُضافون إلى صفاتٍ شهد لها ذلك الدليلُ أصلًا، ولا يُنشئون صفة
+  const corroborate = (line, planet) => {
+    const d = planet && BR.PLANET_DISPOSITION[planet]; if (!d) return;
+    for (const t of d.traits) if ((ev[t] || []).some((e) => e.line === line)) ev[t].push({ line, src: BR.BIRUNI_SRC, text: d.text, corroborates: true });
+  };
+  if (sig.planet) corroborate("manners", sig.planet);
+  if (soul.ruler) corroborate("ptol_ruler", soul.ruler);
+
   // الحكمُ على كلِّ صفة
   const lines = (t) => new Set((ev[t] || []).map((e) => e.line));
+  const fams = (t) => new Set([...lines(t)].map((l) => FAMILY[l] || l));
+  const primary = (t) => new Set([...lines(t)].filter((l) => !SECONDARY.has(l)).map((l) => FAMILY[l] || l)).size;
+  const booksOf = (evs) => [...new Set(evs.map((e) => e.src.split("،")[0]))];
   const groups = Object.fromEntries(Object.keys(TRAIT_GROUPS).map((g) => [g, { title: TRAIT_GROUPS[g], firm: [], sometimes: [], single: [] }]));
   const done = new Set();
   for (const id of Object.keys(TRAITS)) {
     if (done.has(id) || !ev[id]) continue;
-    const t = TRAITS[id], n = lines(id).size;
-    const opp = t.opp && ev[t.opp] ? t.opp : null, no = opp ? lines(opp).size : 0;
+    const t = TRAITS[id], n = fams(id).size;
+    const opp = t.opp && ev[t.opp] ? t.opp : null, no = opp ? fams(opp).size : 0;
     const g = groups[t.group];
-    if (opp && n >= 1 && no >= 1) {
+    // اعتراضٌ ثانويٌّ محض على صفةٍ أكّدها دليلان أصليّان ⇒ تبقى مؤكّدة، ويُسجَّلُ الخلافُ للكشف
+    const overrule = (x, y) => primary(x) >= 2 && primary(y) === 0;
+    if (opp && (overrule(id, opp) || overrule(opp, id))) {
+      const [w, l] = overrule(id, opp) ? [id, opp] : [opp, id];
+      done.add(w); done.add(l);
+      groups[TRAITS[w].group].firm.push({ id: w, ar: TRAITS[w].ar, lines: [...lines(w)], books: booksOf(ev[w]), evidence: ev[w], dissent: ev[l] });
+    } else if (opp && n >= 1 && no >= 1) {
       done.add(id); done.add(opp);
       const [a, b] = n >= no ? [id, opp] : [opp, id];
       g.sometimes.push({ ids: [a, b], ar: `أحيانًا ${TRAITS[a].ar}، وأحيانًا ${TRAITS[b].ar}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
     } else if (n >= 2) {
       done.add(id);
-      g.firm.push({ id, ar: t.ar, lines: [...lines(id)], evidence: ev[id] });
+      g.firm.push({ id, ar: t.ar, lines: [...lines(id)], books: booksOf(ev[id]), evidence: ev[id] });
     } else {
       done.add(id);
       g.single.push({ id, ar: t.ar, lines: [...lines(id)], evidence: ev[id] });
@@ -18925,10 +18999,11 @@ function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
+    nameSign,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, SHAMS_SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }
@@ -24759,10 +24834,10 @@ PANELS.hal = (main) => {
   const groupCards = Object.values(r.groups).filter((g) => g.firm.length || g.sometimes.length).map((g) => card({
     title: g.title,
     body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
-        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}</span></li>`).join("")}
+        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
         ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
       </ul>`,
-    reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
+    reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
   })).join("");
   const singles = Object.values(r.groups).flatMap((g) => g.single.map((x) => ({ ...x, g: g.title })));
   main.insertAdjacentHTML("beforeend", subjectBar(c) + `

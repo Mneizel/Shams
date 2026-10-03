@@ -2216,10 +2216,10 @@ PANELS.hal = (main) => {
   const groupCards = Object.values(r.groups).filter((g) => g.firm.length || g.sometimes.length).map((g) => card({
     title: g.title,
     body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
-        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}</span></li>`).join("")}
+        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
         ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
       </ul>`,
-    reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
+    reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
   })).join("");
   const singles = Object.values(r.groups).flatMap((g) => g.single.map((x) => ({ ...x, g: g.title })));
   main.insertAdjacentHTML("beforeend", subjectBar(c) + `

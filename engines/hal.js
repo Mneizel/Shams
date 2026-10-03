@@ -18,7 +18,10 @@ import { TRAITS, TRAIT_GROUPS } from "../data/hal-traits.data.js";
 import * as L from "../data/hal-lilly.data.js";
 import * as IS from "../data/hal-ibnsina.data.js";
 import * as PT from "../data/hal-ptolemy.data.js";
+import * as KF from "../data/hal-kashf.data.js";
+import ak from "./asma-khuddam.js";
 import * as AM from "../data/hal-abumashar.data.js";
+import * as BR from "../data/hal-biruni.data.js";
 import { MIZAJ } from "../data/huruf.data.js";
 
 const SHAMS_SRC = "شمس المعارف الكبرى — مزاجُ الطبعِ الغالبِ في حروفِ الاسم";
@@ -201,7 +204,11 @@ function ptolemySoul(sky) {
 }
 
 // ── الدمج ───────────────────────────────────────────────────────────────
-const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)" };
+const LINE_AR = { chart: "مزاجُ الخريطة", name: "مزاجُ حروفِ الاسم", manners: "دليلُ الأخلاق", sign: "برجُ دليلِ الأخلاق", wit: "عطاردُ والقمر", ptol_signs: "بروجُ عطاردَ والقمر", ptol_ruler: "حاكمُ النفس", ptol_moon: "حالُ القمر", am_asc: "طالعُ المولد (أبو معشر)", name_sign: "برجُ الاسم (كشف المكتوم)" };
+// خطوطٌ مأخوذةٌ من مدخلٍ واحد تُعَدُّ عائلةً واحدة: برجُ الاسمِ ومزاجُ حروفِه كلاهما من الاسم، فلا يؤكّدان صفةً وحدَهما
+const FAMILY = { name_sign: "name" };
+// مصادرُ ثانويّة (متأخّرة): تشهدُ وتؤيّد، لكنّ اعتراضَها وحدَها لا يقلبُ صفةً اتّفق عليها دليلان أصليّان إلى «أحيانًا»
+const SECONDARY = new Set(["name_sign"]);
 
 /** @param c {name, mother, birth:Date (UTC), lat, lon} */
 export function reading(c) {
@@ -238,25 +245,47 @@ export function reading(c) {
   for (const w of witTestimony(sky)) testify("wit", `${L.LILLY_SRC}، ف١٠٩`, w.text, w.traits);
   const am = AM.ASC_NATURE[sky.ascendant.sign];
   if (am) testify("am_asc", `${AM.ABUMASHAR_SRC}، ص ${am.page}`, am.text, am.traits);
+  // برجُ الاسم بالحساب (كما في بقيّةِ الموقع) ⇒ فصلُ «الرجل» من كشف المكتوم — مصدرٌ ثانويٌّ معاصر
+  let nameSign = null;
+  if (c.mother) { try { nameSign = ak.reading(c.name, c.mother).sign.name; } catch {} }
+  const kf = nameSign && KF.NAME_SIGN_MAN[nameSign];
+  if (kf) testify("name_sign", `${KF.KASHF_SRC}، ص ${kf.page}`, kf.text, kf.traits);
   const soul = ptolemySoul(sky);
   for (const t of soul.testimonies) testify(t.line, PT.PTOLEMY_SRC, t.text, t.traits);
 
+  // المؤيِّدون (يصفون معنى الكوكبِ نفسِه): يُضافون إلى صفاتٍ شهد لها ذلك الدليلُ أصلًا، ولا يُنشئون صفة
+  const corroborate = (line, planet) => {
+    const d = planet && BR.PLANET_DISPOSITION[planet]; if (!d) return;
+    for (const t of d.traits) if ((ev[t] || []).some((e) => e.line === line)) ev[t].push({ line, src: BR.BIRUNI_SRC, text: d.text, corroborates: true });
+  };
+  if (sig.planet) corroborate("manners", sig.planet);
+  if (soul.ruler) corroborate("ptol_ruler", soul.ruler);
+
   // الحكمُ على كلِّ صفة
   const lines = (t) => new Set((ev[t] || []).map((e) => e.line));
+  const fams = (t) => new Set([...lines(t)].map((l) => FAMILY[l] || l));
+  const primary = (t) => new Set([...lines(t)].filter((l) => !SECONDARY.has(l)).map((l) => FAMILY[l] || l)).size;
+  const booksOf = (evs) => [...new Set(evs.map((e) => e.src.split("،")[0]))];
   const groups = Object.fromEntries(Object.keys(TRAIT_GROUPS).map((g) => [g, { title: TRAIT_GROUPS[g], firm: [], sometimes: [], single: [] }]));
   const done = new Set();
   for (const id of Object.keys(TRAITS)) {
     if (done.has(id) || !ev[id]) continue;
-    const t = TRAITS[id], n = lines(id).size;
-    const opp = t.opp && ev[t.opp] ? t.opp : null, no = opp ? lines(opp).size : 0;
+    const t = TRAITS[id], n = fams(id).size;
+    const opp = t.opp && ev[t.opp] ? t.opp : null, no = opp ? fams(opp).size : 0;
     const g = groups[t.group];
-    if (opp && n >= 1 && no >= 1) {
+    // اعتراضٌ ثانويٌّ محض على صفةٍ أكّدها دليلان أصليّان ⇒ تبقى مؤكّدة، ويُسجَّلُ الخلافُ للكشف
+    const overrule = (x, y) => primary(x) >= 2 && primary(y) === 0;
+    if (opp && (overrule(id, opp) || overrule(opp, id))) {
+      const [w, l] = overrule(id, opp) ? [id, opp] : [opp, id];
+      done.add(w); done.add(l);
+      groups[TRAITS[w].group].firm.push({ id: w, ar: TRAITS[w].ar, lines: [...lines(w)], books: booksOf(ev[w]), evidence: ev[w], dissent: ev[l] });
+    } else if (opp && n >= 1 && no >= 1) {
       done.add(id); done.add(opp);
       const [a, b] = n >= no ? [id, opp] : [opp, id];
       g.sometimes.push({ ids: [a, b], ar: `أحيانًا ${TRAITS[a].ar}، وأحيانًا ${TRAITS[b].ar}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
     } else if (n >= 2) {
       done.add(id);
-      g.firm.push({ id, ar: t.ar, lines: [...lines(id)], evidence: ev[id] });
+      g.firm.push({ id, ar: t.ar, lines: [...lines(id)], books: booksOf(ev[id]), evidence: ev[id] });
     } else {
       done.add(id);
       g.single.push({ id, ar: t.ar, lines: [...lines(id)], evidence: ev[id] });
@@ -281,10 +310,11 @@ export function reading(c) {
       final: { heat: heatAx, moist: moistAx, complexion: finalComplexion },
     },
     significator: sig.planet ? { planet: sig.planet, why: sig.why, strength: sigStr } : null,
+    nameSign,
     soulRuler: soul.ruler ? { planet: soul.ruler, strength: soul.rulerStrength } : null,
     groups, body,
     lineNames: LINE_AR,
-    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, SHAMS_SRC],
+    sources: [L.LILLY_SRC, IS.IBNSINA_SRC, PT.PTOLEMY_SRC, AM.ABUMASHAR_SRC, BR.BIRUNI_SRC, SHAMS_SRC, KF.KASHF_SRC],
     summary: summarize(chart, nm, heatAx, moistAx, finalComplexion),
   };
 }
