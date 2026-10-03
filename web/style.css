@@ -425,3 +425,7 @@ body.reveal-on .reveal-hint{display:none}
   .app{display:block} body{background:#fff;color:#000}
 }
 .app.searching .topbar{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* التبسيط: أسماءُ الكتب ومن اتّفق ومن خالف — في «وضع الكشف» فقط */
+body:not(.reveal-on) .src{display:none !important}
+.reveal-hint{display:none}

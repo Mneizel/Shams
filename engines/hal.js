@@ -365,7 +365,7 @@ export function reading(c) {
 
 function summarize(chart, nm, heatAx, moistAx, fc, female) {
   const parts = [];
-  if (chart.complexion) parts.push(`بحسب خريطةِ ميلادِك (طريقةُ Lilly) يغلبُ على مزاجِك ${chart.complexion.qual}، أي المزاجُ ال${chart.complexion.ar}.`);
+  if (chart.complexion) parts.push(`بحسب خريطةِ ميلادِك يغلبُ على مزاجِك ${chart.complexion.qual}، أي المزاجُ ال${chart.complexion.ar}.`);
   else parts.push("خريطةُ ميلادِك متعادلةُ الكيفيّاتِ على أحدِ المحورين، فلا يغلبُ عليها مزاجٌ واحد.");
   const agree = [], mixed = [], tie = [];
   for (const [A, word, k] of [[heatAx, "الحرارةُ والبرودة", nm.heatK], [moistAx, "الرطوبةُ واليبوسة", nm.moistK]]) {

@@ -283,7 +283,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["hal", "🪞 قراءة حالك"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -2263,8 +2263,8 @@ function halHTML(r) {
   const groupCards = Object.values(r.groups).filter((g) => g.firm.length || g.sometimes.length).map((g) => card({
     title: g.title,
     body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
-        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
-        ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
+        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss src">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
+        ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss src">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
       </ul>`,
     reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
   })).join("");
@@ -2273,27 +2273,27 @@ function halHTML(r) {
     ${card({ title: k_("مزاجُك", "مزاجُكِ"), cls: "closing", body: `<div class="kv">${esc(r.summary)}</div>`,
       reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
     <div class="grid wide">${groupCards}</div>
-    ${r.degrees ? card({ title: k_("درجاتُ مولدِك", "درجاتُ مولدِكِ"), k: "كتاب الدرج",
-      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d) => `<li style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
-        <div class="gloss" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في ${k_("صفاتِك", "صفاتِكِ")} أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
+    ${r.degrees ? card({ title: k_("درجةُ طالعِك", "درجةُ طالعِكِ"), k: "",
+      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d, i) => `<li class="${i ? "src" : ""}" style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
+        <div class="gloss src" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في ${k_("صفاتِك", "صفاتِكِ")} أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
       reveal: `المصدر: ${r.degrees.src}\n${r.degrees.points.map((d) => `${d.point}: ${d.sign} ${d.n}${d.entry && d.entry.note ? ` (${d.entry.note})` : ""}`).join("\n")}` }) : ""}
-    ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: `${esc(r.birthNumber.planet)} · Cheiro`,
-      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
+    ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: esc(r.birthNumber.planet),
+      body: `<div class="kv">${esc(r.birthNumber.text)}</div><div class="gloss src" style="margin-top:.4rem">${k_("يومُ ميلادِك", "يومُ ميلادِكِ")} من الشهر مجموعةً أرقامُه حتّى يبقى رقمٌ واحد. مصدرٌ غربيٌّ حديث (١٩٢٦)، يدخلُ صفاتِك شاهدًا ثانويًّا فقط.</div>`,
       basis: esc(r.birthNumber.src) }) : ""}
-    ${r.dalil ? card({ title: `${k_("مرتبةُ طالعِك", "مرتبةُ طالعِكِ")}: ${AR(r.dalil.rank)}`, k: `${esc(r.dalil.tab)} · الطوخي`,
+    ${r.dalil ? card({ title: `${k_("مرتبةُ طالعِك", "مرتبةُ طالعِكِ")}: ${AR(r.dalil.rank)}`, k: esc(r.dalil.tab),
       body: `<div class="kv">${esc(r.dalil.text)}</div>${Object.entries(r.dalil.houses || {}).map(([k, v]) => `<div class="kv" style="margin-top:.35rem"><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}
-        <div class="gloss" style="margin-top:.4rem">من اسمِك واسمِ أمّك بأعداد الحروف الهجائيّة (ا=١ … ي=٢٨) ÷ ٩. مؤلّفٌ متأخّر، فيدخلُ صفاتِك شاهدًا ثانويًّا.</div>`,
+        <div class="gloss src" style="margin-top:.4rem">من اسمِك واسمِ أمّك بأعداد الحروف الهجائيّة (ا=١ … ي=٢٨) ÷ ٩. مؤلّفٌ متأخّر، فيدخلُ صفاتِك شاهدًا ثانويًّا.</div>`,
       basis: esc(r.dalil.src) + ` ص${AR(r.dalil.page)}`, reveal: traceText(r.dalil.trace) }) : ""}
-    ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: r.bodyForm.agree || "من الطالع",
-      body: `<div class="kv"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
-        <div class="kv"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss">— ${esc(x.who)}</span></li>`).join("")}</ul>
-        <div class="gloss">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
+    ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: "",
+      body: `<div class="kv src"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss src">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="kv src"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss src">— ${esc(x.who)}</span></li>`).join("")}</ul>
+        <div class="gloss src">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
       basis: r.bodyForm.src.map(esc).join(" · ") }) : ""}
-    ${(r.body.length || (r.ailments && (r.ailments.hits.length || r.ailments.ascPart))) ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: (r.ailments ? `${r.ailments.hits.map((x) => `<div class="kv" style="margin:.3rem 0"><b>قال بطليموس:</b> ${esc(x.malefic)} ${esc(x.how === "فيه" ? "في" : x.how)} ${esc(x.place)} (${esc(x.sign)}) ⇒ قد يتعبُ <b>${esc(x.part)}</b>، ومن جنسِ ${esc(x.malefic)}: ${esc(x.nature)}. <span class="gloss">${x.injury ? "النحسُ مشرِّق: الغالبُ آفةٌ عارضةٌ لا مرضٌ مزمن" : "النحسُ مغرِّب: الغالبُ مرضٌ يطولُ أو يعاود"} — ${esc(r.ailments.src)}</span></div>`).join("")}${r.ailments.hits.length ? `<div class="kv" style="margin:.3rem 0">${esc(r.ailments.relief)}.</div>` : `<div class="kv" style="margin:.3rem 0">لا يقعُ نحسٌ على الطالع ولا الغارب ولا السادس عند بطليموس.</div>`}<div class="kv" style="margin:.3rem 0">وطالعُك ${esc(r.ailments.ascPart.sign)} ويحكمُ من البدن <b>${esc(r.ailments.ascPart.part)}</b>. <span class="gloss">— ${esc(r.ailments.ascPart.src)}</span></div>` : "") + r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b>قال أبو معشر:</b> ` : ""}${esc(b.text)}${b.src ? ` <span class="gloss">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
-    ${singles.length ? `<details class="intro"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
+    ${(r.body.length || (r.ailments && (r.ailments.hits.length || r.ailments.ascPart))) ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: (r.ailments ? `${r.ailments.hits.map((x) => `<div class="kv" style="margin:.3rem 0"><b class="src">قال بطليموس: </b>${esc(x.malefic)} ${esc(x.how === "فيه" ? "في" : x.how)} ${esc(x.place)} (${esc(x.sign)}) ⇒ قد يتعبُ <b>${esc(x.part)}</b>، ومن جنسِ ${esc(x.malefic)}: ${esc(x.nature)}. <span class="gloss">${x.injury ? "النحسُ مشرِّق: الغالبُ آفةٌ عارضةٌ لا مرضٌ مزمن" : "النحسُ مغرِّب: الغالبُ مرضٌ يطولُ أو يعاود"}<span class="src"> — ${esc(r.ailments.src)}</span></span></div>`).join("")}${r.ailments.hits.length ? `<div class="kv" style="margin:.3rem 0">${esc(r.ailments.relief)}.</div>` : `<div class="kv" style="margin:.3rem 0">لا يقعُ نحسٌ على الطالع ولا الغارب ولا السادس عند بطليموس.</div>`}<div class="kv" style="margin:.3rem 0">وطالعُك ${esc(r.ailments.ascPart.sign)} ويحكمُ من البدن <b>${esc(r.ailments.ascPart.part)}</b>. <span class="gloss src">— ${esc(r.ailments.ascPart.src)}</span></div>` : "") + r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b class="src">قال أبو معشر: </b>` : ""}${esc(b.text)}${b.src ? ` <span class="gloss src">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss src">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
+    ${singles.length ? `<details class="intro src"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
       <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
-    <div class="gloss" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`;
+    <div class="gloss src" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`;
 }
 
 PANELS.hal = (main) => {
@@ -2326,9 +2326,9 @@ PANELS.full = (main) => {
     <h2>٢. هويّتُك</h2>
     <div class="grid wide">
     ${card({ title: "من تاريخِ ميلادك", body: `<div class="kv">برجُ ميلادِك (موضعُ الشمس) <b>${esc(N.sunSign)}</b>، وطالعُك <b>${esc(N.ascendant)}</b>، وقمرُك في <b>${esc(N.moonSign)}</b>، ووُلدتَ في يومٍ ربُّه <b>${esc(N.dayRuler)}</b>.</div>` })}
-    ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "للمعرفة", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وطبعُه <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
-      ${I.angelDesc ? `<div class="kv" style="margin-top:.4rem">ويصفُ البونيّ ${esc(I.angelDesc.angel)} (ملَكَ يوم ${esc(I.angelDesc.day)}) بأنّه ${esc(I.angelDesc.desc)}، ويخدمُه من الملوك السفليّة ${esc(I.angelDesc.servant)}. <span class="gloss">— ${esc(I.angelDesc.src)}</span></div>` : ""}
-      <div class="gloss" style="margin-top:.4rem">هذه أسماءٌ تُستخرَجُ بالحساب من الاسم كما في الكتب، تُذكَرُ هنا للمعرفة. ما يتعلّقُ بالعمل بها في أدواتِه: ${navLink("asma", "الأسماء والخدّام")}.</div>` }) : ""}
+    ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وطبعُه <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
+      ${I.angelDesc ? `<div class="kv" style="margin-top:.4rem">و${esc(I.angelDesc.angel)} (ملَكَ يوم ${esc(I.angelDesc.day)}) بأنّه ${esc(I.angelDesc.desc)}، ويخدمُه من الملوك السفليّة ${esc(I.angelDesc.servant)}. <span class="gloss src">— ${esc(I.angelDesc.src)}</span></div>` : ""}
+      <div class="gloss src" style="margin-top:.4rem">هذه أسماءٌ تُستخرَجُ بالحساب من الاسم كما في الكتب، تُذكَرُ هنا للمعرفة. ما يتعلّقُ بالعمل بها في أدواتِه: ${navLink("asma", "الأسماء والخدّام")}.</div>` }) : ""}
     ${kafCard}
     </div>
     <h2>٣. عمرُك ومرحلتُك</h2>
