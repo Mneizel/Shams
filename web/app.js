@@ -2362,6 +2362,7 @@ PANELS.arif = (main) => {
         <div class="kv" style="font-size:1.06rem">${esc(AR(R.summary))}</div>
         <div class="arif-areas">${areas.map((x) => `<div class="arif-area"><div class="ah"><b>${esc(AR(x.title))}</b><span class="arif-pill ${x.pill.cls}">${esc(AR(x.pill.text))}</span></div><div class="kv">${esc(AR(x.text))}</div><small class="src">${esc(AR(x.src))}</small></div>`).join("")}</div>
         ${R.insights.map((x) => `<div class="arif-insight">${esc(AR(x.text))}<small class="src">${esc(AR(x.src))}</small></div>`).join("")}
+        ${R.luckyDays ? `<div class="arif-insight">${esc(AR(R.luckyDays.text))}<small class="src">Cheiro، كتاب الأرقام: أيّامُ رقمِ الميلاد ${esc(AR(R.ctx.bn))}</small></div>` : ""}
         ${!(palmSaved && palmSaved.lines) ? `<div class="gloss" style="margin-top:.6rem">إن ${F ? "قرأتِ" : "قرأتَ"} كفَّ${F ? "كِ" : "ك"} في «${navLink("kaf", "قراءة الكفّ")}» يضيفُ العارفُ ما في خطوطِ يدِ${F ? "كِ" : "ك"} إلى هذه الخلاصة.</div>` : ""}
       </div>
     </div>
@@ -2440,7 +2441,7 @@ PANELS.arif = (main) => {
     arifInterest(A.topic !== "all" ? A.topic : null);
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     draw(); month();
   });

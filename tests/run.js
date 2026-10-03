@@ -1352,6 +1352,13 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   const rvA = arif.revolutions(C, falakM.snapshot(C.birth, C.lat, C.lon), 2027, 2027)[0];
   const rvD = arif.revolutions({ ...C, resLat: 51.5074, resLon: -0.1278 }, falakM.snapshot(C.birth, C.lat, C.lon), 2027, 2027)[0];
   ok(rvA.when.getTime() === rvD.when.getTime() && rvA.asc !== rvD.asc, "مدينةُ السكن تغيّرُ طالعَ التحويل (عمّان ⇐ لندن) ولا تغيّرُ لحظتَه");
+  const qs = arif.qasim(skyN, 34);
+  ok(qs.ruler === "المشتري" && qs.sign === "القوس" && qs.partners.includes("عطارد") && arif.qasim(skyN, 30).ruler === "زحل", "القاسم (البيروني §٥٢٣): في الرابعة والثلاثين حدُّ المشتري في القوس وشريكُه عطارد، وفي الثلاثين حدُّ زحل");
+  ok(a.months.some((m) => m.voices.some((v) => v.meth === "qisma")), "صوتُ القاسم يدخلُ أزمنةَ العمر");
+  ok(a.luckyDays && a.luckyDays.days.join() === "الثلاثاء,الخميس,الجمعة" && a.luckyDays.dates.join() === "9,18,27", "Cheiro: أيّامُ الرقم ٩ الثلاثاء والخميس والجمعة، وتواريخُه ٩ و١٨ و٢٧");
+  ok(q.bestDay && q.bestDay.label && q.bestDay.date >= new Date(Date.UTC(q.best.from.y, q.best.from.m, 1)), "أنسبُ يومٍ للبدء داخلَ أنسبِ نافذة");
+  const fwom = arif.timeline({ ...C, sex: "f" });
+  ok(fwom.months.some((m) => m.voices.some((v) => /مريخِك/.test(v.why))) || fwom.months.length === 48, "للمرأة: المريخُ والشمسُ دليلا الزوج في موضوع الحبّ");
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

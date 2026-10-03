@@ -21321,8 +21321,22 @@ function tasyir(natal, ageYears) {
   return out;
 }
 
+/** القاسمُ وشريكُه في سنٍّ معيّنة: حدُّ درجةِ الطالع المسيَّرة (درجةٌ لكلّ سنة) */
+function qasim(natal, ageYears) {
+  const lon = (natal.ascendant.longitude + ageYears) % 360;
+  const z = falak.zodiacOf(lon);
+  const ruler = z.term?.ruler;
+  if (!ruler) return null;
+  const partners = Object.entries(natal.planets).filter(([n, p]) => n !== ruler && p.sign === z.sign && p.term?.ruler === ruler).map(([n]) => n);
+  return { ruler, sign: z.sign, from: z.term.from, to: z.term.to, partners };
+}
+
+// ── Cheiro: أيّامُ الأسبوع الأنسبُ لكلّ رقم (الفصول ٣–١١)
+const CHEIRO_DAYS = { 1: ["الأحد", "الاثنين"], 2: ["الأحد", "الاثنين", "الجمعة"], 3: ["الخميس", "الجمعة", "الثلاثاء"], 4: ["السبت", "الأحد", "الاثنين"], 5: ["الأربعاء", "الجمعة"], 6: ["الثلاثاء", "الخميس", "الجمعة"], 7: ["الأحد", "الاثنين"], 8: ["السبت", "الأحد", "الاثنين"], 9: ["الثلاثاء", "الخميس", "الجمعة"] };
+const ownDates = (n) => [n, n + 9, n + 18, n + 27].filter((d) => d <= 31);
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
-function natalPoints(sky) {
+function natalPoints(sky, female = false) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
   const pts = [
     { key: "asc", ar: "طالعِك", lon: sky.ascendant.longitude, topics: ["all", "health"] },
@@ -21331,6 +21345,8 @@ function natalPoints(sky) {
     { key: "venus", ar: "زهرتِك", lon: sky.planets["الزهرة"].longitude, topics: ["love"] },
   ];
   if (lot) pts.push({ key: "lot", ar: "سهمِ رزقِك", lon: lot.longitude, topics: ["money"] });
+  // للمرأة: الشمسُ دليلُ الزوج عند بطليموس (م٤ ف٥)، والمريخُ دليلُه في المسائل
+  if (female) { pts[1].topics = ["all", "work", "love"]; pts.push({ key: "mars", ar: "مريخِك", lon: sky.planets["المريخ"].longitude, topics: ["love"] }); }
   // عودةُ المشتري وزحل إلى موضعَيهما في الميلاد
   pts.push({ key: "jup", ar: "مشتريك", lon: sky.planets["المشتري"].longitude, topics: ["all"], only: "jup" });
   pts.push({ key: "sat", ar: "زحلِك", lon: sky.planets["زحل"].longitude, topics: ["all"], only: "sat" });
@@ -21371,6 +21387,14 @@ function monthVoices(ctx, y, m) {
   }
   // ١أ) التسيير: درجةٌ لكلِّ سنةٍ من العمر
   if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics, "tasyir");
+  // ١أ٢) القاسم وشريكُه
+  if (date > ctx.birth) {
+    const q = qasim(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000));
+    if (q) {
+      const sQ = Math.max(-1, Math.min(1, (NATURE[q.ruler] ?? 0) + natalDig(ctx, q.ruler) + q.partners.reduce((a, n) => a + 0.3 * (NATURE[n] ?? 0), 0)));
+      push("periods", sQ, sQ >= 0.5 ? "قطعةٌ من العمر يحكمُها سعد" : sQ <= -0.5 ? "قطعةٌ من العمر يحكمُها نحس" : "", `القاسم ${q.ruler} (حدُّ ${q.sign} ${q.from}–${q.to})${q.partners.length ? `، وشريكُه ${q.partners.join(" و")}` : ""}`, ["all"], "qisma");
+    }
+  }
   // ١ب) تحويلُ السنة التي يقعُ فيها هذا الشهر
   const rv = [...ctx.revs].reverse().find((r) => r.when <= date);
   if (rv) for (const v of rv.voices) push("periods", v.s, v.plain, `تحويلُ سنة ${rv.y}: ${v.why}`, v.topics, "revolution");
@@ -21381,8 +21405,8 @@ function monthVoices(ctx, y, m) {
     if (pt.only === "jup") { if (aspectOf(J, pt.lon) === "conj") push("sky", 1, "بدايةُ دورةِ خيرٍ جديدة", "المشتري يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     if (pt.only === "sat") { if (aspectOf(S, pt.lon) === "conj") push("sky", -1, "مرحلةُ مراجعةٍ وثقلٍ ومسؤوليّة", "زحل يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     const aj = aspectOf(J, pt.lon), as = aspectOf(S, pt.lon), am = aspectOf(M, pt.lon, 3);
-    if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" ? "مودّةٌ وقرب" : pt.key === "sun" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
-    if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" ? "برودٌ في العلاقة" : pt.key === "sun" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
+    if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" || pt.key === "mars" ? "مودّةٌ وقرب" : pt.key === "sun" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
+    if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" || pt.key === "mars" ? "برودٌ في العلاقة" : pt.key === "sun" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
     if (am && ["conj", "square", "opp"].includes(am) && ["asc", "sun", "moon"].includes(pt.key)) push("sky", -0.5, "توتّرٌ وعصبيّة", `المريخ ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[am]} ${pt.ar}`, pt.topics);
   }
   // الكسوف: الشهرُ الذي يقعُ فيه وشهران بعده
@@ -21464,7 +21488,7 @@ function timeline(c, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
   const sky = falak.snapshot(c.birth, c.lat, c.lon);
   const ctx = {
-    birth: new Date(c.birth), sky, byNight: sky.lots?.sect === "ليليّ", points: natalPoints(sky), ascIdx: signIdx(sky.ascendant.longitude),
+    birth: new Date(c.birth), sky, byNight: sky.lots?.sect === "ليليّ", points: natalPoints(sky, c.sex === "f"), ascIdx: signIdx(sky.ascendant.longitude),
     name: c.name, mother: c.mother, bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };
   const past = opt.past ?? 12, future = opt.future ?? 36;
@@ -21515,6 +21539,13 @@ function turningPoints(c, ctx, months) {
     prev = F;
     const jup = mo.voices.find((v) => v.fam === "sky" && v.s === 1 && /المشتري يقارن (طالعِك|شمسِك)/.test(v.why));
     if (jup && !out.some((o) => o.k === mo.k - 1 && /المشتري/.test(o.why))) out.push({ k: mo.k, label: mo.label, text: "انفراجٌ وبابُ فرصة: من أقوى أشهرِك.", why: jup.why });
+  }
+  // تبدّلُ القاسم
+  let prevQ = null;
+  for (const mo of months.filter((x) => x.k >= 0)) {
+    const q = qasim(ctx.sky, (new Date(Date.UTC(mo.y, mo.m, 15)) - ctx.birth) / (365.2422 * 86400000));
+    if (q && prevQ && q.ruler !== prevQ.ruler) { const n = NATURE[q.ruler] ?? 0; out.push({ k: mo.k, label: mo.label, text: n > 0 ? "تبدأ قطعةٌ من العمر يحكمُها كوكبٌ سعد: سنواتٌ أيسر." : n < 0 ? "تبدأ قطعةٌ من العمر يحكمُها كوكبٌ ثقيل: سنواتٌ تحتاجُ صبرًا." : "تتبدّلُ قسمةُ العمر.", why: `القاسم: ${prevQ.ruler} ⇐ ${q.ruler}` }); }
+    prevQ = q;
   }
   // بدايةُ سنةِ التحويل إن كان حكمُها واضحًا
   const fut = months.filter((x) => x.k >= 0);
@@ -21604,7 +21635,8 @@ function read(c, opt = {}) {
     else if (has("fate", /واضحٌ مستقيم|يبدأُ من خطِّ الحياة/)) insights.push({ text: `خطُّ المصير واضح: مسارٌ مهنيٌّ ثابتٌ بجهدِ${k_("ك", "كِ")}، يقوى بين ${W.work.best.label}.`, src: SRC("المصير", "١٢") });
   }
 
-  return { summary, pills, areas, insights, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
+  const luckyDays = ctx.bn ? { days: CHEIRO_DAYS[ctx.bn], dates: ownDates(ctx.bn), text: `أنسبُ أيّامِ${k_("ك", "كِ")} في الأسبوع ${CHEIRO_DAYS[ctx.bn].join(" و")}، وأنسبُ تواريخِ الشهر ${ownDates(ctx.bn).join(" و")}.` } : null;
+  return { summary, pills, areas, insights, luckyDays, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
 }
 
 /** «اسأل العارف»: الرملُ للحظةِ السؤال + الخطُّ الزمنيّ لموضوعه ⇒ جوابٌ واضحٌ وأنسبُ وقت */
@@ -21634,12 +21666,21 @@ function ask(c, question, opt = {}) {
   const locked = /محبوس/.test(r.timing?.text || "");
   const tStr = !locked && r.timing?.magnitude && r.timing?.unit ? `، وأوّلُ ما يظهرُ منه بعد نحو ${r.timing.magnitude} ${r.timing.unit}` : locked ? "، لكنّه لا يظهرُ قريبًا" : "";
   const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
-  return { topic, topicAr: TOPICS[topic], big, text, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
+  let bestDay = null;
+  try {
+    const fromD = new Date(Date.UTC(W.best.from.y, W.best.from.m, 1, 6));
+    const el = falak.election(key || "عام", fromD, new Date(fromD.getTime() + 7 * 86400000), c.resLat ?? c.lat, c.resLon ?? c.lon);
+    const bd = T.ctx.bn ? CHEIRO_DAYS[T.ctx.bn] : null;
+    const WD = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const cand = (el.best || []).map((x) => ({ ...x, d: new Date(x.start) })).sort((a, b) => (b.score + (bd && bd.includes(WD[b.d.getUTCDay()]) ? 1 : 0)) - (a.score + (bd && bd.includes(WD[a.d.getUTCDay()]) ? 1 : 0)));
+    if (cand[0]) bestDay = { date: cand[0].d, weekday: WD[cand[0].d.getUTCDay()], hourRuler: cand[0].hourRuler, label: `${WD[cand[0].d.getUTCDay()]} ${cand[0].d.getUTCDate()} ${MONTHS[cand[0].d.getUTCMonth()]} ${cand[0].d.getUTCFullYear()}` };
+  } catch {}
+  return { topic, topicAr: TOPICS[topic], big, text, bestDay, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-__exports.default = { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, MONTHS, TOPICS, FAMILIES };
+__exports.default = { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
 
-;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["revolutions"]=revolutions;__exports["midheaven"]=midheaven;__exports["tasyir"]=tasyir;__exports["abjadDate"]=abjadDate;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
+;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["revolutions"]=revolutions;__exports["midheaven"]=midheaven;__exports["tasyir"]=tasyir;__exports["qasim"]=qasim;__exports["CHEIRO_DAYS"]=CHEIRO_DAYS;__exports["ownDates"]=ownDates;__exports["abjadDate"]=abjadDate;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
 __M["awfaq"]=(function(){"use strict";const __exports={};
 // engines/awfaq.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27782,6 +27823,7 @@ PANELS.arif = (main) => {
         <div class="kv" style="font-size:1.06rem">${esc(AR(R.summary))}</div>
         <div class="arif-areas">${areas.map((x) => `<div class="arif-area"><div class="ah"><b>${esc(AR(x.title))}</b><span class="arif-pill ${x.pill.cls}">${esc(AR(x.pill.text))}</span></div><div class="kv">${esc(AR(x.text))}</div><small class="src">${esc(AR(x.src))}</small></div>`).join("")}</div>
         ${R.insights.map((x) => `<div class="arif-insight">${esc(AR(x.text))}<small class="src">${esc(AR(x.src))}</small></div>`).join("")}
+        ${R.luckyDays ? `<div class="arif-insight">${esc(AR(R.luckyDays.text))}<small class="src">Cheiro، كتاب الأرقام: أيّامُ رقمِ الميلاد ${esc(AR(R.ctx.bn))}</small></div>` : ""}
         ${!(palmSaved && palmSaved.lines) ? `<div class="gloss" style="margin-top:.6rem">إن ${F ? "قرأتِ" : "قرأتَ"} كفَّ${F ? "كِ" : "ك"} في «${navLink("kaf", "قراءة الكفّ")}» يضيفُ العارفُ ما في خطوطِ يدِ${F ? "كِ" : "ك"} إلى هذه الخلاصة.</div>` : ""}
       </div>
     </div>
@@ -27860,7 +27902,7 @@ PANELS.arif = (main) => {
     arifInterest(A.topic !== "all" ? A.topic : null);
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     draw(); month();
   });
