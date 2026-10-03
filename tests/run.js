@@ -1307,6 +1307,22 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(a.hits.length === 1 && a.hits[0].malefic === "زحل" && a.hits[0].how === "تربيع" && a.hits[0].part.includes("الكليتان"), "زحلُ يربّعُ الطالع (الميزان ⇒ الكليتان وأسفلُ الظهر) — محورُ الطالع والغارب يُعَدُّ مرّةً واحدة");
 }
 
+// ── العارف بالأمر ──
+{
+  const arif = (await import("../engines/arif.js")).default;
+  const C = { name: "محمد", mother: "سميرة", birth: new Date(Date.UTC(1991, 10, 9, 2, 35)), birthDay: 9, lat: 31.9539, lon: 35.9106, now: new Date(Date.UTC(2026, 9, 4)) };
+  const a = arif.read(C), b = arif.read(C);
+  ok(a.months.length === 48 && a.months.filter((m) => m.past).length === 12 && a.months.find((m) => m.now).label === "أكتوبر 2026", "العارف: سنةٌ مضت + ٣٦ شهرًا قادمة، والشهرُ الحاليّ أكتوبر ٢٠٢٦");
+  ok(JSON.stringify(a.months.map((m) => m.scores)) === JSON.stringify(b.months.map((m) => m.scores)) && a.summary === b.summary, "العارف حتميّ");
+  ok(new Set(a.months.map((m) => m.text.all)).size > 20, "نصوصُ الأشهر تختلفُ من شهرٍ لآخر (لا جملةٌ واحدةٌ مكرّرة)");
+  ok(a.areas.length === 5 && a.areas.every((x) => x.text && x.pill) && a.summary.length > 40, "الزبدةُ وجوانبُ الحياة الخمسة");
+  ok(!/[٠-٩]?\s?[+−-]\d/.test(a.summary) && !a.summary.includes("Lilly"), "الزبدةُ بلا أرقامٍ غامضةٍ ولا أسماءِ كتب");
+  const w = arif.read(C, { weights: { sky: 1.5, numbers: 0.5 } });
+  ok(JSON.stringify(w.months.map((m) => m.scores.all)) !== JSON.stringify(a.months.map((m) => m.scores.all)), "أوزانُ «صار/لم يصر» تغيّرُ الحساب");
+  const q = arif.ask(C, "هل أفتح مشروعًا تجاريًّا؟");
+  ok(q.topic === "work" && q.big && q.best && q.best.label, "اسألِ العارف: موضوعُ الشغل وأنسبُ وقت");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

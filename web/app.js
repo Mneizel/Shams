@@ -23,6 +23,7 @@ import debunk from "../engines/debunk.js";
 import kaf from "../engines/kaf.js";
 import hal from "../engines/hal.js";
 import qiraa from "../engines/qiraa.js";
+import arif from "../engines/arif.js";
 import spirits from "../data/spirits.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
@@ -34,7 +35,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const AR = (n) => talisman.toArabicDigits(n);
 function elem(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; }
 
-const AR_MONTHS = ["كانون الثاني", "شباط", "آذار", "نيسان", "أيّار", "حزيران", "تمّوز", "آب", "أيلول", "تشرين الأوّل", "تشرين الثاني", "كانون الأوّل"];
+const AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 const AR_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 function fmtDate(d) { return `${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}`; }
 function fmtDateTime(d) { return `${AR_DAYS[d.getDay()]} ${fmtDate(d)}، الساعة ${AR(String(d.getHours()).padStart(2, "0"))}:${AR(String(d.getMinutes()).padStart(2, "0"))}`; }
@@ -114,7 +115,7 @@ function resolveTiming(phrase, now = new Date()) {
     "عند سفرٍ أو قدومِ غائب": () => `⚠ لا تاريخ — مشروطةٌ بحدثٍ قد لا يقع، فلا يمكن تكذيبها.`,
     "بعد ثلاثة أشهر": () => `أي نحو ${fmtDate(add(90))}`,
     "عند اجتماعِ أهلِ الشأن": () => `⚠ لا تاريخ — مشروطةٌ بـ«اجتماع» غامض، فلا يمكن تكذيبها.`,
-    "قُربَ نهاية العام": () => `أي أواخر سنة ${AR(now.getFullYear())} (كانون الأوّل ${AR(now.getFullYear())})`
+    "قُربَ نهاية العام": () => `أي أواخر سنة ${AR(now.getFullYear())} (ديسمبر ${AR(now.getFullYear())})`
   };
   return (map[phrase] || (() => "—"))();
 }
@@ -212,7 +213,7 @@ const traceText = (arr) => (arr || []).join("\n");
 // عمليّةُ تسخيرٍ كاملة (خاتم + قسَم + قلم سرّي + عزيمة + يوم قمريّ + نقض + شروط) —
 // تُستعمَل أينما ذُكر خادمٌ أو ملَكٌ مرتبطٌ بالاسم، لا في لوحة «التسخير» وحدها.
 function taskhirOpFullHTML(op) {
-  const todayStr = new Date().toLocaleDateString("ar", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const todayStr = new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   return `<div class="grid wide">${card({
     title: `خطواتُ العمل: ${op.goal.label}`, k: op.target ? `بينك وبين ${op.target.name}` : "خاصٌّ بك",
     body: `<div class="kv">الغايةُ: <b>${esc(op.goal.intent)}</b>${op.target ? ` — بينك وبين <b>${esc(op.target.name)}</b> (${esc(op.target.note)})` : ""}.</div>
@@ -247,7 +248,7 @@ function taskhirOpFullHTML(op) {
         if (!op.timing.chosenDate || !op.timing.hourWindow?.start) return `يوم <b>${esc(op.timing.day)}</b> (أقربُ يومٍ كذلك من الآن — تعذّر حسابُ تاريخه الفعليّ هنا)`;
         const d = new Date(op.timing.chosenDate);
         const hs = new Date(op.timing.hourWindow.start), he = new Date(op.timing.hourWindow.end);
-        const dateStr = d.toLocaleDateString("ar", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+        const dateStr = d.toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
         const hsStr = hs.toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" });
         const heStr = he.toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" });
         return `أقربُ يوم <b>${esc(op.timing.day)}</b> من الآن: <b>${esc(dateStr)}</b>، وساعةُ <b>${esc(op.timing.hourRuler)}</b> فيه تحديدًا من <b>${esc(hsStr)}</b> إلى <b>${esc(heStr)}</b> (ساعةٌ كوكبيّةٌ لا ساعةٌ عاديّة — تختلف حدودُها كلَّ يوم؛ هذا حسابُها الفعليُّ لهذا التاريخ بموقعك المسجَّل، لا تقريبًا).`;
@@ -283,7 +284,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -293,9 +294,10 @@ const NAV = [
 ];
 
 // ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──
-const ICON = { home: "home", tools: "grid", card: "user", session: "candle", full: "user", hal: "eye", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
+const ICON = { home: "home", tools: "grid", card: "user", session: "candle", arif: "eye", full: "user", hal: "eye", reading: "astro", compat: "rings", diagnosis: "pulse", kaf: "hand", qura: "dice", jummal: "hash", jafr: "letter", zairja: "dial", raml: "raml", awfaq: "square", falak: "planet", asma: "person-star", talismans: "pen", spirits: "wings", taskhir: "flame", khawass: "beads", debunk: "mask", corpus: "book", manual: "guide", infoOnly: "info" };
 const BRIEF = {
   session: "الأداةُ الأولى لأيّ سؤال: إجماعُ الجفر والزايرجة والفلك، وشاهدٌ من الرمل، وتوصيةُ عمل، ودعمٌ من الخواصّ.",
+  arif: "كلُّ العلومِ تحكي معًا: خلاصةُ حالِك وجوانبِ حياتِك، وسنواتُك الثلاثُ القادمةُ شهرًا بشهر، وجوابُ سؤالِك وأنسبُ وقتٍ له.",
   full: "كلُّ ما يُقالُ عنك أنت من بطاقتك: طبعُك وحالُك، وهويّتُك، وعمرُك ومرحلتُك وسنتُك — بلا أعمالٍ ولا تسخير.",
   hal: "طبعُك ومزاجُك وانفعالاتُك وما قد يُتعبُك — من بطاقتِك وحدَها، بدمجِ عدّةِ كتب: ما اتّفقت عليه يُقال، وما اختلفت فيه «أحيانًا».",
   reading: "كلُّ المحرّكات في «طالعٍ» واحد: هويّةُ الاسم، والكوكب، والمنزلة، والحالُ الفلكيّة.",
@@ -465,7 +467,7 @@ function renderDeco() {
   const who = `${c.name} ابن/ة ${c.mother}`;
   const f = r.fortune || {};
   let h;
-  if (["home", "card", "asma", "spirits", "taskhir", "hal", "full"].includes(id)) {
+  if (["home", "card", "asma", "spirits", "taskhir", "hal", "full", "arif"].includes(id)) {
     h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
   } else if (id === "session" || id === "compat" || id === "diagnosis") {
     h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
@@ -1505,7 +1507,7 @@ PANELS.falak = (main) => {
   </div>`;
 
   // ── أحكام العالم (ج٤): الفصل / الطقس / الغلاء ─────────────────────
-  $("#hours", main).innerHTML = card({ title: `${esc(ph.dayRuler)} — ${new Date(ph.sunrise).toLocaleDateString("ar")}`,
+  $("#hours", main).innerHTML = card({ title: `${esc(ph.dayRuler)} — ${new Date(ph.sunrise).toLocaleDateString("ar-EG")}`,
     body: `<div style="overflow-x:auto"><table class="tbl"><tr><th>#</th><th>الطور</th><th>الحاكم</th><th>من</th><th>إلى</th></tr>
       ${ph.hours.map((h) => `<tr><td>${AR(h.i)}</td><td>${esc(h.phase)}</td><td>${esc(h.ruler)}</td>
         <td>${new Date(h.start).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}</td>
@@ -2304,6 +2306,140 @@ PANELS.hal = (main) => {
   try { r = hal.reading({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
+};
+
+
+// العارف بالأمر ───────────────────────────────────────────────────────
+const ARIF_FB = "smk-arif-fb", ARIF_INT = "smk-arif-int";
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
+function arifWeights() {
+  const fb = lsGet(ARIF_FB, {}), tally = {};
+  for (const e of Object.values(fb)) for (const [fam, s] of Object.entries(e.fams || {})) {
+    if (!s) continue;
+    const t = (tally[fam] = tally[fam] || { hit: 0, miss: 0 });
+    // «صار» يُصدِّقُ العائلةَ التي وافق حكمُها حكمَ الشهر، و«لم يصر» يُكذِّبُها
+    const agreed = Math.sign(s) === Math.sign(e.score || 0) || !e.score;
+    if (e.ok === agreed) t.hit++; else t.miss++;
+  }
+  const w = {};
+  for (const [f, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[f] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
+  return w;
+}
+// الاهتمام: ما فُتح في آخر ٣٠ يومًا (ترتيبٌ فقط — لا يُخفى شيء)
+function arifInterest(topic) {
+  if (!topic) return;
+  const it = lsGet(ARIF_INT, {}); (it[topic] = it[topic] || []).push(Date.now()); lsSet(ARIF_INT, it);
+}
+function arifOrder(keys) {
+  const it = lsGet(ARIF_INT, {}), cut = Date.now() - 30 * 86400000;
+  const n = (k) => (it[k] || []).filter((t) => t > cut).length;
+  return [...keys].sort((x, y) => n(y) - n(x));
+}
+PANELS.arif = (main) => {
+  main.innerHTML = head("arif", "العارف بالأمر");
+  if (!gate(main)) return;
+  const c = ctx();
+  const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now };
+  let R;
+  try { R = arif.read(C, { weights: arifWeights() }); }
+  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
+  const MON = arif.MONTHS, F = c.sex === "f";
+  let topic = "all", sel = R.months.find((m) => m.now)?.k ?? 0, askBest = null;
+  const tabKeys = ["all", ...arifOrder(["work", "money", "love", "health", "study"])];
+  const areaKeys = arifOrder(R.areas.map((x) => x.key));
+  const areas = areaKeys.map((k) => R.areas.find((x) => x.key === k));
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + `
+    <div class="card closing arif-zubda">
+      <h3><span>الزبدة</span></h3>
+      <div class="normal">
+        <div class="arif-pills">${R.pills.map((p) => `<span class="arif-pill ${p.cls}">${esc(AR(p.text))}</span>`).join("")}</div>
+        <div class="kv" style="font-size:1.06rem">${esc(AR(R.summary))}</div>
+        <div class="arif-areas">${areas.map((x) => `<div class="arif-area"><div class="ah"><b>${esc(AR(x.title))}</b><span class="arif-pill ${x.pill.cls}">${esc(AR(x.pill.text))}</span></div><div class="kv">${esc(AR(x.text))}</div><small class="src">${esc(AR(x.src))}</small></div>`).join("")}</div>
+        ${R.insights.map((x) => `<div class="arif-insight">${esc(AR(x.text))}<small class="src">${esc(AR(x.src))}</small></div>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <h3><span>سنةٌ مضت والسنواتُ الثلاثُ القادمة، شهرًا بشهر</span></h3>
+      <div class="normal">
+        <div class="arif-tabs" role="tablist">${tabKeys.map((k) => `<button class="arif-tab" role="tab" data-t="${k}" aria-selected="${k === "all"}">${esc(arif.TOPICS[k])}</button>`).join("")}</div>
+        <div class="arif-legend"><span><i style="background:var(--ok)"></i>شهرٌ طيّب</span><span><i style="background:var(--faint)"></i>عاديّ</span><span><i style="background:var(--bad)"></i>ثقيل</span><span>الأعمدةُ الباهتةُ أشهرٌ مضت · اضغطْ أيَّ شهرٍ لتعرفَ ما فيه</span></div>
+        <div id="arifYears" class="arif-years"></div>
+      </div>
+    </div>
+    <div class="card" id="arifMonth"></div>
+    ${R.turning.length ? `<h2>نقاطُ التحوّل</h2><div class="arif-turns">${R.turning.map((t) => `<div class="arif-turn"><div class="when">${esc(AR(t.label))}</div><div class="kv">${esc(AR(t.text))}</div><small class="src">${esc(AR(t.why))}</small></div>`).join("")}</div>` : ""}
+    <div class="card">
+      <h3><span>اسألِ العارف</span></h3>
+      <div class="normal">
+        <form class="form" id="arifAsk"><input id="arifQ" placeholder="مثلًا: هل أفتح مشروعًا تجاريًّا؟" value="${esc(c.question || "")}" style="flex:1 1 260px;min-width:0"><button class="btn" type="submit">اسأل</button></form>
+        <div id="arifAns"></div>
+      </div>
+    </div>
+    <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء. وإجاباتُك «صار / لم يصر» على الأشهر الماضية تُعلّمُ العارفَ أيَّ العلومِ تصيبُ معك.</span>
+      <button class="btn sm sec" id="arifReset" type="button">أرجِعِ الترتيبَ الأصليّ وامسحْ ما تعلّمه</button></div>`);
+
+  const box = $("#arifYears", main), md = $("#arifMonth", main);
+  const colorOf = (s) => (s >= 0.45 ? "var(--ok)" : s <= -0.45 ? "var(--bad)" : "var(--faint)");
+  function draw() {
+    const years = [...new Set(R.months.map((m) => m.y))];
+    const shade = askBest || R.windows[topic]?.best;
+    box.innerHTML = years.map((y) => {
+      const W = 720, mid = 62, scale = 24, bw = W / 12;
+      let h = `<line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--line)" />`;
+      for (let m = 0; m < 12; m++) {
+        const d = R.months.find((q) => q.y === y && q.m === m);
+        const x = W - (m + 1) * bw + 6;
+        if (d && shade && d.k >= shade.from.k && d.k <= shade.to.k) h += `<rect x="${x - 6}" y="2" width="${bw}" height="${mid * 2 - 4}" fill="var(--gold-soft)" />`;
+        if (d) {
+          const v = d.scores[topic], hgt = Math.max(3, Math.min(56, Math.abs(v) * scale));
+          h += `<rect class="arif-bar${d.past ? " past" : ""}" data-k="${d.k}" x="${x}" y="${v >= 0 ? mid - hgt : mid}" width="${bw - 12}" height="${hgt}" rx="3" fill="${colorOf(v)}" stroke="${d.k === sel ? "var(--gold-hi)" : "none"}" stroke-width="2"><title>${MON[m]} ${y}</title></rect>`;
+          if (d.now) h += `<line x1="${x + bw - 6}" x2="${x + bw - 6}" y1="0" y2="${mid * 2}" stroke="var(--gold)" stroke-dasharray="3 3" /><text x="${x + bw - 9}" y="11" text-anchor="end" fill="var(--gold-hi)" font-size="10">الآن</text>`;
+        } else h += `<rect x="${x}" y="${mid - 1}" width="${bw - 12}" height="2" fill="var(--line)" />`;
+        h += `<text x="${x + (bw - 12) / 2}" y="${mid * 2 + 18}" text-anchor="middle" fill="${d ? "var(--faint)" : "var(--line)"}" font-size="12">${MON[m]}</text>`;
+      }
+      return `<div class="arif-yr"><div class="y">${AR(y)}</div><div class="arif-chart"><svg viewBox="0 0 720 150" role="img" aria-label="أشهر ${AR(y)}">${h}</svg></div></div>`;
+    }).join("");
+    box.querySelectorAll(".arif-bar").forEach((b) => b.addEventListener("click", () => { sel = +b.dataset.k; draw(); month(); }));
+  }
+  function month() {
+    const d = R.months.find((m) => m.k === sel); if (!d) return;
+    const fb = lsGet(ARIF_FB, {})[d.label];
+    const lvl = d.level[topic];
+    md.innerHTML = `<h3><span>${esc(MON[d.m])} ${AR(d.y)}</span><span class="k">${d.past ? "مضى" : d.now ? "الآن" : ""}</span></h3><div class="normal">
+      <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? "كان " : ""}شهرًا ${esc(AR(lvl))}</div>
+      <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
+      ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
+        : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
+      <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
+    </div>`;
+    md.querySelectorAll("[data-ok]").forEach((b) => b.addEventListener("click", () => {
+      const all = lsGet(ARIF_FB, {}), fams = {};
+      for (const v of d.voices) fams[v.fam] = (fams[v.fam] || 0) + v.s;
+      all[d.label] = { ok: b.dataset.ok === "1", score: d.scores.all, fams };
+      lsSet(ARIF_FB, all); month();
+    }));
+  }
+  main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
+    topic = t.dataset.t; askBest = null;
+    main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x === t ? "true" : "false"));
+    if (topic !== "all") arifInterest(topic);
+    draw(); month();
+  }));
+  $("#arifAsk", main).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = $("#arifQ", main).value.trim(); if (!q) return;
+    let A; try { A = arif.ask(C, q, { weights: arifWeights() }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
+    arifInterest(A.topic !== "all" ? A.topic : null);
+    topic = A.topic; askBest = A.best;
+    main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>
+      <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
+    draw(); month();
+  });
+  $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(ARIF_FB); } catch {} route("arif"); });
+  draw(); month();
 };
 
 // قراءتك الكاملة ───────────────────────────────────────────────────────

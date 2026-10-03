@@ -48,7 +48,7 @@ export const AGES_LIST = AGES;
 export const NATURE = { المشتري: "saad", الزهرة: "saad", زحل: "nahs", المريخ: "nahs", الشمس: "mixed", القمر: "mixed", عطارد: "mixed", الرأس: "saad", الذنب: "nahs" };
 const NAT_AR = { saad: "سعد", nahs: "نحس", mixed: "وسط" };
 const addYears = (d, y) => new Date(d.getTime() + y * 365.2422 * 86400000);
-const fmtMY = (d) => `${["كانون الثاني", "شباط", "آذار", "نيسان", "أيّار", "حزيران", "تمّوز", "آب", "أيلول", "تشرين الأوّل", "تشرين الثاني", "كانون الأوّل"][d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+const fmtMY = (d) => `${["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"][d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 
 /** حكمٌ واحدٌ واضح: الفترةُ الكبرى والصغرى وسنةُ العمر — سعدٌ أم نحس، ومتى تنتهي. */
 export function fortune(age, now) {

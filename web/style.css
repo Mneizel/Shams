@@ -429,3 +429,36 @@ body.reveal-on .reveal-hint{display:none}
 /* التبسيط: أسماءُ الكتب ومن اتّفق ومن خالف — في «وضع الكشف» فقط */
 body:not(.reveal-on) .src{display:none !important}
 .reveal-hint{display:none}
+
+/* العارف بالأمر */
+.arif-pills{display:flex;gap:.45rem;flex-wrap:wrap;margin:.1rem 0 .6rem}
+.arif-pill{font-size:.78rem;border-radius:999px;padding:.1rem .65rem;border:1px solid var(--line-2);color:var(--muted);white-space:nowrap}
+.arif-pill.saad{color:var(--ok);border-color:rgba(69,180,140,.5);background:var(--ok-soft)}
+.arif-pill.nahs{color:var(--bad);border-color:rgba(229,101,93,.5);background:var(--bad-soft)}
+.arif-pill.gold{color:var(--gold-hi);border-color:var(--gold-line);background:var(--gold-soft)}
+.arif-areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:.9rem 0 .3rem}
+.arif-area{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:.25rem;align-content:start;min-width:0}
+.arif-area .ah{display:flex;justify-content:space-between;gap:.5rem;align-items:center;flex-wrap:wrap}
+.arif-area .ah b{font-family:var(--font-head)}
+.arif-area small,.arif-insight small,.arif-turn small{display:block;color:var(--faint);font-size:.74rem}
+.arif-insight{border-inline-start:2px solid var(--gold);padding-inline-start:.7rem;margin:.6rem 0 0}
+.arif-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem}
+.arif-tab{background:var(--panel-2);border:1px solid var(--line-2);color:var(--muted);border-radius:999px;padding:.2rem .9rem;cursor:pointer;font-size:.88rem}
+.arif-tab[aria-selected="true"]{color:var(--accent-ink);background:var(--gold);border-color:var(--gold);font-weight:600}
+.arif-legend{display:flex;gap:.9rem;font-size:.78rem;color:var(--muted);flex-wrap:wrap;margin-bottom:.4rem}
+.arif-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:.3rem;vertical-align:-1px}
+.arif-years{display:grid;gap:12px}
+.arif-yr{display:grid;grid-template-columns:5.6rem minmax(0,1fr);gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.arif-yr .y{white-space:nowrap;font-family:var(--f-display);font-size:2rem;color:var(--gold-hi);line-height:1}
+.arif-chart{overflow-x:auto}
+.arif-chart svg{display:block;width:100%;min-width:540px;height:auto;font-family:var(--font-body)}
+.arif-bar{cursor:pointer}.arif-bar.past{opacity:.5}.arif-bar:hover{opacity:.9}
+@media (max-width:560px){.arif-yr{grid-template-columns:1fr}}
+.arif-lvl{font-family:var(--f-display);font-size:1.7rem;line-height:1.3}
+.arif-did{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-top:.5rem}
+.arif-did [aria-pressed="true"]{border-color:var(--gold);color:var(--ink)}
+.arif-turns{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:1rem}
+.arif-turn{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.arif-turn .when{font-family:var(--font-head);color:var(--gold-hi)}
+.arif-big{font-family:var(--f-display);font-size:1.4rem;color:var(--gold-hi);margin-top:.6rem}
+.arif-learn{display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--faint);margin-top:.8rem}
