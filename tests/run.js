@@ -1344,6 +1344,11 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(a.turning.some((t) => /^تحويلُ سنة/.test(t.why)), "بدايةُ سنةِ التحويل الواضحة نقطةُ تحوّل");
   const per = a.months.find((m) => m.now).voices.filter((v) => v.fam === "periods");
   ok(per.every((v) => v.meth) && new Set(per.map((v) => v.meth)).size >= 2, "داخلَ العائلة لكلِّ طريقةٍ صوتٌ واحد (التحويلُ لا يطغى بكثرةِ أحكامِه)");
+  ok(!/فاستفدْ/.test(arif.read({ ...C, sex: "f", birth: new Date(Date.UTC(2000, 1, 29, 23, 50)), lat: -33.87, lon: 151.2 }).summary), "الزبدةُ للمرأة بلا صيغةِ مذكّر");
+  for (const [b, la, lo] of [[Date.UTC(2000, 1, 29, 23, 50), -33.87, 151.2], [Date.UTC(1975, 0, 1, 0, 5), 64.13, -21.9], [Date.UTC(1988, 11, 31, 18, 30), -1.29, 36.82]]) {
+    const rr = arif.read({ ...C, birth: new Date(b), lat: la, lon: lo });
+    ok(rr.months.every((m) => Object.values(m.scores).every(Number.isFinite)) && rr.months.some((m) => m.voices.some((v) => v.meth === "revolution")), `العارف يعملُ لميلادٍ صعب (${new Date(b).toISOString().slice(0, 10)}، ${la}°)`);
+  }
   const palm = { lines: { life: { present: true, states: ["قصيرٌ"] }, head: { present: true, states: ["مستقيمٌ واضحٌ طويل"] }, heart: { present: true, states: ["به فروعٌ هابطة"] }, fate: { present: false, states: [] } } };
   const ap = arif.read(C, { palm });
   ok(ap.insights.length >= a.insights.length + 3 && ap.insights.some((x) => /خطُّ الحياة/.test(x.text)) && ap.insights.some((x) => /خطُّ القلب/.test(x.text) && /تمهّل/.test(x.text)), "الكفّ: خطوطُ اليد المحفوظة تُركَّبُ مع الخطِّ الزمنيّ في الاستنتاجات");

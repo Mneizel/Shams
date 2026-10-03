@@ -175,6 +175,9 @@ export function abjadDate(n) {
   return (th ? (th > 1 ? ABJ[th] : "") + "غ" : "") + (h ? ABJ[h] : "") + (t ? ABJ[t] : "") + (u ? ABJ[u] : "");
 }
 
+// حالُ الكوكب في خريطة الميلاد (Lilly: «if the Lord … be well dignified»): قويٌّ بالحظوظ ⇒ يُحسِن، ضعيفٌ بالوبال والهبوط ⇒ يُسيء
+const natalDig = (ctx, planet) => { const p = ctx.sky.planets[planet]; if (!p) return 0; const d = falak.dignities(planet, p.longitude); return d.score >= 3 ? 0.4 : d.score < 0 ? -0.4 : 0; };
+
 /** أصواتُ شهرٍ واحد */
 function monthVoices(ctx, y, m) {
   const date = new Date(Date.UTC(y, m, 15, 12));
@@ -183,13 +186,14 @@ function monthVoices(ctx, y, m) {
   // ١) أزمنةُ العمر
   if (date > ctx.birth) {
     const F = falak.firdaria(ctx.birth, date, { byNight: ctx.byNight });
-    const maj = NATURE[F.majorLord] ?? 0, min = NATURE[F.minorLord] ?? 0;
+    const maj = (NATURE[F.majorLord] ?? 0) + natalDig(ctx, F.majorLord), min = (NATURE[F.minorLord] ?? 0) + natalDig(ctx, F.minorLord);
     const sF = Math.max(-1, Math.min(1, 0.45 * maj + 0.55 * min));
     push("periods", sF, sF <= -0.5 ? "تعبٌ وتأخيرٌ في الأمور" : sF >= 0.5 ? "خفّةٌ وتيسيرٌ في الحال" : sF < 0 ? "شيءٌ من الثقل" : sF > 0 ? "شيءٌ من التيسير" : "",
       `الفترةُ الكبرى لـ${F.majorLord} والصغرى لـ${F.minorLord} (${PLANET_GOVERNS[F.minorLord] || ""})`, ["all"], "firdaria");
     const P = falak.annualProfection(ctx.birth, date, ctx.sky.ascendant.longitude);
-    const sP = NATURE[P.yearLord] ?? 0;
-    push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})`, HOUSE_TOPIC[P.profectedHouse] || ["all"], "profection");
+    const dP = natalDig(ctx, P.yearLord);
+    const sP = Math.max(-1, Math.min(1, (NATURE[P.yearLord] ?? 0) + dP));
+    push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})${dP > 0 ? "، وهو قويٌّ في ميلادِك" : dP < 0 ? "، وهو ضعيفٌ في ميلادِك" : ""}`, HOUSE_TOPIC[P.profectedHouse] || ["all"], "profection");
   }
   // ١أ) التسيير: درجةٌ لكلِّ سنةٍ من العمر
   if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics, "tasyir");
@@ -386,7 +390,7 @@ export function read(c, opt = {}) {
   let summary = nowLvl === "heavy"
     ? `${k_("أنت", "أنتِ")} الآن في فترةٍ ثقيلة${g.heavyUntil ? ` تمتدُّ حتّى ${g.heavyUntil.label}` : ""}: الأمورُ تتأخّرُ ويكثرُ التعب.${g.relief ? ` من ${g.relief.label} تبدأ بالانفراج تدريجيًّا،` : ""} وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}.`
     : nowLvl === "good"
-    ? `${k_("أنت", "أنتِ")} الآن في فترةٍ طيّبة، فاستفدْ منها. وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}، وأثقلُ فترةٍ بين ${g.worst.label}.`
+    ? `${k_("أنت", "أنتِ")} الآن في فترةٍ طيّبة، ${k_("فاستفدْ", "فاستفيدي")} منها. وأحسنُ ما يمرُّ ${k_("عليك", "عليكِ")} في السنوات الثلاث بين ${g.best.label}، وأثقلُ فترةٍ بين ${g.worst.label}.`
     : `${k_("حالُك", "حالُكِ")} الآن وسط${g.relief ? `، ويبدأ التحسّنُ من ${g.relief.label}` : ""}. أحسنُ فترةٍ في السنوات الثلاث بين ${g.best.label}، وأثقلُها بين ${g.worst.label}.`;
 
   // الجوانب
