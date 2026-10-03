@@ -2549,6 +2549,19 @@ const SIGNIFICATORS = {
   "علم":    { house: 9,  planets: ["عطارد"], note: "عطاردُ سالمًا من الاحتراق، ناظرًا لحاكم الطالع." },
   "غائب":   { house: 3,  planets: ["القمر", "عطارد"], note: "القمرُ وحاكمُ الثالث؛ اتّصالُ القمر بحاكم الطالع ⇒ خبرٌ/قدوم." },
   "خبر":    { house: 3,  planets: ["عطارد", "القمر"], note: "عطاردٌ والقمرُ ونظرُهما لحاكم الطالع." },
+  // ── مسائلُ زادها كتابُ البارع لابن أبي الرجال (باب المسائل) ──
+  "سرقة":   { house: 2,  planets: ["عطارد"], note: "الطالعُ لصاحب المتاع، الثاني للمتاع، السابعُ للسارق، الرابعُ لموضع المتاع (البارع ٥٣)." },
+  "ضالة":   { house: 2,  planets: ["القمر"], note: "القمرُ وربُّ الثاني للضالّة، وربُّ الطالع للطالب (البارع ٥١)." },
+  "حبس":    { house: 12, planets: ["زحل"], note: "انصرافُ القمر عن صاحب الرابع وخروجُ الدليل من تحت الشعاع خلاص (البارع ٨٢)." },
+  "بيع وشراء": { house: 7, planets: ["عطارد"], note: "الطالعُ للبائع، السابعُ للمشتري، الرابعُ للسلعة، العاشرُ للثمن (البارع ٦٠)." },
+  "شركة":   { house: 7,  planets: ["عطارد"], note: "الطالعُ للسائل والسابعُ للشريك؛ البروجُ الثابتة تدوم (البارع ٦٠)." },
+  "عقار":   { house: 4,  planets: ["زحل"], note: "الطالعُ للمشتري، السابعُ للبائع، العاشرُ للثمن، الرابعُ للعقار (البارع ٢٣)." },
+  "كنز":    { house: 4,  planets: ["زحل"], note: "السعدُ في الرابع واتّصالُ ربّ الطالع بربّه (البارع ٢٥)." },
+  "رؤيا":   { house: 9,  planets: ["المشتري"], note: "المشتري ونظرُه لربّ الطالع؛ والكوكبُ في التاسع مادّةُ الرؤيا (البارع ٧٩)." },
+  "كتاب":   { house: 3,  planets: ["عطارد", "القمر"], note: "عطاردُ أو القمرُ في الطالع، أو القمرُ مقبلٌ على عطارد (البارع ٣٥)." },
+  "رجاء":   { house: 11, planets: ["المشتري"], note: "اتّصالُ ربّ الطالع أو القمر بربّ الحادي عشر (البارع ٩٦)." },
+  "صديق":   { house: 11, planets: ["الزهرة"], note: "اتّصالُ ربّ الطالع بربّ الحادي عشر (البارع ٩٦)." },
+  "صناعة":  { house: 10, planets: ["عطارد"], note: "الأقوى من ربّ الطالع وربّ العاشر وعطارد، وطبعُ برجه (البارع ٩٥)." },
 };
 
 // ── سهام العرب (اللوطات) ─────────────────────────────────────────────
@@ -3350,6 +3363,144 @@ const TRAITS_F = {
 const GROUPS_F = { temper: "طبعُكِ وانفعالاتُكِ", mind: "عقلُكِ وتفكيرُكِ", social: "معاملتُكِ للناس", inner: "ما يعتملُ في داخلكِ", work: "عملُكِ وهمّتُكِ", body: "بدنُكِ ونومُكِ" };
 
 ;__exports["ASC_NATURE_WOMAN"]=ASC_NATURE_WOMAN;__exports["NAME_SIGN_WOMAN"]=NAME_SIGN_WOMAN;__exports["TRAITS_F"]=TRAITS_F;__exports["GROUPS_F"]=GROUPS_F;return __exports;})();
+__M["horary-bari.data"]=(function(){"use strict";const __exports={};
+// data/horary-bari.data.js
+// ─────────────────────────────────────────────────────────────────────────────
+// جداولُ «المسائل» من كتاب البارع في أحكام النجوم لابن أبي الرجال (الأجزاء ١–٣،
+// باب المسائل، الورقات ١٩–٩٧ من المخطوط). كلُّ جدولٍ مُعلَّمٌ برقم الورقة.
+// ما يخصّ الدولَ والحروبَ وحصارَ المدن (الورقات ٦٢–٧٣، ٩١) لم يُنقَل لأنّه لا يخصّ سائلًا فردًا.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BARI_SRC = "ابن أبي الرجال، البارع في أحكام النجوم — باب المسائل";
+
+/** مصدرُ المال بموضع ربّ الثاني (أو الكوكب المتّصل به) من البيوت [ورقة ٢٢] */
+const MONEY_SOURCE = {
+  1: "بسعيِك أنت وكدِّ يدِك", 2: "من مالٍ قائمٍ يزيدُ بنفسه", 3: "من الإخوة والأقارب أو التنقّل",
+  4: "من الأرض والعقار أو من الأب", 5: "من الأولاد أو الهدايا", 6: "من العمّال والخدم أو الدوابّ",
+  7: "من الزوج أو الشريك أو من خصمٍ", 8: "من ميراثٍ أو مالِ غيرِك", 9: "من سفرٍ أو بلدٍ بعيد",
+  10: "من صاحبِ سلطانٍ أو من رئيسِك في العمل", 11: "من الأصدقاء والمعارف", 12: "من طريقٍ مكروهٍ أو من عدوّ",
+};
+
+/** من أين يدخلُ الفسادُ على الأمر: موضعُ النحس [ورقة ٤٥ في الزواج، وتُعمَّم] */
+const HARM_SOURCE = {
+  2: "من المال", 3: "من الإخوة أو الأقارب", 4: "من الأهل والآباء", 5: "من الأولاد",
+  6: "من مرضٍ أو من عامل", 8: "من دَينٍ أو مالِ الغير", 12: "من عدوٍّ خفيّ",
+};
+
+/** من أين يأتي الخيرُ للزوجين: نظرُ القمر/الدليل [ورقة ٤٦] */
+const MARRIAGE_GOOD_BY_ASPECT = {
+  "تسديس": "من الأصدقاء والإخوان", "تثليث": "من الأولاد ومن السفر", "مقارنة": "من عمل اليد",
+  "تربيع": "من الأهل والسلطان", "مقابلة": "من الأسفار والنساء",
+};
+
+/** بروجُ الجمال وغيرُها لصفة الزوج [ورقة ٤٥] */
+const BEAUTY_SIGNS = ["الجوزاء", "السنبلة", "الميزان", "القوس", "الدلو"];
+const PLAIN_SIGNS = ["الثور", "الجدي", "الحوت"];
+
+/** العضوُ المعتلّ ببيت النحس من الطالع [ورقة ٣٩ و٤٣] */
+const HOUSE_BODY = {
+  1: "الرأس والوجه", 2: "العنق والحلق", 3: "الكتفين واليدين", 4: "الصدر والرئة", 5: "المعدة والقلب والظهر",
+  6: "البطن والأمعاء", 7: "الوركين والمثانة", 8: "الفرج والمقعدة", 9: "الفخذين", 10: "الركبتين",
+  11: "الساقين", 12: "القدمين",
+};
+
+/** خِلطُ المرض بطبع برج القمر [ورقة ٤٢] */
+const ELEMENT_HUMOR = { "نار": "صفراء (حرارةٌ ويبس)", "تراب": "سوداء (بردٌ ويبس)", "هواء": "دم (حرارةٌ ورطوبة)", "ماء": "بلغم (بردٌ ورطوبة)" };
+const QUALITY_COURSE = { "منقلب": "يتقلّبُ ويتغيّرُ سريعًا", "ثابت": "يثبتُ ويطول", "ذو جسدين": "يخفُّ ثمّ يعاودُ (نكسة)" };
+
+/** وحدةُ الزمن ببرج القمر [ورقة ٢١] */
+const MOON_SIGN_TIME = { "منقلب": "أيّام", "ذو جسدين": "شهور", "ثابت": "سنين" };
+
+/** ما يناله المسافر بموضع السعد [ورقة ٧٦] */
+const TRAVEL_BENEFIC_HOUSE = { 1: "قبل خروجِه وفي أوّل السفر", 10: "في وسط الطريق", 7: "في البلد الذي يقصدُه", 4: "عند رجوعِه إلى أهلِه" };
+/** من أيّ جهةٍ يأتي الخيرُ في السفر بطبع السعد [ورقة ٧٦] */
+const TRAVEL_BENEFIC_FROM = { "المشتري": "من أهل العلم والقضاة والصالحين", "الزهرة": "من النساء والفرح", "الشمس": "من أصحاب السلطان", "عطارد": "من التجارة والكتابة", "القمر": "من الرسل والخدم" };
+const TRAVEL_MALEFIC = { "زحل": "بردٌ أو مرضٌ أو تأخيرٌ وتعطيل", "المريخ": "حوادثُ الطريق أو سرقةٌ أو حريق" };
+
+/** صفةُ السارق بكوكبِ الدليل [ورقة ٥٣–٥٤] */
+const THIEF_LOOK = {
+  "زحل": "أسمر، غليظ، كثير الشعر، بطيء الحركة، مهموم",
+  "المشتري": "أبيض حسن الوجه، معتدل القامة، حسن الخلق",
+  "المريخ": "أحمر اللون، حادّ النظر، في وجهه أثرُ جرح، سريع الحركة",
+  "الشمس": "أبيض مشرّبٌ بصفرة، واسع العينين، حسن الحركة",
+  "الزهرة": "أبيض، ممتلئ، جميل، حسن العينين",
+  "عطارد": "نحيف، أسمر، خفيف اللحية، كثير الكلام",
+  "القمر": "أبيض مستدير الوجه",
+};
+
+/** جنسُ المتاع/الدفين بطبع الكوكب [ورقة ٢٦ و٥٦–٥٧] */
+const PLANET_SUBSTANCE = {
+  "الشمس": "ذهبٌ أو شيءٌ ثمين", "القمر": "فضّةٌ أو ثيابُ قطنٍ وكتّان", "زحل": "شيءٌ قديمٌ أو حديدٌ أو جلود",
+  "المشتري": "شيءٌ نفيسٌ أبيض", "الزهرة": "حليٌّ أو ثيابٌ فاخرةٌ أو طيب", "عطارد": "أوراقٌ أو كتبٌ أو نقود",
+  "المريخ": "سلاحٌ أو أداةٌ من حديدٍ أو نحاس",
+};
+
+/** موضعُ الشيء داخل الدار بكوكب الدليل [ورقة ٥٦] */
+const PLANET_PLACE_IN_HOUSE = {
+  "الشمس": "صدرُ البيت أو مجلسُ الضيوف", "القمر": "قربَ الماء: المطبخ أو الحمّام", "الزهرة": "غرفةُ النوم أو موضعُ الزينة",
+  "عطارد": "موضعُ الكتب والأوراق أو المكتب", "زحل": "موضعٌ مظلمٌ أو مخزنٌ أو قبو", "المريخ": "المطبخ أو قربَ النار",
+  "المشتري": "مجلسُ صاحبِ البيت أو أحسنُ غرفة",
+};
+
+/** الجهةُ بطبع البرج وبالبيت [ورقة ٢٦ و٥١ و٥٥] */
+const ELEMENT_DIRECTION = { "نار": "الشرق", "تراب": "الجنوب", "هواء": "الغرب", "ماء": "الشمال" };
+const ANGLE_DIRECTION = { 1: "الشرق", 10: "الجنوب", 7: "الغرب", 4: "الشمال" };
+/** ارتفاعُ الموضع بطبع البرج [ورقة ٢٦ و٥٦] */
+const QUALITY_HEIGHT = { "ثابت": "على الأرض أو تحتَها", "ذو جسدين": "في الحائط أو في مستوًى متوسّط", "منقلب": "في موضعٍ مرتفعٍ أو قربَ السقف" };
+
+/** سببُ الحبس بالكوكب الذي انصرف عنه القمر [ورقة ٨٣] */
+const PRISON_CAUSE = {
+  "زحل": "أرضٌ أو عقارٌ أو أمرٌ قديم", "المريخ": "شجارٌ أو اتّهامٌ بسرقة", "المشتري": "مالٌ أو دَين",
+  "الزهرة": "امرأة", "عطارد": "كتابٌ أو ورقةٌ أو كلام", "الشمس": "صاحبُ سلطان",
+};
+/** الحبسُ ببرج القمر وقتَ السؤال [ورقة ٨٤، عن دوروثيوس] */
+const PRISON_BY_MOON_SIGN = {
+  "الحمل": "خلاصٌ سريع", "الثور": "حبسٌ يطول", "الجوزاء": "يُرجى الخلاصُ بعد أيّامٍ قليلة", "السرطان": "حبسٌ يطول",
+  "الأسد": "حبسٌ بسبب صاحبِ نفوذٍ ويطول", "السنبلة": "يسهلُ أمرُه", "الميزان": "يطولُ ثمّ يُطلَق",
+  "العقرب": "أذًى ثمّ خلاص", "القوس": "طولُ مكث", "الجدي": "خلاصٌ سريع", "الدلو": "يبقى مدّةً طويلة", "الحوت": "يبقى مدّةً طويلة",
+};
+/** الحبسُ بصاحب الساعة [ورقة ٨٥، عن القدماء] */
+const PRISON_BY_HOUR = {
+  "الشمس": "يُطلَقُ بعد نحو شهر", "الزهرة": "يُطلَقُ بعد نحو أربعين يومًا", "عطارد": "يطولُ حبسُه",
+  "القمر": "ينتقلُ أمرُه بحسب اتّصال القمر", "زحل": "يطولُ حبسُه", "المشتري": "يقربُ خروجُه", "المريخ": "مكروهٌ وتشديد",
+};
+
+/** الصناعةُ ببرج الدليل الأقوى [ورقة ٩٥–٩٦] */
+const SIGN_CRAFT = {
+  "الحمل": "العمل مع الحيوان أو الأعمال الميدانيّة الشاقّة", "الثور": "الزراعة والأرض والعقار",
+  "الجوزاء": "الكتابة والحساب والإدارة والمساحة", "السرطان": "ما يتعلّق بالماء والبحر والتجارة البحريّة",
+  "الأسد": "صناعاتُ النار والمعادن، أو القيادة", "السنبلة": "الكتابة والحساب والطبّ والعلوم الدقيقة",
+  "الميزان": "التجارة والكتابة الأدبيّة وما يخصّ النساء والزينة", "العقرب": "الطبّ والعلاج والصناعات الدقيقة",
+  "القوس": "الرياضة والخيل والسفر والتعليم", "الجدي": "التجارة في الطعام والسلع والدوابّ",
+  "الدلو": "الملاحة والسقي والأعمال الفنّيّة والهندسيّة", "الحوت": "ما يتعلّق بالماء والسفن والجواهر",
+};
+
+/** مادّةُ الرؤيا بالكوكب في التاسع أو الطالع [ورقة ٧٩–٨٠] */
+const DREAM_MATTER = {
+  "زحل": "خرابٌ وأماكنُ قديمة وخوف", "المشتري": "أماكنُ عبادةٍ وعلماء وقضاة", "المريخ": "سلاحٌ وحربٌ ونارٌ وجنود",
+  "الشمس": "ملوكٌ وذهبٌ وبساتين", "الزهرة": "نساءٌ ولهوٌ وعرسٌ وثياب", "عطارد": "كتّابٌ ودواوينُ وحساب",
+  "القمر": "أنهارٌ وماءٌ ولؤلؤ",
+};
+
+/** القاضي/الحَكَم بطبع الكوكب في العاشر [ورقة ٥٩] */
+const JUDGE_BY_PLANET = {
+  "المشتري": "حَكَمٌ عادل", "زحل": "حَكَمٌ بطيءٌ لا ينصف", "المريخ": "حَكَمٌ عجولٌ متسرّع",
+  "عطارد": "حَكَمٌ ذكيّ", "الزهرة": "حَكَمٌ ليّن", "الشمس": "حَكَمٌ ذو هيبة", "القمر": "حَكَمٌ متقلّب",
+};
+
+/** سببُ النزاع بموضع الكوكب الذي انصرف عنه القمر [ورقة ٦٥] */
+const DISPUTE_CAUSE = {
+  1: "المعيشة", 2: "المال", 3: "الأقارب أو الكلام", 4: "أمرٌ قديمٌ مستور", 5: "الأولاد أو البناء", 6: "العمل أو مرض",
+  7: "عداوةٌ أو شراكة", 8: "ميراثٌ أو دَين", 9: "الدين أو السفر", 10: "صاحبُ سلطان", 11: "الأصدقاء", 12: "عداوةٌ قديمة",
+};
+
+/** سببُ الضياع بالكوكب الذي انصرف عنه ربّ الطالع [ورقة ٥٢] */
+const LOSS_CAUSE = {
+  "زحل": "نسيانٌ أو انشغالٌ بهمّ", "المريخ": "عجلةٌ أو غضب", "المشتري": "وُضِع أمانةً عند أحد",
+  "الشمس": "بسبب صاحبِ سلطان", "الزهرة": "لهوٌ أو فرح", "عطارد": "كتبٌ أو انشغالٌ بالأخبار", "القمر": "خدمٌ أو رسل",
+};
+
+;__exports["BARI_SRC"]=BARI_SRC;__exports["MONEY_SOURCE"]=MONEY_SOURCE;__exports["HARM_SOURCE"]=HARM_SOURCE;__exports["MARRIAGE_GOOD_BY_ASPECT"]=MARRIAGE_GOOD_BY_ASPECT;__exports["BEAUTY_SIGNS"]=BEAUTY_SIGNS;__exports["PLAIN_SIGNS"]=PLAIN_SIGNS;__exports["HOUSE_BODY"]=HOUSE_BODY;__exports["ELEMENT_HUMOR"]=ELEMENT_HUMOR;__exports["QUALITY_COURSE"]=QUALITY_COURSE;__exports["MOON_SIGN_TIME"]=MOON_SIGN_TIME;__exports["TRAVEL_BENEFIC_HOUSE"]=TRAVEL_BENEFIC_HOUSE;__exports["TRAVEL_BENEFIC_FROM"]=TRAVEL_BENEFIC_FROM;__exports["TRAVEL_MALEFIC"]=TRAVEL_MALEFIC;__exports["THIEF_LOOK"]=THIEF_LOOK;__exports["PLANET_SUBSTANCE"]=PLANET_SUBSTANCE;__exports["PLANET_PLACE_IN_HOUSE"]=PLANET_PLACE_IN_HOUSE;__exports["ELEMENT_DIRECTION"]=ELEMENT_DIRECTION;__exports["ANGLE_DIRECTION"]=ANGLE_DIRECTION;__exports["QUALITY_HEIGHT"]=QUALITY_HEIGHT;__exports["PRISON_CAUSE"]=PRISON_CAUSE;__exports["PRISON_BY_MOON_SIGN"]=PRISON_BY_MOON_SIGN;__exports["PRISON_BY_HOUR"]=PRISON_BY_HOUR;__exports["SIGN_CRAFT"]=SIGN_CRAFT;__exports["DREAM_MATTER"]=DREAM_MATTER;__exports["JUDGE_BY_PLANET"]=JUDGE_BY_PLANET;__exports["DISPUTE_CAUSE"]=DISPUTE_CAUSE;__exports["LOSS_CAUSE"]=LOSS_CAUSE;return __exports;})();
 __M["huruf-tibb-ghazali.data"]=(function(){"use strict";const __exports={};
 // data/huruf-tibb-ghazali.data.js — «الطبّ الروحانيّ للجسم الإنسانيّ» المنسوبُ إلى الإمام الغزاليّ (طبعة مصريّة مصوَّرة،
 // text/sources/hekma2/altbalro7ani). تبيّن عند المقابلة أنّ أبوابَ الرجالِ فيه هي نفسُها نصُّ «السرّ المكشوف» للطوخي حرفًا بحرف
@@ -18107,6 +18258,378 @@ class GravSimEndpoint {
 }
 
 ;__exports["C_AUDAY"]=C_AUDAY;__exports["KM_PER_AU"]=KM_PER_AU;__exports["AU_PER_LY"]=AU_PER_LY;__exports["DEG2RAD"]=DEG2RAD;__exports["HOUR2RAD"]=HOUR2RAD;__exports["RAD2DEG"]=RAD2DEG;__exports["RAD2HOUR"]=RAD2HOUR;__exports["JUPITER_EQUATORIAL_RADIUS_KM"]=JUPITER_EQUATORIAL_RADIUS_KM;__exports["JUPITER_POLAR_RADIUS_KM"]=JUPITER_POLAR_RADIUS_KM;__exports["JUPITER_MEAN_RADIUS_KM"]=JUPITER_MEAN_RADIUS_KM;__exports["IO_RADIUS_KM"]=IO_RADIUS_KM;__exports["EUROPA_RADIUS_KM"]=EUROPA_RADIUS_KM;__exports["GANYMEDE_RADIUS_KM"]=GANYMEDE_RADIUS_KM;__exports["CALLISTO_RADIUS_KM"]=CALLISTO_RADIUS_KM;__exports["MassProduct"]=MassProduct;__exports["AngleBetween"]=AngleBetween;__exports["Body"]=Body;__exports["DefineStar"]=DefineStar;__exports["PlanetOrbitalPeriod"]=PlanetOrbitalPeriod;__exports["DeltaT_EspenakMeeus"]=DeltaT_EspenakMeeus;__exports["DeltaT_JplHorizons"]=DeltaT_JplHorizons;__exports["SetDeltaTFunction"]=SetDeltaTFunction;__exports["AstroTime"]=AstroTime;__exports["MakeTime"]=MakeTime;__exports["e_tilt"]=e_tilt;__exports["CalcMoonCount"]=CalcMoonCount;__exports["LibrationInfo"]=LibrationInfo;__exports["Libration"]=Libration;__exports["SiderealTime"]=SiderealTime;__exports["Vector"]=Vector;__exports["StateVector"]=StateVector;__exports["Spherical"]=Spherical;__exports["EquatorialCoordinates"]=EquatorialCoordinates;__exports["RotationMatrix"]=RotationMatrix;__exports["MakeRotation"]=MakeRotation;__exports["HorizontalCoordinates"]=HorizontalCoordinates;__exports["EclipticCoordinates"]=EclipticCoordinates;__exports["Horizon"]=Horizon;__exports["Observer"]=Observer;__exports["SunPosition"]=SunPosition;__exports["Equator"]=Equator;__exports["ObserverVector"]=ObserverVector;__exports["ObserverState"]=ObserverState;__exports["VectorObserver"]=VectorObserver;__exports["ObserverGravity"]=ObserverGravity;__exports["Ecliptic"]=Ecliptic;__exports["GeoMoon"]=GeoMoon;__exports["EclipticGeoMoon"]=EclipticGeoMoon;__exports["GeoMoonState"]=GeoMoonState;__exports["GeoEmbState"]=GeoEmbState;__exports["JupiterMoonsInfo"]=JupiterMoonsInfo;__exports["JupiterMoons"]=JupiterMoons;__exports["HelioVector"]=HelioVector;__exports["HelioDistance"]=HelioDistance;__exports["CorrectLightTravel"]=CorrectLightTravel;__exports["BackdatePosition"]=BackdatePosition;__exports["GeoVector"]=GeoVector;__exports["BaryState"]=BaryState;__exports["HelioState"]=HelioState;__exports["Search"]=Search;__exports["SearchSunLongitude"]=SearchSunLongitude;__exports["PairLongitude"]=PairLongitude;__exports["AngleFromSun"]=AngleFromSun;__exports["EclipticLongitude"]=EclipticLongitude;__exports["IlluminationInfo"]=IlluminationInfo;__exports["Illumination"]=Illumination;__exports["SearchRelativeLongitude"]=SearchRelativeLongitude;__exports["MoonPhase"]=MoonPhase;__exports["SearchMoonPhase"]=SearchMoonPhase;__exports["MoonQuarter"]=MoonQuarter;__exports["SearchMoonQuarter"]=SearchMoonQuarter;__exports["NextMoonQuarter"]=NextMoonQuarter;__exports["AtmosphereInfo"]=AtmosphereInfo;__exports["Atmosphere"]=Atmosphere;__exports["SearchRiseSet"]=SearchRiseSet;__exports["SearchAltitude"]=SearchAltitude;__exports["HourAngleEvent"]=HourAngleEvent;__exports["SearchHourAngle"]=SearchHourAngle;__exports["HourAngle"]=HourAngle;__exports["SeasonInfo"]=SeasonInfo;__exports["Seasons"]=Seasons;__exports["ElongationEvent"]=ElongationEvent;__exports["Elongation"]=Elongation;__exports["SearchMaxElongation"]=SearchMaxElongation;__exports["SearchPeakMagnitude"]=SearchPeakMagnitude;__exports["ApsisKind"]=ApsisKind;__exports["Apsis"]=Apsis;__exports["SearchLunarApsis"]=SearchLunarApsis;__exports["NextLunarApsis"]=NextLunarApsis;__exports["SearchPlanetApsis"]=SearchPlanetApsis;__exports["NextPlanetApsis"]=NextPlanetApsis;__exports["InverseRotation"]=InverseRotation;__exports["CombineRotation"]=CombineRotation;__exports["IdentityMatrix"]=IdentityMatrix;__exports["Pivot"]=Pivot;__exports["VectorFromSphere"]=VectorFromSphere;__exports["EquatorFromVector"]=EquatorFromVector;__exports["SphereFromVector"]=SphereFromVector;__exports["HorizonFromVector"]=HorizonFromVector;__exports["VectorFromHorizon"]=VectorFromHorizon;__exports["Refraction"]=Refraction;__exports["InverseRefraction"]=InverseRefraction;__exports["RotateVector"]=RotateVector;__exports["RotateState"]=RotateState;__exports["Rotation_EQJ_ECL"]=Rotation_EQJ_ECL;__exports["Rotation_ECL_EQJ"]=Rotation_ECL_EQJ;__exports["Rotation_EQJ_EQD"]=Rotation_EQJ_EQD;__exports["Rotation_EQJ_ECT"]=Rotation_EQJ_ECT;__exports["Rotation_ECT_EQJ"]=Rotation_ECT_EQJ;__exports["Rotation_EQD_EQJ"]=Rotation_EQD_EQJ;__exports["Rotation_EQD_HOR"]=Rotation_EQD_HOR;__exports["Rotation_HOR_EQD"]=Rotation_HOR_EQD;__exports["Rotation_HOR_EQJ"]=Rotation_HOR_EQJ;__exports["Rotation_EQJ_HOR"]=Rotation_EQJ_HOR;__exports["Rotation_EQD_ECL"]=Rotation_EQD_ECL;__exports["Rotation_ECL_EQD"]=Rotation_ECL_EQD;__exports["Rotation_ECL_HOR"]=Rotation_ECL_HOR;__exports["Rotation_HOR_ECL"]=Rotation_HOR_ECL;__exports["Rotation_EQJ_GAL"]=Rotation_EQJ_GAL;__exports["Rotation_GAL_EQJ"]=Rotation_GAL_EQJ;__exports["Rotation_ECT_EQD"]=Rotation_ECT_EQD;__exports["Rotation_EQD_ECT"]=Rotation_EQD_ECT;__exports["ConstellationInfo"]=ConstellationInfo;__exports["Constellation"]=Constellation;__exports["EclipseKind"]=EclipseKind;__exports["LunarEclipseInfo"]=LunarEclipseInfo;__exports["SearchLunarEclipse"]=SearchLunarEclipse;__exports["GlobalSolarEclipseInfo"]=GlobalSolarEclipseInfo;__exports["NextLunarEclipse"]=NextLunarEclipse;__exports["SearchGlobalSolarEclipse"]=SearchGlobalSolarEclipse;__exports["NextGlobalSolarEclipse"]=NextGlobalSolarEclipse;__exports["EclipseEvent"]=EclipseEvent;__exports["LocalSolarEclipseInfo"]=LocalSolarEclipseInfo;__exports["SearchLocalSolarEclipse"]=SearchLocalSolarEclipse;__exports["NextLocalSolarEclipse"]=NextLocalSolarEclipse;__exports["TransitInfo"]=TransitInfo;__exports["SearchTransit"]=SearchTransit;__exports["NextTransit"]=NextTransit;__exports["NodeEventKind"]=NodeEventKind;__exports["NodeEventInfo"]=NodeEventInfo;__exports["SearchMoonNode"]=SearchMoonNode;__exports["NextMoonNode"]=NextMoonNode;__exports["AxisInfo"]=AxisInfo;__exports["RotationAxis"]=RotationAxis;__exports["LagrangePoint"]=LagrangePoint;__exports["LagrangePointFast"]=LagrangePointFast;__exports["GravitySimulator"]=GravitySimulator;return __exports;})();
+__M["bari"]=(function(){"use strict";const __exports={};
+// engines/bari.js
+// ─────────────────────────────────────────────────────────────────────────────
+// أحكامُ «المسائل» من كتاب البارع لابن أبي الرجال: قواعدُ خاصّةٌ بكلّ نوعٍ من
+// الأسئلة، تُضاف فوق الحكم العامّ في falak.horary. دالّةٌ خالصة: تأخذ خريطةَ
+// لحظة السؤال محسوبةً (لا تحسب فلكًا بنفسها) وتُرجع تفاصيلَ مقروءة + تعديلًا صغيرًا للنقاط.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { SIGNS }=__M["falak.data"];
+const { DOMICILE, EXALT }=__M["falak-ahkam.data"];
+const {
+  BARI_SRC, MONEY_SOURCE, HARM_SOURCE, MARRIAGE_GOOD_BY_ASPECT, BEAUTY_SIGNS, PLAIN_SIGNS, HOUSE_BODY,
+  ELEMENT_HUMOR, QUALITY_COURSE, MOON_SIGN_TIME, TRAVEL_BENEFIC_HOUSE, TRAVEL_BENEFIC_FROM, TRAVEL_MALEFIC,
+  THIEF_LOOK, PLANET_SUBSTANCE, PLANET_PLACE_IN_HOUSE, ELEMENT_DIRECTION, ANGLE_DIRECTION, QUALITY_HEIGHT,
+  PRISON_CAUSE, PRISON_BY_MOON_SIGN, PRISON_BY_HOUR, SIGN_CRAFT, DREAM_MATTER, JUDGE_BY_PLANET, DISPUTE_CAUSE, LOSS_CAUSE,
+}=__M["horary-bari.data"];
+
+const BEN = new Set(["المشتري", "الزهرة"]);
+const MAL = new Set(["زحل", "المريخ"]);
+const HARD = new Set(["تربيع", "مقابلة"]);
+const SOFT = new Set(["تثليث", "تسديس"]);
+const norm = (x) => ((x % 360) + 360) % 360;
+const sep = (a, b) => { const d = Math.abs(norm(a) - norm(b)) % 360; return d > 180 ? 360 - d : d; };
+
+/** أدواتُ قراءة الخريطة */
+function tools(ch) {
+  const lon = (p) => ch.pos[p]?.longitude ?? 0;
+  const sign = (l) => SIGNS[Math.floor(norm(l) / 30)];
+  const house = (l) => ((Math.floor(norm(l) / 30) - Math.floor(norm(ch.ascLon) / 30) + 12) % 12) + 1;
+  const H = (p) => house(lon(p));
+  const angular = (h) => [1, 4, 7, 10].includes(h);
+  const cadent = (h) => [3, 6, 9, 12].includes(h);
+  const lordOf = (h) => SIGNS[(Math.floor(norm(ch.ascLon) / 30) + h - 1) % 12].ruler;
+  const asp = (a, b) => ch.asps.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a)) || null;
+  const applying = (a, b) => { const x = asp(a, b); return x && x.applying ? x : null; };
+  const separating = (a, b) => { const x = asp(a, b); return x && !x.applying ? x : null; };
+  // القبول: أن يكون الكوكبُ في بيتِ الآخر أو شرفِه
+  const receives = (host, guest) => { const s = sign(lon(guest)).name; return (DOMICILE[host] || []).includes(s) || (EXALT[host] && EXALT[host][0] === s); };
+  const ownPlace = (p) => receives(p, p);
+  const combust = (p) => ch.comb[p] === "احتراق";
+  const afflicted = (p) => combust(p) || [...MAL].some((m) => m !== p && (() => { const x = asp(p, m); return x && (x.name === "مقارنة" || HARD.has(x.name)); })());
+  const helped = (p) => [...BEN].some((b) => b !== p && asp(p, b) && !HARD.has(asp(p, b).name));
+  const moonFrom = () => ch.asps.filter((x) => (x.a === "القمر" || x.b === "القمر") && !x.applying).sort((a, b) => a.orb - b.orb)[0];
+  const moonTo = () => ch.asps.filter((x) => (x.a === "القمر" || x.b === "القمر") && x.applying).sort((a, b) => a.orb - b.orb)[0];
+  const other = (x, p) => (x ? (x.a === p ? x.b : x.a) : null);
+  const masc = (l) => ["نار", "هواء"].includes(sign(l).element);
+  const strength = (p) => (ch.dig?.(p) ?? 0) + (angular(H(p)) ? 2 : cadent(H(p)) ? -1 : 0) - (combust(p) ? 3 : 0) - (ch.pos[p]?.retrograde ? 1 : 0);
+  const peregrine = (p) => (ch.dig?.(p) ?? 0) === 0;
+  return { lon, sign, house, H, angular, cadent, lordOf, asp, applying, separating, receives, ownPlace, combust, afflicted, helped, moonFrom, moonTo, other, masc, strength, peregrine };
+}
+
+/**
+ * @param {string} topic مفتاحُ الموضوع (من classifyAstroTopic)
+ * @param {object} ch خريطةُ السؤال: { ascLon, pos, asps, comb, ms, hourRuler, lotLon, dig(p), ascLord, qLord, qHouse }
+ * @returns {{details: {text:string, s:number, src:string}[], adj:number, phases:object[], timeUnit:string}}
+ */
+function judge(topic, ch) {
+  const T = tools(ch);
+  const out = [];
+  const add = (text, s = 0, page = "") => out.push({ text, s, src: `${BARI_SRC}${page ? `، ورقة ${page}` : ""}` });
+  const { ascLord, qLord } = ch;
+  const moonSign = T.sign(T.lon("القمر"));
+
+  // ── قواعدُ عامّةٌ لكلّ مسألة ─────────────────────────────────────────
+  // اتّصالُ القمر بسعدٍ أو نحس [ورقة ٢١]
+  const mt = T.moonTo(), mtP = T.other(mt, "القمر");
+  if (mtP && BEN.has(mtP)) add(`القمرُ مقبلٌ على ${mtP}: الأمرُ يتّجهُ إلى خير.`, 0.3, 21);
+  else if (mtP && MAL.has(mtP) && !T.ownPlace(mtP)) add(`القمرُ مقبلٌ على ${mtP}: يدخلُ على الأمر مكروهٌ أو تعطيل.`, -0.3, 21);
+  // الرجاءُ والخوف بموضع ربّ الطالع [ورقة ٢١]
+  const hA = T.H(ascLord);
+  if (T.angular(hA) && T.helped(ascLord)) add("صاحبُ الطالع في وتدٍ ويقبلُه سعد: ما ترجوه يتحقّق.", 0.3, 21);
+  else if ([6, 8, 12].includes(hA)) add("صاحبُ الطالع ساقطٌ في بيتٍ رديء: يصيبُك قلقٌ أو تعبٌ في هذا الأمر.", -0.3, 21);
+  // مراحلُ الأمر بأرباب مثلّثة الطالع: الأوّل للبداية والثاني للوسط والثالث للآخر [ورقة ١٩]
+  const trip = { "نار": ["الشمس", "المشتري", "زحل"], "تراب": ["الزهرة", "القمر", "المريخ"], "هواء": ["زحل", "عطارد", "المشتري"], "ماء": ["الزهرة", "المريخ", "القمر"] }[T.sign(ch.ascLon).element];
+  const phases = trip.map((p, i) => {
+    const good = !T.afflicted(p) && !T.cadent(T.H(p)) ? true : T.afflicted(p) && T.cadent(T.H(p)) ? false : null;
+    return { stage: ["البداية", "الوسط", "الآخر"][i], planet: p, good };
+  });
+  const ph = phases.map((x) => `${x.stage} ${x.good === true ? "حسنة" : x.good === false ? "متعبة" : "وسط"}`);
+  add(`مراحلُ الأمر: ${ph.join("، ")}.`, 0, 19);
+  const timeUnit = MOON_SIGN_TIME[moonSign.quality];
+
+  // ── قواعدُ كلّ موضوع ────────────────────────────────────────────────
+  const R = RULES[topic];
+  if (R) R(T, ch, add);
+
+  const adj = Math.max(-1, Math.min(1, out.reduce((a, x) => a + x.s, 0)));
+  return { details: out, adj: Math.round(adj * 100) / 100, phases, timeUnit };
+}
+
+// المال والرزق [ورقة ٢١–٢٢، ٩٥]
+function money(T, ch, add) {
+  const l2 = T.lordOf(2);
+  if (T.applying(ch.ascLord, l2) || T.applying("القمر", l2) || T.H(l2) === 1) add("دليلُك يتّصلُ بدليل المال: يصيبُك مال.", 0.4, 21);
+  else if (T.separating(ch.ascLord, l2)) add("دليلُك منصرفٌ عن دليل المال: فرصةٌ تفوتُك إن لم تسرع.", -0.3, 21);
+  const hJ = T.H("المشتري"), hL = ch.lotLon != null ? T.house(ch.lotLon) : null;
+  if ([1, 2].includes(hJ) || [1, 2].includes(hL)) add("المشتري أو سهمُ السعادة في بيتِك أو بيتِ مالِك: رزقٌ حاضر.", 0.3, 21);
+  add(`مصدرُ المال الأرجح: ${MONEY_SOURCE[T.H(l2)]}.`, 0, 22);
+  if (hL === 2 && T.afflicted(T.sign(ch.lotLon).ruler)) add("سهمُ السعادة منحوسٌ في بيت المال: يدخلُ المالُ ويخرج.", -0.3, 95);
+  if (BEN.has(l2) && !ch.pos[l2]?.retrograde && !T.afflicted(l2)) add("دليلُ المال سعدٌ سالم: المالُ يدوم.", 0.2, 22);
+}
+
+// العمل والسلطان [ورقة ٨٧، ٩٠–٩٥]
+function work(T, ch, add) {
+  const l10 = T.lordOf(10), a = T.asp(ch.ascLord, l10);
+  if ((a && SOFT.has(a.name)) || (T.angular(T.H(ch.ascLord)) && T.angular(T.H(l10)))) add("دليلُك ودليلُ العمل متّفقان: تنالُ ما تطلبُه.", 0.4, 87);
+  else if (T.cadent(T.H(ch.ascLord)) && !a) add("دليلُك ساقطٌ ولا ينظرُ إلى دليل العمل: لا يتمّ الآن.", -0.4, 87);
+  else if (a && HARD.has(a.name)) add("بين دليلِك ودليلِ العمل نظرُ عداوة: يتمُّ بعد نزاعٍ وتعب.", 0, 87);
+  if (T.H("المشتري") === 10) add("المشتري في وسط السماء: رفعةٌ وزيادة.", 0.3, 90);
+  if (T.H("زحل") === 10 && T.H("المريخ") === 10) add("زحل والمريخ في وسط السماء: ظلمٌ وخلافٌ في العمل.", -0.3, 90);
+  if ([6, 12].includes(T.H(ch.ascLord))) add("صاحبُ الطالع في السادس أو الثاني عشر: خصومٌ يعطّلون أمرَك.", -0.2, 90);
+  craft(T, ch, add);
+}
+
+// الصناعة [ورقة ٩٥–٩٦]
+function craft(T, ch, add) {
+  const cands = [ch.ascLord, T.lordOf(10), "عطارد"];
+  const best = cands.sort((x, y) => T.strength(y) - T.strength(x))[0];
+  const s = T.sign(T.lon(best)).name;
+  add(`الصنعةُ التي تناسبُك (من ${best} في ${s}): ${SIGN_CRAFT[s]}${T.angular(T.H(best)) ? "، وتصلحُ لك الأعمالُ الكبيرة" : ""}.`, 0, 95);
+}
+
+// الزواج والحبّ [ورقة ٤٥–٤٩، ٥١]
+function marriage(T, ch, add) {
+  const l7 = T.lordOf(7);
+  if (T.applying(ch.ascLord, l7) || T.applying("القمر", l7) || T.H(l7) === 1 || T.H("القمر") === 7) {
+    const a = T.applying(ch.ascLord, l7) || T.applying("القمر", l7);
+    add(a && HARD.has(a.name) ? "يتمُّ الارتباطُ لكن ببطءٍ وتعب." : "دليلُ الطرفين يجتمعان: يتمُّ الارتباط.", a && HARD.has(a.name) ? 0.1 : 0.4, 45);
+    if (a && MARRIAGE_GOOD_BY_ASPECT[a.name]) add(`الخيرُ لهما يأتي ${MARRIAGE_GOOD_BY_ASPECT[a.name]}.`, 0, 46);
+  }
+  for (const m of MAL) { const h = T.H(m); if (HARM_SOURCE[h]) { add(`إن فسد الأمرُ فمن جهة ${HARM_SOURCE[h].replace(/^من /, "")}.`, 0, 45); break; } }
+  const sA = T.strength(ch.ascLord), s7 = T.strength(l7);
+  if (Math.abs(sA - s7) >= 2) add(sA > s7 ? "أنت الطرفُ الأقوى في هذه العلاقة." : "الطرفُ الآخرُ هو الأقوى في هذه العلاقة.", 0, 47);
+  const s7n = T.sign(ch.ascLon + 180).name;
+  if (BEAUTY_SIGNS.includes(s7n)) add("صفةُ الطرف الآخر: حسنُ الصورة.", 0, 45);
+  else if (PLAIN_SIGNS.includes(s7n)) add("صفةُ الطرف الآخر: جمالُه في طبعه أكثرَ من صورته.", 0, 45);
+  const x = T.asp(ch.ascLord, l7);
+  if (x && x.name === "مقابلة") add("بين الدليلين مقابلة: خلافٌ متكرّرٌ يحتاجُ صبرًا.", -0.2, 46);
+  if (T.H("زحل") === 10 || T.H("المريخ") === 10) add("نحسٌ في وسط السماء: مشكلاتٌ تظهرُ بينكما.", -0.2, 46);
+  if (T.H("المشتري") === 10 || T.H("الزهرة") === 10) add("سعدٌ في وسط السماء: وفاقٌ بينكما.", 0.2, 46);
+}
+
+// الطلاق والرجوع [ورقة ٤٨–٤٩]
+function divorce(T, ch, add) {
+  const above = (p) => T.H(p) >= 7;
+  if ((T.angular(T.H("الزهرة")) && above("الزهرة")) || (T.angular(T.H("الشمس")) && above("الشمس"))) add("الزهرة أو الشمس في وتدٍ فوق الأرض: يرجعُ الطرفان بعد ندم.", 0.4, 48);
+  else if (T.cadent(T.H("الزهرة")) && T.cadent(T.H("الشمس"))) add("الزهرة والشمس ساقطتان: لا رجوعَ قريب.", -0.4, 48);
+  if (T.angular(T.H("زحل"))) add("زحل في وتد: يطولُ الهجر.", -0.2, 49);
+  if (T.angular(T.H("المشتري")) || T.angular(T.H("الزهرة"))) add(`سعدٌ في الأوتاد: صلح، ويبدأُه ${T.H("المشتري") === 1 || T.H("الزهرة") === 1 ? "السائل" : "الطرف الآخر"}.`, 0.3, 49);
+}
+
+// الولد والحمل [ورقة ٢٧–٣١، ٥٠]
+function child(T, ch, add) {
+  const l5 = T.lordOf(5);
+  if (T.H(ch.ascLord) === 5 || T.H("القمر") === 5 || T.H(l5) === 1) add("دليلُك في بيت الولد أو دليلُ الولد في طالعِك: حملٌ أو ولد.", 0.4, 28);
+  if (["السرطان", "العقرب", "الحوت"].includes(T.sign(T.lon("القمر")).name)) add("القمرُ في برجٍ كثير الولد: علامةُ حمل.", 0.2, 28);
+  if (T.afflicted(l5) || ch.pos[l5]?.retrograde) add("دليلُ الولد منحوسٌ أو محترق: يُخشى على الحمل، فالحذرَ والمتابعة.", -0.3, 29);
+  if (T.sign(ch.ascLon).quality === "ذو جسدين" && T.sign(T.lon(l5)).quality === "ذو جسدين") add("الطالعُ ودليلُ الولد في بروجٍ ذات جسدين: احتمالُ توأم.", 0, 29);
+  const votes = [l5, ch.hourRuler, "القمر"].filter(Boolean).map((p) => (T.masc(T.lon(p)) ? 1 : -1));
+  const m = votes.reduce((a, b) => a + b, 0);
+  if (m) add(`الأرجحُ أن يكون المولودُ ${m > 0 ? "ذكرًا" : "أنثى"} (من برج دليل الولد وصاحب الساعة والقمر).`, 0, 29);
+  if (T.applying("القمر", "المشتري") || T.applying("القمر", "الزهرة")) add("القمرُ مقبلٌ على سعد: ولادةٌ سهلة.", 0.2, 31);
+}
+
+// المرض [ورقة ٣٧–٤٣]
+function illness(T, ch, add) {
+  const moonBad = T.afflicted("القمر") || [1].some((h) => [...MAL].some((m) => T.H(m) === h));
+  const soulBad = T.afflicted("الشمس") || T.afflicted(ch.ascLord);
+  add(moonBad && !soulBad ? "العلّةُ في البدن أكثرَ منها في النفس." : soulBad && !moonBad ? "العلّةُ في النفس والهمّ أكثرَ منها في البدن." : moonBad && soulBad ? "التعبُ في البدن والنفس معًا." : "لا علامةَ قويّةً على علّةٍ ثقيلة.", moonBad && soulBad ? -0.2 : 0, 39);
+  const mal = [...MAL].map((m) => ({ m, h: T.H(m) })).sort((a, b) => T.strength(b.m) - T.strength(a.m))[0];
+  add(`موضعُ التعب الأرجح في البدن: ${HOUSE_BODY[mal.h]}، ${mal.h >= 7 ? "في الجانب الأيمن" : "في الجانب الأيسر"}.`, 0, 39);
+  const ms = T.sign(T.lon("القمر"));
+  add(`طبعُ العلّة: ${ELEMENT_HUMOR[ms.element]}، ومسارُها ${QUALITY_COURSE[ms.quality]}.`, 0, 42);
+  // البُحران: إذا بلغ القمرُ تربيعَ موضعِه ثمّ مقابلتَه ثمّ تربيعَه الثاني [ورقة ٤٠]
+  const days = [[7, 90], [14, 180], [21, 270]].map(([d, a]) => {
+    const tgt = norm(T.lon("القمر") + a);
+    const hit = ["المشتري", "الزهرة", "زحل", "المريخ"].find((p) => sep(T.lon(p), tgt) <= 8);
+    return hit ? `${d === 7 ? "في نحو اليوم السابع" : d === 14 ? "في نحو اليوم الرابع عشر" : "في نحو اليوم الحادي والعشرين"} ${BEN.has(hit) ? "خفّةٌ وراحة" : "شدّةٌ تحتاجُ انتباهًا"}` : null;
+  }).filter(Boolean);
+  if (days.length) add(`أيّامُ التحوّل: ${days.join("؛ ")}.`, 0, 40);
+  if (T.angular(T.H(ch.ascLord)) && T.helped(ch.ascLord) && (mtBen(T))) add("صاحبُ الطالع قريبٌ من الأوتاد والقمرُ مقبلٌ على سعد: برءٌ سريع.", 0.4, 40);
+  if (T.H("القمر") === 6 && T.afflicted("القمر")) add("القمرُ منحوسٌ في بيت المرض: تطولُ العلّة.", -0.3, 39);
+}
+const mtBen = (T) => { const x = T.moonTo(); return x && BEN.has(T.other(x, "القمر")); };
+
+// السفر [ورقة ٧٥–٧٨]
+function travel(T, ch, add) {
+  const l9 = T.lordOf(9);
+  if (T.applying(ch.ascLord, l9) || T.applying(ch.ascLord, T.lordOf(3)) || [3, 9].includes(T.H(ch.ascLord))) add("دليلُك يتّصلُ ببيت السفر: يتمُّ السفر.", 0.3, 75);
+  else if (T.angular(T.H(ch.ascLord)) && T.sign(T.lon(ch.ascLord)).quality === "ثابت") add("دليلُك ثابتٌ في وتد: السفرُ يتأخّرُ أو لا يقع.", -0.3, 75);
+  for (const b of BEN) { const h = T.H(b); if (TRAVEL_BENEFIC_HOUSE[h]) add(`الخيرُ يكون ${TRAVEL_BENEFIC_HOUSE[h]}، ${TRAVEL_BENEFIC_FROM[b]}.`, 0.2, 76); }
+  for (const m of MAL) if (T.angular(T.H(m)) || T.H(m) === 12) add(`ما يُحذَر في الطريق: ${TRAVEL_MALEFIC[m]}.`, -0.2, 76);
+  const q = T.sign(T.lon(l9)).quality;
+  add(q === "ثابت" ? "الإقامةُ في البلد المقصود تطول." : q === "منقلب" ? "الرجوعُ يكون سريعًا." : "سفرٌ يتبعُه سفرٌ آخر.", 0, 77);
+  if (ch.pos[l9]?.retrograde) add("دليلُ السفر راجع: قد ترجعُ قبل أن تبلغَ مقصدَك.", -0.2, 77);
+  if (T.combust(ch.ascLord) || T.combust("القمر")) add("صاحبُ الطالع أو القمرُ محترق: لا خيرَ في هذا السفر الآن.", -0.4, 78);
+}
+
+// الغائب والخبر [ورقة ٢٣، ٣٥–٣٦، ٧٥، ٧٩]
+function absent(T, ch, add) {
+  if ([1, 10].includes(T.H(ch.ascLord)) || [1, 10].includes(T.H("القمر"))) add("الدليلُ في الطالع أو وسط السماء: الغائبُ يقدمُ أو يصلُ خبرُه.", 0.4, 79);
+  else if (T.H(ch.ascLord) === 4) add("الدليلُ تحت الأرض: لا قدومَ قريب.", -0.3, 79);
+  if (ch.pos[ch.ascLord]?.retrograde) add("صاحبُ الطالع راجع: رجوعٌ سريع.", 0.2, 79);
+  const mq = T.sign(T.lon("القمر")).quality, eq = T.sign(T.lon("عطارد")).quality;
+  if (mq === "ثابت" && eq === "ثابت" && T.angular(T.H("القمر"))) add("القمرُ وعطارد في بروجٍ ثابتة: الخبرُ صحيح.", 0.2, 23);
+  else if (mq === "منقلب" && T.afflicted("القمر")) add("القمرُ في برجٍ منقلبٍ مع نحس: الخبرُ لا يثبت.", -0.2, 23);
+  else if (mq === "ذو جسدين") add("بعضُ الخبر صحيحٌ وبعضُه لا.", 0, 23);
+  const mf = T.other(T.separating("عطارد", "المشتري") || T.separating("عطارد", "الزهرة") || T.separating("عطارد", "زحل") || T.separating("عطارد", "المريخ"), "عطارد");
+  if (mf) add(BEN.has(mf) ? "الخبرُ القادمُ فيه بشرى." : "الخبرُ القادمُ فيه ما يُكره.", BEN.has(mf) ? 0.2 : -0.2, 79);
+}
+
+// الرسالة والكتاب [ورقة ٣٥–٣٦]
+function letter(T, ch, add) {
+  if (T.H("عطارد") === 1 || T.H("القمر") === 1 || T.applying("القمر", "عطارد")) add("عطارد أو القمر في الطالع أو القمرُ مقبلٌ على عطارد: الرسالةُ تأتي.", 0.4, 35);
+  else if (!T.asp("عطارد", "القمر") && !T.angular(T.H("عطارد"))) add("عطارد لا ينظرُ إلى القمر ولا إلى الأوتاد: لا يأتي قريبًا.", -0.3, 35);
+  if (T.H("عطارد") === 12) add("عطارد في الثاني عشر داخلٌ إلى الطالع: يأتي قريبًا.", 0.2, 35);
+  absent(T, ch, () => {});
+}
+
+// الخصومة والقضيّة والعدوّ [ورقة ٥٩–٦٥]
+function dispute(T, ch, add) {
+  const l7 = T.lordOf(7), a = T.asp(ch.ascLord, l7);
+  if (a && SOFT.has(a.name)) add("بينكما نظرُ مودّة: صلحٌ قبل أن تشتدّ الخصومة.", 0.3, 59);
+  else if (a && HARD.has(a.name)) add("بينكما نظرُ عداوة: لا صلحَ إلّا بعد نزاع.", 0, 59);
+  const sA = T.strength(ch.ascLord), s7 = T.strength(l7);
+  if (sA - s7 >= 2) add("دليلُك أقوى من دليل خصمِك: الغلبةُ لك.", 0.4, 59);
+  else if (s7 - sA >= 2) add("دليلُ خصمِك أقوى: الغلبةُ له إن لم تُصالح.", -0.4, 59);
+  if (ch.pos[ch.ascLord]?.retrograde) add("دليلُك راجع: تتراجعُ أو تضعفُ حجّتُك.", -0.2, 64);
+  if (ch.pos[l7]?.retrograde) add("دليلُ خصمِك راجع: يتراجعُ خصمُك.", 0.2, 64);
+  const l10 = T.lordOf(10);
+  add(`الحَكَمُ أو صاحبُ القرار: ${JUDGE_BY_PLANET[l10]}${ch.pos[l10]?.retrograde ? "، ويُخشى منه الميل" : ""}.`, 0, 59);
+  const mf = T.other(T.moonFrom(), "القمر");
+  if (mf) add(`أصلُ النزاع: ${DISPUTE_CAUSE[T.H(mf)]}.`, 0, 65);
+  if (ch.lotLon != null) { const h = T.house(ch.lotLon); add([10, 11, 12, 1, 2, 3].includes(h) ? "سهمُ السعادة في جهتِك: الظفرُ أقربُ إليك." : "سهمُ السعادة في جهة خصمِك.", [10, 11, 12, 1, 2, 3].includes(h) ? 0.2 : -0.2, 65); }
+}
+
+// السحر [ورقة ٤٤]
+function sihr(T, ch, add) {
+  const lotLord = ch.lotLon != null ? T.sign(ch.lotLon).ruler : null;
+  const signs = (lotLord && T.afflicted(lotLord)) || ([1, 12].includes(T.H("القمر")) && T.afflicted("القمر")) || ["الجدي", "الدلو"].includes(T.sign(T.lon("القمر")).name);
+  add(signs ? "في الخريطة علامةُ أذًى مُدبَّر (على قول الكتاب)؛ والأغلبُ أنّه همٌّ وتعبٌ يحتاجُ علاجًا ظاهرًا." : "لا علامةَ في الخريطة على عملٍ مُدبَّر.", signs ? -0.2 : 0.2, 44);
+}
+
+// العلم والدراسة [ورقة ٨٢]
+function study(T, ch, add) {
+  const l9 = T.lordOf(9), a = T.asp(l9, ch.ascLord);
+  if ([...BEN].some((b) => T.H(b) === 9) || (a && !HARD.has(a.name))) add("بيتُ العلم سعيدٌ وينظرُ إلى دليلِك: علمٌ صحيحٌ تنتفعُ به.", 0.4, 82);
+  if ([...MAL].some((m) => T.H(m) === 9)) add("نحسٌ في بيت العلم: تعبٌ في الدراسة أو مادّةٌ لا تنفع.", -0.3, 82);
+  if (a && HARD.has(a.name)) add("بين دليلِك ودليل العلم نظرٌ صعب: تتعبُ فيه كثيرًا.", -0.2, 82);
+  if (BEN.has(l9) && !a) add("دليلُ العلم سعيدٌ لكنّه لا ينظرُ إليك: علمٌ نافعٌ لا تستفيدُ منه الآن.", 0, 82);
+}
+
+// السرقة [ورقة ٥٣–٥٩]
+function theft(T, ch, add) {
+  const strangers = ["زحل", "المشتري", "المريخ", "الشمس", "الزهرة", "عطارد", "القمر"].filter((p) => T.angular(T.H(p)) && T.peregrine(p));
+  const thief = strangers[0] || T.lordOf(7);
+  const tl = T.lon(thief), ts = T.sign(tl);
+  add(`صفةُ الآخذ: ${THIEF_LOOK[thief]}؛ ${T.masc(tl) ? "رجل" : "امرأة"}، ${ts.quality === "ثابت" ? "واحد" : ts.quality === "ذو جسدين" ? "أكثرُ من واحد" : "واحدٌ غالبًا"}، ${(norm(tl) % 30) < 15 ? "أصغرُ سنًّا" : "أكبرُ سنًّا"}.`, 0, 54);
+  const l2 = T.lordOf(2);
+  if (T.applying(l2, ch.ascLord) || T.applying("القمر", ch.ascLord) || [...BEN].some((b) => T.H(b) === 1)) add("دليلُ المتاع يرجعُ إلى دليلِك: يرجعُ الشيء.", 0.4, 54);
+  else if (T.cadent(T.H(l2)) && T.afflicted(l2)) add("دليلُ المتاع ساقطٌ منحوس: يصعبُ رجوعُه.", -0.4, 57);
+  if (ch.pos[thief]?.retrograde) add("دليلُ الآخذ راجع: يردُّ ما أخذ.", 0.3, 54);
+  if (T.angular(T.H(thief)) && T.asp(thief, "الشمس") && T.asp(thief, "القمر")) add("النيّران ينظران إلى دليل الآخذ: ينكشفُ أمرُه.", 0.2, 55);
+  const l4 = T.lordOf(4), s4 = T.sign(T.lon(l4));
+  add(`جهةُ الشيء: ${ANGLE_DIRECTION[T.H(l4)] || ELEMENT_DIRECTION[s4.element]}، ${QUALITY_HEIGHT[s4.quality]}، وأقربُ موضع: ${PLANET_PLACE_IN_HOUSE[l4]}.`, 0, 55);
+}
+
+// الضالّة والمفقود [ورقة ٥١–٥٢]
+function lost(T, ch, add) {
+  const l2 = T.lordOf(2), mL = T.sign(T.lon("القمر")).ruler;
+  if (T.applying("القمر", ch.ascLord) || T.applying("القمر", l2) || T.applying("القمر", mL)) add("القمرُ مقبلٌ على دليلِك أو دليل الشيء: يُوجَد.", 0.4, 51);
+  else if ([6, 8, 12].some((h) => T.asp("القمر", T.lordOf(h)) && HARD.has(T.asp("القمر", T.lordOf(h)).name))) add("القمرُ منحوسٌ بأرباب البيوت الرديئة: صار في يد غيرك.", -0.4, 51);
+  const ms = T.sign(T.lon("القمر")), hM = T.H("القمر");
+  add(`جهتُه: ${ANGLE_DIRECTION[hM] || ELEMENT_DIRECTION[ms.element]}، ${QUALITY_HEIGHT[ms.quality]}.`, 0, 51);
+  const d = sep(T.lon(ch.ascLord), T.lon(l2));
+  add(T.sign(T.lon(ch.ascLord)).name === T.sign(T.lon(l2)).name ? "قريبٌ جدًّا، غالبًا في البيت نفسه." : d < 30 ? "قريبٌ منك." : "بعيدٌ نسبيًّا.", 0, 52);
+  const sf = T.other(T.separating(ch.ascLord, "زحل") || T.separating(ch.ascLord, "المريخ") || T.separating(ch.ascLord, "المشتري") || T.separating(ch.ascLord, "الزهرة") || T.separating(ch.ascLord, "عطارد"), ch.ascLord);
+  if (sf && LOSS_CAUSE[sf]) add(`سببُ الضياع: ${LOSS_CAUSE[sf]}.`, 0, 52);
+}
+
+// الحبس [ورقة ٨٢–٨٥]
+function prison(T, ch, add) {
+  const l4 = T.lordOf(4);
+  if (T.separating("القمر", l4)) add("القمرُ منصرفٌ عن دليل الحبس: خروج.", 0.4, 82);
+  if (mtBen(T)) add("القمرُ مقبلٌ على سعد: خلاصٌ سريع.", 0.3, 82);
+  if (T.sign(T.lon("القمر")).quality === "ثابت" && T.sign(T.lon(ch.ascLord)).quality === "ثابت") add("القمرُ وصاحبُ الطالع في بروجٍ ثابتة: يطولُ الحبس.", -0.3, 82);
+  add(`على برج القمر: ${PRISON_BY_MOON_SIGN[T.sign(T.lon("القمر")).name]}.`, 0, 84);
+  if (ch.hourRuler && PRISON_BY_HOUR[ch.hourRuler]) add(`على صاحب الساعة (${ch.hourRuler}): ${PRISON_BY_HOUR[ch.hourRuler]}.`, 0, 85);
+  const mf = T.other(T.moonFrom(), "القمر");
+  if (mf && PRISON_CAUSE[mf]) add(`السببُ الأرجح: ${PRISON_CAUSE[mf]}.`, 0, 83);
+}
+
+// البيع والشراء [ورقة ٢٤، ٦٠–٦١]
+function sale(T, ch, add) {
+  const l7 = T.lordOf(7), a = T.applying(ch.ascLord, l7);
+  if (a) add(SOFT.has(a.name) ? "دليلُ البائع والمشتري يتّصلان: الصفقةُ تتمُّ بسهولة." : "الصفقةُ تتمُّ بعد شدٍّ وجذب.", SOFT.has(a.name) ? 0.4 : 0.1, 60);
+  else add("لا اتّصالَ بين الطرفين: الصفقةُ لا تتمُّ الآن.", -0.3, 60);
+  const l4 = T.lordOf(4);
+  if (ch.pos[l4]?.retrograde || T.combust(l4)) add("دليلُ السلعة راجعٌ أو محترق: فيها عيب، فافحصْها.", -0.3, 61);
+  const l10 = T.lordOf(10), d = ch.dig?.(l10) ?? 0;
+  add(d >= 3 ? "السعرُ مرتفع." : d < 0 || T.cadent(T.H(l10)) ? "السعرُ منخفض." : "السعرُ معتدل.", 0, 24);
+  if ([...BEN].some((b) => T.H(b) === 1)) add("سعدٌ في الطالع: البائعُ صادقٌ ويسهلُ التعامل.", 0.2, 60);
+  if ([...MAL].some((m) => T.H(m) === 1)) add("نحسٌ في الطالع: احذرْ الغشّ.", -0.2, 60);
+}
+
+// الشراكة [ورقة ٦٠]
+function partner(T, ch, add) {
+  const l7 = T.lordOf(7), a = T.asp(ch.ascLord, l7);
+  if (a && SOFT.has(a.name)) add("بين الشريكين نظرُ مودّة: شراكةٌ مستقيمة.", 0.4, 60);
+  const q1 = T.sign(ch.ascLon).quality;
+  add(q1 === "ثابت" ? "الشراكةُ تدوم." : q1 === "منقلب" ? "الشراكةُ لا تدومُ طويلًا." : "الشراكةُ تربحُ لكن مع تبدّل.", q1 === "ثابت" ? 0.2 : q1 === "منقلب" ? -0.2 : 0.1, 60);
+  if ([...MAL].some((m) => T.H(m) === 1)) add("النحسُ في جهتِك: الخللُ يأتي منك، فانتبه.", -0.1, 60);
+  if ([...MAL].some((m) => T.H(m) === 7)) add("النحسُ في جهة الشريك: الخللُ يأتي منه.", -0.2, 60);
+}
+
+// العقار والبيت [ورقة ٢٣–٢٥]
+function estate(T, ch, add) {
+  const l4 = T.lordOf(4), l7 = T.lordOf(7);
+  if (T.applying(ch.ascLord, l7) || T.applying(ch.ascLord, l4) || T.applying("القمر", l4)) add("دليلُك يتّصلُ بدليل البيت: تملكُه.", 0.4, 24);
+  if (ch.pos[l4]?.retrograde || T.afflicted(l4)) add("دليلُ العقار راجعٌ أو منحوس: فيه خللٌ أو خراب.", -0.3, 24);
+  if ([...BEN].some((b) => T.H(b) === 4)) add("سعدٌ في بيت العقار: موضعٌ صالحٌ عامر.", 0.3, 24);
+  const a = T.asp(ch.ascLord, l4);
+  if (a) add(SOFT.has(a.name) ? "تنتفعُ بهذا العقار." : "تنتفعُ به لكن مع تعب.", SOFT.has(a.name) ? 0.2 : 0, 24);
+}
+
+// الكنز والدفين [ورقة ٢٥–٢٧]
+function treasure(T, ch, add) {
+  const l4 = T.lordOf(4);
+  if ([...BEN].some((b) => T.H(b) === 4)) add("سعدٌ في الرابع: في الموضع شيءٌ له قيمة.", 0.2, 25);
+  else add("لا سعدَ في الرابع: لا علامةَ على شيءٍ مدفون.", -0.2, 25);
+  add(T.applying(ch.ascLord, l4) ? "دليلُك يتّصلُ بدليل الدفين: تصلُ إليه." : "لا اتّصالَ بينك وبين دليل الدفين: لا تصلُ إليه.", T.applying(ch.ascLord, l4) ? 0.3 : -0.3, 26);
+  add(`نوعُه: ${PLANET_SUBSTANCE[l4]}؛ وموضعُه ${QUALITY_HEIGHT[T.sign(T.lon(l4)).quality]}.`, 0, 26);
+}
+
+// الرؤيا [ورقة ٧٥، ٧٩–٨٠]
+function dream(T, ch, add) {
+  const p = ["زحل", "المشتري", "المريخ", "الشمس", "الزهرة", "عطارد", "القمر"].find((x) => T.H(x) === 9) || ["زحل", "المشتري", "المريخ", "الشمس", "الزهرة", "عطارد", "القمر"].find((x) => T.H(x) === 1) || T.lordOf(9);
+  add(`مادّةُ الرؤيا: ${DREAM_MATTER[p]} (من ${p}).`, 0, 80);
+  const j = T.asp("المشتري", ch.ascLord);
+  if (j && !HARD.has(j.name)) add("المشتري ينظرُ إلى دليلِك: الرؤيا صادقة.", 0.3, 75);
+  const l9 = T.lordOf(9);
+  if (T.afflicted(l9) && T.cadent(T.H(l9))) add("دليلُ الرؤيا منحوسٌ ساقط: أضغاثٌ لا تصدق.", -0.3, 80);
+  else if (mtBen(T)) add("الدليلُ متّصلٌ بسعد: الرؤيا خيرٌ وتتحقّق.", 0.2, 80);
+}
+
+// الرجاء والأمنية [ورقة ٩٦]
+function hope(T, ch, add) {
+  const l11 = T.lordOf(11), a = T.applying(ch.ascLord, l11) || T.applying("القمر", l11);
+  if (a) add(SOFT.has(a.name) ? "دليلُك يتّصلُ بدليل الرجاء: تنالُ ما تتمنّاه بسهولة." : "تنالُ ما تتمنّاه بعد إبطاء.", SOFT.has(a.name) ? 0.4 : 0.1, 96);
+  const q = T.sign(T.lon("القمر")).quality;
+  add(q === "ثابت" ? "إن تحقّق فيتحقّقُ كاملًا." : q === "ذو جسدين" ? "يتحقّقُ بعضُه." : "يتغيّرُ سريعًا، فاغتنمْه.", 0, 96);
+}
+
+// الصديق [ورقة ٩٦–٩٧]
+function friend(T, ch, add) {
+  const l11 = T.lordOf(11), a = T.asp(ch.ascLord, l11);
+  if (a) add(SOFT.has(a.name) || a.name === "مقارنة" ? "تجتمعان، واجتماعُكما فيه سرورٌ ونفع." : "تجتمعان، لكن فيه شدٌّ ومضايقة.", SOFT.has(a.name) ? 0.3 : 0, 96);
+  else add("لا اتّصالَ بين دليلِك ودليل الصديق الآن.", -0.2, 96);
+}
+
+const RULES = {
+  "رزق": money, "مال": money, "عمل": work, "وظيفة": work, "سلطان": work, "صناعة": craft,
+  "زواج": marriage, "حب": marriage, "طلاق": divorce, "ولد": child, "حمل": child,
+  "مرض": illness, "صحة": illness, "سفر": travel, "غائب": absent, "خبر": absent, "كتاب": letter,
+  "قضية": dispute, "دعوى": dispute, "عدو": dispute, "سحر": sihr, "دراسة": study, "علم": study,
+  "سرقة": theft, "ضالة": lost, "حبس": prison, "بيع وشراء": sale, "شركة": partner, "عقار": estate,
+  "كنز": treasure, "رؤيا": dream, "رجاء": hope, "صديق": friend,
+};
+
+__exports.default = { judge };
+
+;__exports["judge"]=judge;return __exports;})();
 __M["falak"]=(function(){"use strict";const __exports={};
 // engines/falak.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18159,6 +18682,7 @@ const {
   SOURCE_META: MUNDANE_SRC, MUNDANE_NOTE,
 }=__M["falak-mundane.data"];
 const abjad=__M["abjad"].default;
+const bari=__M["bari"].default;
 
 const DEG = 180 / Math.PI;
 const RAD = Math.PI / 180;
@@ -18909,6 +19433,11 @@ function almuten(when, lat, lon) {
 /** تصنيفُ موضوعِ السؤال إلى مفتاحٍ في جدول الدلائل. */
 function classifyAstroTopic(text) {
   const q = abjad.normalize(String(text || ""));
+  // المسائلُ المخصوصة أوّلًا (البارع): كلماتُها أدلُّ من الكلمات العامّة («محبوس» ليست «حب»، و«انسرق… يرجع» سرقةٌ لا غائب)
+  const PRIORITY = [["سرقة", ["سرق", "حرامي", "لص", "انسرق"]], ["حبس", ["سجن", "محبوس", "مسجون", "اسير", "أسير", "موقوف"]],
+    ["ضالة", ["ضاع", "ضايع", "ضيعت", "اضعت", "فقدت", "ضالة"]], ["كنز", ["كنز", "دفين", "دفينة", "مدفون"]],
+    ["رؤيا", ["حلم", "منام", "رؤيا", "حلمت"]], ["صناعة", ["مهنة", "صنعة", "صنعه", "تخصص"]], ["شركة", ["شريك", "شراكة", "شركه"]]];
+  for (const [key, kws] of PRIORITY) if (kws.some((k) => q.includes(abjad.normalize(k)))) return key;
   for (const key of Object.keys(SIGNIFICATORS)) {
     if (key !== "عام" && q.includes(abjad.normalize(key))) return key;
   }
@@ -18924,7 +19453,15 @@ function classifyAstroTopic(text) {
     ["سحر", ["سحر", "مسحور", "معمول", "ربط"]],
     ["عين", ["عين", "حسد", "محسود", "نظرة"]],
     ["دراسة", ["دراسة", "امتحان", "نجاح", "الجامعة", "شهادة", "أنجح"]],
-    ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]]];
+    ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]],
+    // مسائلُ البارع
+    ["صناعة", ["مجال"]],
+    ["عقار", ["بيت", "دار", "شقة", "شقه", "ارض", "أرض", "عقار"]],
+    ["بيع وشراء", ["ابيع", "بيع", "اشتري", "أشتري", "شراء", "صفقة"]],
+    ["شركة", ["شريك", "شراكة", "شركه"]],
+    ["كتاب", ["رسالة", "رساله", "مكتوب", "ايميل", "كتاب"]],
+    ["رجاء", ["امنية", "أمنية", "امنيتي", "اتمنى", "أتمنى"]],
+    ["صديق", ["صديق", "صاحبي", "صديقتي", "صحبة"]]];
   for (const [key, kws] of map) if (kws.some((k) => q.includes(abjad.normalize(k)))) return key;
   return "عام";
 }
@@ -19036,10 +19573,26 @@ function horary(question, when, lat, lon) {
     }
   }
 
-  const verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
+  // أحكامُ المسائل الخاصّة بكلّ موضوع [البارع لابن أبي الرجال، باب المسائل]
+  let bariR = null;
+  try {
+    const lotsNow = lots(when, lat, lon);
+    const hr = currentHour(when, lat, lon);
+    bariR = bari.judge(topic, {
+      ascLon: asc.longitude, pos, asps, comb, ms, hourRuler: hr?.ruler, ascLord, qLord,
+      lotLon: lotsNow.lots["سهم السعادة"]?.longitude, dig: (p) => dignities(p, P_LON(pos, p), { byNight }).score,
+    });
+    score += bariR.adj;
+    for (const x of bariR.details) if (x.s) factors.push(`${x.text} [${x.src}]`);
+  } catch {}
+
+  let verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
     : score >= 0 ? "نعم، بشرطِ سعيٍ وشيءٍ من التأخير"
     : score > -1.5 ? "الأمرُ متوقّفٌ لم يترجّحْ بعدُ لجانب"
     : "لا — لا يتمّ، والأولى تركُه";
+  // مسائلُ الوصف (أيُّ صنعة؟ ما معنى الرؤيا؟) لا جوابَ «نعم/لا» لها: الحكمُ هو الوصفُ نفسُه
+  const infoV = (topic === "صناعة" || topic === "رؤيا") && bariR ? bariR.details.find((x) => !/^مراحلُ الأمر|^القمرُ مقبلٌ|^صاحبُ الطالع/.test(x.text)) : null;
+  if (infoV) verdict = infoV.text.replace(/\.$/, "");
 
   // تقديرُ الوقت [مقياس الزمن — أحكام الحكيم ج١ ص ١٥٢]: عددُ الوحدات = فضلُ
   // الاتّصال بالدرجات؛ نوعُ الوحدة من جدول (طبعُ برجِ الدليل الأسرع × موضعُ بيتِه).
@@ -19071,6 +19624,7 @@ function horary(question, when, lat, lon) {
     disease,
     score: Math.round(score * 100) / 100,
     verdict, timing, factors,
+    bari: bariR,
     trace: [
       `موضوع السؤال ⇒ «${topic}» ⇒ البيت ${sig.house} وكواكبُه ${(sig.planets || []).join("، ")}.`,
       `الطالع: ${asc.sign} ${asc.degreeInSign.toFixed(1)}° ⇒ حاكمُه ${ascLord}.`,
@@ -21643,7 +22197,7 @@ function read(c, opt = {}) {
 function ask(c, question, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
   const key = falak.classifyAstroTopic(question || "");
-  const topic = { زواج: "love", حب: "love", ولد: "love", حمل: "love", رزق: "money", مال: "money", دين: "money", عمل: "work", وظيفة: "work", سلطان: "work", سفر: "study", مرض: "health", شفاء: "health" }[key] || "all";
+  const topic = { زواج: "love", حب: "love", طلاق: "love", ولد: "love", حمل: "love", صديق: "love", رزق: "money", مال: "money", دين: "money", سرقة: "money", ضالة: "money", "بيع وشراء": "money", عقار: "money", كنز: "money", عمل: "work", وظيفة: "work", سلطان: "work", صناعة: "work", شركة: "work", سفر: "study", دراسة: "study", علم: "study", مرض: "health", صحة: "health", شفاء: "health" }[key] || "all";
   const r = raml.reading({ name: c.name, mother: c.mother, question, when: now });
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
@@ -21679,7 +22233,7 @@ function ask(c, question, opt = {}) {
     const cand = (el.best || []).map((x) => ({ ...x, d: new Date(x.start) })).sort((a, b) => (b.score + (bd && bd.includes(WD[b.d.getUTCDay()]) ? 1 : 0)) - (a.score + (bd && bd.includes(WD[a.d.getUTCDay()]) ? 1 : 0)));
     if (cand[0]) bestDay = { date: cand[0].d, weekday: WD[cand[0].d.getUTCDay()], hourRuler: cand[0].hourRuler, label: `${WD[cand[0].d.getUTCDay()]} ${cand[0].d.getUTCDate()} ${MONTHS[cand[0].d.getUTCMonth()]} ${cand[0].d.getUTCFullYear()}` };
   } catch {}
-  return { topic, topicAr: TOPICS[topic], big, text, bestDay, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
+  return { topic, topicAr: TOPICS[topic], big, text, bestDay, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
 __exports.default = { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
@@ -26961,7 +27515,8 @@ PANELS.falak = (main) => {
         ${hor.perfection ? `اتّصالٌ مقبلٌ بين الدليلين: ${esc(hor.perfection.between.join(" — "))} (${esc(hor.perfection.aspect)}).` : hor.lightTransfer ? `${esc(hor.lightTransfer.kind)}: ${esc(hor.lightTransfer.text)}` : "لا اتّصالَ مقبلًا بين الدليلين."}<br>
         القمر: ${esc(hor.moon.phase)}${hor.moon.voidOfCourse ? " — خالي السير" : ""}.
         ${hor.timing ? `<br>مقياسُ الزمن: <b>${esc(hor.timing.text)}</b> (من ${esc(hor.timing.fromPlanet)}).` : ""}
-        ${hor.disease ? `<br>جنسُ العلّة (من ${esc(hor.disease.from)}): <b>${esc(hor.disease.nature)}</b> — ${esc(hor.disease.diseases)}` : ""}</div>`,
+        ${hor.disease ? `<br>جنسُ العلّة (من ${esc(hor.disease.from)}): <b>${esc(hor.disease.nature)}</b> — ${esc(hor.disease.diseases)}` : ""}</div>
+        ${hor.bari?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${hor.bari.details.map((x) => `<li>${esc(x.text)}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}`,
       basis: `دليلُ السائل (حاكمُ الطالع + القمر) ودليلُ المطلوب (حاكمُ بيته + كوكبُه الطبيعيّ)، ثمّ اتّصالٌ مقبلٌ أو نقلُ نورٍ أو جمعُه، ثمّ نقاطُ الكرامة والاحتراق وخلوّ السير ودرجاتِ البروج. تفصيلُ العوامل: ${hor.factors.map((f) => f).join(" | ")}`,
       reveal: traceText(hor.trace),
       vs: [`«كشف طالعُك أنّ: ${esc(hor.verdict)}»`, `الحكم = مجموع نقاطٍ من جداول ثابتة (${AR(hor.score)}). بدّل ساعةَ السؤال أو صياغتَه ⇒ طالعٌ آخرُ ⇒ حكمٌ آخر.`]
@@ -27907,6 +28462,7 @@ PANELS.arif = (main) => {
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
     $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
+      ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     draw(); month();
   });

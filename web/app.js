@@ -1496,7 +1496,8 @@ PANELS.falak = (main) => {
         ${hor.perfection ? `اتّصالٌ مقبلٌ بين الدليلين: ${esc(hor.perfection.between.join(" — "))} (${esc(hor.perfection.aspect)}).` : hor.lightTransfer ? `${esc(hor.lightTransfer.kind)}: ${esc(hor.lightTransfer.text)}` : "لا اتّصالَ مقبلًا بين الدليلين."}<br>
         القمر: ${esc(hor.moon.phase)}${hor.moon.voidOfCourse ? " — خالي السير" : ""}.
         ${hor.timing ? `<br>مقياسُ الزمن: <b>${esc(hor.timing.text)}</b> (من ${esc(hor.timing.fromPlanet)}).` : ""}
-        ${hor.disease ? `<br>جنسُ العلّة (من ${esc(hor.disease.from)}): <b>${esc(hor.disease.nature)}</b> — ${esc(hor.disease.diseases)}` : ""}</div>`,
+        ${hor.disease ? `<br>جنسُ العلّة (من ${esc(hor.disease.from)}): <b>${esc(hor.disease.nature)}</b> — ${esc(hor.disease.diseases)}` : ""}</div>
+        ${hor.bari?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${hor.bari.details.map((x) => `<li>${esc(x.text)}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}`,
       basis: `دليلُ السائل (حاكمُ الطالع + القمر) ودليلُ المطلوب (حاكمُ بيته + كوكبُه الطبيعيّ)، ثمّ اتّصالٌ مقبلٌ أو نقلُ نورٍ أو جمعُه، ثمّ نقاطُ الكرامة والاحتراق وخلوّ السير ودرجاتِ البروج. تفصيلُ العوامل: ${hor.factors.map((f) => f).join(" | ")}`,
       reveal: traceText(hor.trace),
       vs: [`«كشف طالعُك أنّ: ${esc(hor.verdict)}»`, `الحكم = مجموع نقاطٍ من جداول ثابتة (${AR(hor.score)}). بدّل ساعةَ السؤال أو صياغتَه ⇒ طالعٌ آخرُ ⇒ حكمٌ آخر.`]
@@ -2442,6 +2443,7 @@ PANELS.arif = (main) => {
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
     $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
+      ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     draw(); month();
   });

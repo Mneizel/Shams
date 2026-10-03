@@ -358,6 +358,29 @@ import falak from "../engines/falak.js";
   eq(JSON.stringify(falak.mundaneForecast(WHEN, LAT, LON).trace),
      JSON.stringify(mf.trace), "أحكامُ العالم حتميّة");
   ok(falak.SOURCES.ahkam4 && /ج٤/.test(falak.SOURCES.ahkam4.title), "مصدرُ أحكام العالم مسجَّل");
+  // مسائلُ البارع: تصنيفُ المسائل المخصوصة + تفاصيلُ كلّ موضوع
+  eq(falak.classifyAstroTopic("ابني محبوس متى يطلع"), "حبس", "«محبوس» حبسٌ لا حبّ");
+  eq(falak.classifyAstroTopic("انسرق تلفوني هل يرجع"), "سرقة", "«انسرق… يرجع» سرقةٌ لا غائب");
+  eq(falak.classifyAstroTopic("ضاع خاتمي"), "ضالة", "الضالّة");
+  eq(falak.classifyAstroTopic("هل أشتري البيت"), "عقار", "العقار قبل البيع والشراء");
+  eq(falak.classifyAstroTopic("شو المهنة اللي بتناسبني"), "صناعة", "الصناعة");
+  eq(falak.classifyAstroTopic("هل أتزوج هذا العام"), "زواج", "الزواجُ باقٍ كما هو");
+  {
+    const W2 = new Date("2026-11-20T18:00:00Z");
+    const hb = falak.horary("هل أتزوج هذا العام", W2, 31.95, 35.93);
+    ok(hb.bari && hb.bari.details.length >= 3 && hb.bari.phases.length === 3, "البارع: تفاصيلُ الزواج ومراحلُ الأمر الثلاث");
+    ok(hb.bari.details.every((x) => /البارع/.test(x.src)), "كلُّ تفصيلٍ منسوبٌ إلى البارع");
+    ok(Math.abs(hb.bari.adj) <= 1, "تعديلُ البارع محصورٌ في ±١");
+    const th = falak.horary("انسرق تلفوني هل يرجع", W2, 31.95, 35.93);
+    ok(th.bari.details.some((x) => /صفةُ الآخذ/.test(x.text)) && th.bari.details.some((x) => /جهةُ الشيء/.test(x.text)), "السرقة: صفةُ الآخذ وجهةُ الشيء");
+    const pr = falak.horary("ابني محبوس متى يطلع", W2, 31.95, 35.93);
+    ok(pr.bari.details.some((x) => /على برج القمر/.test(x.text)) && pr.bari.details.some((x) => /صاحب الساعة/.test(x.text)), "الحبس: برجُ القمر وصاحبُ الساعة");
+    const cr = falak.horary("شو المهنة اللي بتناسبني", W2, 31.95, 35.93);
+    ok(/الصنعةُ التي تناسبُك/.test(cr.verdict), "مسألةُ الصناعة جوابُها وصفٌ لا نعم/لا");
+    const il = falak.horary("هل أشفى من المرض هذا العام", W2, 31.95, 35.93);
+    ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
+    eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
+  }
   // horary: مقياسُ الزمن مدمجٌ + جنسُ المرض في مسائل البدن
   const hh = falak.horary("هل أشفى من المرض هذا العام", WHEN, LAT, LON);
   ok(!hh.timing || (hh.timing.unit && falak.SPECIAL_DEGREE_TABLES.TIMING_TABLE), "توقيتُ الحكم يستعمل جدول مقياس الزمن");

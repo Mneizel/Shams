@@ -49,6 +49,7 @@ import {
   SOURCE_META as MUNDANE_SRC, MUNDANE_NOTE,
 } from "../data/falak-mundane.data.js";
 import abjad from "./abjad.js";
+import bari from "./bari.js";
 
 const DEG = 180 / Math.PI;
 const RAD = Math.PI / 180;
@@ -799,6 +800,11 @@ export function almuten(when, lat, lon) {
 /** تصنيفُ موضوعِ السؤال إلى مفتاحٍ في جدول الدلائل. */
 export function classifyAstroTopic(text) {
   const q = abjad.normalize(String(text || ""));
+  // المسائلُ المخصوصة أوّلًا (البارع): كلماتُها أدلُّ من الكلمات العامّة («محبوس» ليست «حب»، و«انسرق… يرجع» سرقةٌ لا غائب)
+  const PRIORITY = [["سرقة", ["سرق", "حرامي", "لص", "انسرق"]], ["حبس", ["سجن", "محبوس", "مسجون", "اسير", "أسير", "موقوف"]],
+    ["ضالة", ["ضاع", "ضايع", "ضيعت", "اضعت", "فقدت", "ضالة"]], ["كنز", ["كنز", "دفين", "دفينة", "مدفون"]],
+    ["رؤيا", ["حلم", "منام", "رؤيا", "حلمت"]], ["صناعة", ["مهنة", "صنعة", "صنعه", "تخصص"]], ["شركة", ["شريك", "شراكة", "شركه"]]];
+  for (const [key, kws] of PRIORITY) if (kws.some((k) => q.includes(abjad.normalize(k)))) return key;
   for (const key of Object.keys(SIGNIFICATORS)) {
     if (key !== "عام" && q.includes(abjad.normalize(key))) return key;
   }
@@ -814,7 +820,15 @@ export function classifyAstroTopic(text) {
     ["سحر", ["سحر", "مسحور", "معمول", "ربط"]],
     ["عين", ["عين", "حسد", "محسود", "نظرة"]],
     ["دراسة", ["دراسة", "امتحان", "نجاح", "الجامعة", "شهادة", "أنجح"]],
-    ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]]];
+    ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]],
+    // مسائلُ البارع
+    ["صناعة", ["مجال"]],
+    ["عقار", ["بيت", "دار", "شقة", "شقه", "ارض", "أرض", "عقار"]],
+    ["بيع وشراء", ["ابيع", "بيع", "اشتري", "أشتري", "شراء", "صفقة"]],
+    ["شركة", ["شريك", "شراكة", "شركه"]],
+    ["كتاب", ["رسالة", "رساله", "مكتوب", "ايميل", "كتاب"]],
+    ["رجاء", ["امنية", "أمنية", "امنيتي", "اتمنى", "أتمنى"]],
+    ["صديق", ["صديق", "صاحبي", "صديقتي", "صحبة"]]];
   for (const [key, kws] of map) if (kws.some((k) => q.includes(abjad.normalize(k)))) return key;
   return "عام";
 }
@@ -926,10 +940,26 @@ export function horary(question, when, lat, lon) {
     }
   }
 
-  const verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
+  // أحكامُ المسائل الخاصّة بكلّ موضوع [البارع لابن أبي الرجال، باب المسائل]
+  let bariR = null;
+  try {
+    const lotsNow = lots(when, lat, lon);
+    const hr = currentHour(when, lat, lon);
+    bariR = bari.judge(topic, {
+      ascLon: asc.longitude, pos, asps, comb, ms, hourRuler: hr?.ruler, ascLord, qLord,
+      lotLon: lotsNow.lots["سهم السعادة"]?.longitude, dig: (p) => dignities(p, P_LON(pos, p), { byNight }).score,
+    });
+    score += bariR.adj;
+    for (const x of bariR.details) if (x.s) factors.push(`${x.text} [${x.src}]`);
+  } catch {}
+
+  let verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
     : score >= 0 ? "نعم، بشرطِ سعيٍ وشيءٍ من التأخير"
     : score > -1.5 ? "الأمرُ متوقّفٌ لم يترجّحْ بعدُ لجانب"
     : "لا — لا يتمّ، والأولى تركُه";
+  // مسائلُ الوصف (أيُّ صنعة؟ ما معنى الرؤيا؟) لا جوابَ «نعم/لا» لها: الحكمُ هو الوصفُ نفسُه
+  const infoV = (topic === "صناعة" || topic === "رؤيا") && bariR ? bariR.details.find((x) => !/^مراحلُ الأمر|^القمرُ مقبلٌ|^صاحبُ الطالع/.test(x.text)) : null;
+  if (infoV) verdict = infoV.text.replace(/\.$/, "");
 
   // تقديرُ الوقت [مقياس الزمن — أحكام الحكيم ج١ ص ١٥٢]: عددُ الوحدات = فضلُ
   // الاتّصال بالدرجات؛ نوعُ الوحدة من جدول (طبعُ برجِ الدليل الأسرع × موضعُ بيتِه).
@@ -961,6 +991,7 @@ export function horary(question, when, lat, lon) {
     disease,
     score: Math.round(score * 100) / 100,
     verdict, timing, factors,
+    bari: bariR,
     trace: [
       `موضوع السؤال ⇒ «${topic}» ⇒ البيت ${sig.house} وكواكبُه ${(sig.planets || []).join("، ")}.`,
       `الطالع: ${asc.sign} ${asc.degreeInSign.toFixed(1)}° ⇒ حاكمُه ${ascLord}.`,

@@ -470,7 +470,7 @@ export function read(c, opt = {}) {
 export function ask(c, question, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
   const key = falak.classifyAstroTopic(question || "");
-  const topic = { زواج: "love", حب: "love", ولد: "love", حمل: "love", رزق: "money", مال: "money", دين: "money", عمل: "work", وظيفة: "work", سلطان: "work", سفر: "study", مرض: "health", شفاء: "health" }[key] || "all";
+  const topic = { زواج: "love", حب: "love", طلاق: "love", ولد: "love", حمل: "love", صديق: "love", رزق: "money", مال: "money", دين: "money", سرقة: "money", ضالة: "money", "بيع وشراء": "money", عقار: "money", كنز: "money", عمل: "work", وظيفة: "work", سلطان: "work", صناعة: "work", شركة: "work", سفر: "study", دراسة: "study", علم: "study", مرض: "health", صحة: "health", شفاء: "health" }[key] || "all";
   const r = raml.reading({ name: c.name, mother: c.mother, question, when: now });
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
@@ -506,7 +506,7 @@ export function ask(c, question, opt = {}) {
     const cand = (el.best || []).map((x) => ({ ...x, d: new Date(x.start) })).sort((a, b) => (b.score + (bd && bd.includes(WD[b.d.getUTCDay()]) ? 1 : 0)) - (a.score + (bd && bd.includes(WD[a.d.getUTCDay()]) ? 1 : 0)));
     if (cand[0]) bestDay = { date: cand[0].d, weekday: WD[cand[0].d.getUTCDay()], hourRuler: cand[0].hourRuler, label: `${WD[cand[0].d.getUTCDay()]} ${cand[0].d.getUTCDate()} ${MONTHS[cand[0].d.getUTCMonth()]} ${cand[0].d.getUTCFullYear()}` };
   } catch {}
-  return { topic, topicAr: TOPICS[topic], big, text, bestDay, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
+  return { topic, topicAr: TOPICS[topic], big, text, bestDay, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
 export default { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
