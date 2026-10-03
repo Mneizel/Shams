@@ -27,6 +27,7 @@ import {
   AYQANIYYA, ELEMENT_FRIENDSHIP,
 } from "../data/huruf-tibb.data.js";
 import * as ASM_AZAM from "../data/asm-azam.data.js";
+import { LETTER_AILMENTS_MORE, SANUSI_DAYS, DAY_SERVANT_CURE, GHAZALI_TIBB_SRC, SANUSI_SRC } from "../data/huruf-tibb-ghazali.data.js";
 
 // ── تطبيع ───────────────────────────────────────────────────────────────────
 
@@ -401,6 +402,7 @@ export function nameBattle(nameA, nameB, opt = {}) {
  * @param {string} [opt.weekday]     اسمُ يوم الأسبوع (أحد..سبت)
  * @param {number} [opt.arabicDate]  اليومُ من الشهر العربيّ
  * @param {"first"|"computed"} [opt.method="computed"]
+ * @param {"man"|"woman"|"child"|"girl"} [opt.who="man"]  الرجل / المرأة الكاملة / الصغير / الصغيرة (أبوابُ الغزاليّ)
  */
 export function letterMedicine(patientName, opt = {}) {
   const name = normalize(patientName || "");
@@ -420,6 +422,20 @@ export function letterMedicine(patientName, opt = {}) {
     trace.push(`الطريقة الحسابيّة: جُمّل(المريض ${jummal(name)}${opt.fatherName ? ` + الأب ${jummal(opt.fatherName)}` : ""}${opt.motherName ? ` + الأمّ ${jummal(opt.motherName)}` : ""}${opt.weekday ? ` + اليوم ${jummal(opt.weekday)}` : ""}${opt.arabicDate ? ` + التاريخ ${opt.arabicDate}` : ""}) = ${total}`);
     trace.push(`إسقاطٌ بـ٢٨ ⇒ الباقي ${rem} ⇒ الحرفُ رقم ${rem} في أبجد ⇒ «${letter}».`);
   }
+  const who = ["woman", "child", "girl"].includes(opt.who) ? opt.who : "man";
+  const WHO_AR = { man: "الرجل", woman: "المرأة الكاملة", child: "الصغير في مهده", girl: "الصغيرة في مهدها" };
+  // غيرُ الرجل: بابُه من «الطبّ الروحانيّ» (الغزاليّ)؛ والرجل من «السرّ المكشوف» (وهو النصُّ نفسُه)، و«غ» للرجل من الغزاليّ
+  if (who !== "man" || !LETTER_AILMENTS[letter]) {
+    const more = LETTER_AILMENTS_MORE[letter]?.[who];
+    if (more) {
+      trace.push(`بابُ «${WHO_AR[who]}» في حرف «${letter}» من «${GHAZALI_TIBB_SRC}» ص${more.page}.`);
+      trace.push("تشخيصٌ ثابتٌ لكلّ من وقع اسمُه على هذا الحرف — لا فحصَ ولا صلةَ بالبدن.");
+      return { patient: name, letter, who, whoAr: WHO_AR[who], substitutedFrom: null, rem: rem ?? null, total: total ?? null,
+        cause: more.cause, sign: more.sign || "", cure: more.cure || "", page: more.page,
+        method: TIBB_METHOD, note: TIBB_NOTE, source: GHAZALI_TIBB_SRC, trace };
+    }
+    if (who !== "man") trace.push(`بابُ «${WHO_AR[who]}» في حرف «${letter}» ساقطٌ من نسخة الكتاب ⇒ يُعطى بابُ الرجل.`);
+  }
   let entry = LETTER_AILMENTS[letter];
   let substituted = null;
   if (!entry) {
@@ -434,11 +450,29 @@ export function letterMedicine(patientName, opt = {}) {
   }
   trace.push("تشخيصٌ ثابتٌ لكلّ من وقع اسمُه على هذا الحرف — لا فحصَ ولا صلةَ بالبدن.");
   return {
-    patient: name, letter, substitutedFrom: substituted,
+    patient: name, letter, who: "man", whoAr: "الرجل", substitutedFrom: substituted,
     rem: rem ?? null, total: total ?? null,
     cause: entry.cause, sign: entry.sign, cure: entry.cure,
     method: TIBB_METHOD, note: TIBB_NOTE, source: TIBB_SRC.title, trace,
   };
+}
+
+/**
+ * «الطبّ الروحانيّ للإمام السنوسيّ»: جُمّل(اسم المريض + اسم أمّه + اسم يوم المرض) ÷ ٧ ⇒ ١ الأحد … ٧ السبت ⇒
+ * كوكبُ اليوم وملَكُه وملكُه السفليّ، ومدّةُ النظر في المرض، وسببُه وعلامتُه وعلاجُه. ومعه «بابٌ على الأيّام السبعة»:
+ * جُمّل(الاسم + الأمّ) ÷ ٧ ⇒ خادمُ اليوم الذي منه المرض وعلاجُه. حتميّ.
+ */
+export function sanusiPrognosis(patientName, motherName, illnessDay) {
+  const name = normalize(patientName || ""), mother = normalize(motherName || ""), day = normalize(illnessDay || "");
+  const total = jummal(name) + jummal(mother) + (day ? jummal(day) : 0);
+  const r = total % 7 || 7;
+  const base = jummal(name) + jummal(mother), r2 = base % 7 || 7;
+  const trace = [
+    `جُمّل «${name}» ${jummal(name)} + «${mother}» ${jummal(mother)}${day ? ` + «${day}» ${jummal(day)}` : ""} = ${total} ⇒ ÷٧ الباقي ${r} ⇒ ${SANUSI_DAYS[r - 1].day}`,
+    `بابُ الأيّام السبعة: ${base} ÷٧ الباقي ${r2} ⇒ خادمُ ${DAY_SERVANT_CURE[r2 - 1].day}`,
+    "نفسُ الأسماءِ واليوم ⇒ نفسُ «المدّة» و«السبب» دائمًا: رقمٌ من جدولٍ لا فحص.",
+  ];
+  return { total, rem: r, ...SANUSI_DAYS[r - 1], servant: { rem: r2, ...DAY_SERVANT_CURE[r2 - 1] }, source: SANUSI_SRC, trace };
 }
 
 /**
@@ -481,6 +515,7 @@ export default {
   normalize,
   letters,
   letterMedicine,
+  sanusiPrognosis,
   letterValue,
   saghir,
   digitalRoot,

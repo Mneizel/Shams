@@ -1183,6 +1183,17 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(n2.clearDominant ? !!n2.mizajText : n2.mizajText === null, "نصُّ مزاجِ الاسمِ يُستعمَلُ فقط حين يكونُ الطبعُ الغالبُ صريحًا");
 }
 
+// ── الطبّ الروحانيّ (الغزاليّ) + السنوسيّ ──
+{
+  const abjad = (await import("../engines/abjad.js")).default;
+  const { LETTER_AILMENTS_MORE, SANUSI_DAYS } = await import("../data/huruf-tibb-ghazali.data.js");
+  ok(Object.keys(LETTER_AILMENTS_MORE).length === 27 && SANUSI_DAYS.length === 7, "الغزاليّ: أبوابُ ٢٧ حرفًا للمرأة والصغير والصغيرة، والسنوسيّ ٧ أيّام");
+  const m = abjad.letterMedicine("يوسف"), w = abjad.letterMedicine("يوسف", { who: "woman" });
+  ok(m.letter === w.letter && m.who === "man" && w.who === "woman" && w.cause !== m.cause && /وقعت في بعض الأيّام/.test(w.cause), "نفسُ الحرف (ي): بابُ المرأة غيرُ بابِ الرجل");
+  const s1 = abjad.sanusiPrognosis("محمد", "سميرة", "سبت"), s2 = abjad.sanusiPrognosis("محمد", "سميرة", "سبت");
+  ok(s1.rem === (s1.total % 7 || 7) && s1.day === SANUSI_DAYS[s1.rem - 1].day && JSON.stringify(s1) === JSON.stringify(s2), "السنوسيّ: (الاسم + الأمّ + اليوم) ÷ ٧ ⇒ يومٌ ثابت");
+}
+
 // ── فرقُ التوقيت التاريخيّ يومَ الميلاد (كان ثابتًا = الحاليّ، فيُزيح الطالعَ ساعةً) ──
 {
   const { tzOffsetAt, CITY_INDEX, CITY_GROUPS } = await import("../web/cities.data.js");

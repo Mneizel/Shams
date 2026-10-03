@@ -979,6 +979,7 @@ PANELS.jummal = (main) => {
       <div class="fld"><label>اسم المريض</label><input id="lmn" value="${esc(c0.name || "يوسف")}"></div>
       <div class="fld"><label>اسم الأب <span class="gloss">(اختياري — غير موجود في بطاقتك)</span></label><input id="lmf" placeholder="اختياري"></div>
       <div class="fld"><label>اسم الأمّ</label><input id="lmm" value="${esc(c0.mother || "امنة")}"></div>
+      <div class="fld"><label>المريض</label><select id="lmw"><option value="man">رجل</option><option value="woman">امرأة</option><option value="child">صغير (ولد)</option><option value="girl">صغيرة (بنت)</option></select></div>
       <div class="fld"><label>اليوم</label><select id="lmd"><option value="">—</option>${["أحد","اثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"].map((d) => `<option>${d}</option>`).join("")}</select></div>
       <button class="btn" id="lmg">شخِّص</button>
     </div><div id="lmout"></div>
@@ -1030,15 +1031,25 @@ PANELS.jummal = (main) => {
   if (lmForm) $("#lmg", main).onclick = () => {
     const nm = $("#lmn", main).value.trim();
     if (!nm) { $("#lmout", main).innerHTML = `<div class="warn">اكتب اسمَ المريض.</div>`; return; }
-    const lm = abjad.letterMedicine(nm, { motherName: $("#lmm", main).value.trim(), fatherName: $("#lmf", main).value.trim(), weekday: $("#lmd", main).value });
+    const lm = abjad.letterMedicine(nm, { motherName: $("#lmm", main).value.trim(), fatherName: $("#lmf", main).value.trim(), weekday: $("#lmd", main).value, who: $("#lmw", main).value });
+    const sn = abjad.sanusiPrognosis(nm, $("#lmm", main).value.trim(), $("#lmd", main).value);
     $("#lmout", main).innerHTML = `<div class="grid">${card({
-      title: `طبُّ الحروف — «${esc(lm.patient)}»`, k: `حرفُك «${esc(lm.letter)}»`,
+      title: `طبُّ الحروف — «${esc(lm.patient)}»`, k: `حرفُك «${esc(lm.letter)}» · ${esc(lm.whoAr)}`,
       body: `<div class="kv">حرفُك من طبِّ الحروف هو «<b>${esc(lm.letter)}</b>»، وبابُه يقول:</div>
         <div class="kv" style="margin-top:.5rem"><b>سببُ العلّة:</b> ${esc(lm.cause)}</div>
         <div class="kv"><b>العلامة:</b> ${esc(lm.sign)}</div>
         <div class="kv"><b>العلاج:</b> ${esc(lm.cure)}</div>`,
-      basis: `«السرّ المكشوف في طبّ الحروف» للطوخي: ${lm.total ? `جُمّل المريض والأب والأمّ واليوم = ${AR(lm.total)}، إسقاطٌ بـ٢٨ ⇒ الباقي ${AR(lm.rem)} ⇒ الحرف «${esc(lm.letter)}»` : `أوّلُ حرفٍ من الاسم «${esc(lm.letter)}»`}؛ ثمّ بابُه الثابت.`,
+      basis: `${lm.who === "man" ? "«السرّ المكشوف في طبّ الحروف» للطوخي" : `«${esc(lm.source)}» ص${esc(lm.page)}`}: ${lm.total ? `جُمّل المريض والأب والأمّ واليوم = ${AR(lm.total)}، إسقاطٌ بـ٢٨ ⇒ الباقي ${AR(lm.rem)} ⇒ الحرف «${esc(lm.letter)}»` : `أوّلُ حرفٍ من الاسم «${esc(lm.letter)}»`}؛ ثمّ بابُه الثابت.`,
       reveal: traceText(lm.trace) + "\n\n" + lm.note + "\nتشخيصٌ ثابتٌ لكلّ من وقع اسمُه على هذا الحرف — بلا فحص. غيِّرِ اسمَ الأمّ أو اليوم ⇒ حرفٌ آخرُ ⇒ «علّةٌ» أخرى.",
+    })}${card({
+      title: "يومُ المرض — طريقةُ السنوسيّ", k: `${esc(sn.day)} · ${esc(sn.planet)}`,
+      body: `<div class="kv">وقع حسابُك على <b>${esc(sn.day)}</b>: كوكبُه ${esc(sn.planet)}، وملَكُه ${esc(sn.angel)}، وملكُه السفليّ ${esc(sn.king)}. يُنظَرُ في المرض إلى <b>${esc(sn.days)}</b>.</div>
+        ${sn.cause ? `<div class="kv" style="margin-top:.4rem"><b>السبب:</b> ${esc(sn.cause)}</div>` : ""}
+        <div class="kv"><b>العلامة:</b> ${esc(sn.sign)}</div>
+        <div class="kv"><b>العلاج:</b> ${esc(sn.cure)}</div>
+        <div class="kv" style="margin-top:.4rem"><b>خادمُ اليوم (بابُ الأيّام السبعة):</b> ${esc(sn.servant.king)} — ${esc(sn.servant.cure)}</div>`,
+      basis: `${esc(sn.source)}: جُمّل الاسم والأمّ${$("#lmd", main).value ? " ويوم المرض" : ""} = ${AR(sn.total)}، ÷٧ ⇒ ${AR(sn.rem)}.${$("#lmd", main).value ? "" : " (اختر «اليوم» الذي بدأ فيه المرض ليدخل في الحساب.)"}`,
+      reveal: traceText(sn.trace),
     })}</div>`;
     wireCards(main);
   };
