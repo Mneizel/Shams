@@ -2143,7 +2143,7 @@ PANELS.kaf = (main) => {
       $("#k-photo-btn", main).disabled = true; $("#k-photo2-btn", main).disabled = true;
       $("#k-shot", main).innerHTML = "";
       try {
-        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-02e");
+        if (!vis) vis = await import("./kaf-vision.js?v=2026-10-03a");
         const out = await vis.analyzePhotos(photos, (m) => (pStatus.textContent = m));
         if (out.error) { pStatus.innerHTML = `<span style="color:var(--warn)">${esc(out.error)}</span>`; photos = photos.slice(0, -1); }
         else {
@@ -2170,7 +2170,7 @@ PANELS.kaf = (main) => {
       btn.hidden = true; $("#k-shot", main).innerHTML = "";
       $("#k-guide", main).textContent = "جارٍ تحميلُ محرّكِ الرؤية… (أوّلَ مرّةٍ قد يستغرقُ حتى دقيقةٍ على اتّصالٍ بطيء)";
       $("#k-camwrap", main).hidden = false; $("#k-camstop", main).hidden = false;
-      try { vis = await import("./kaf-vision.js?v=2026-10-02e"); }
+      try { vis = await import("./kaf-vision.js?v=2026-10-03a"); }
       catch (e) { if (!cancelled()) failReset("تعذّرَ تحميلُ محرّكِ الرؤية — استعملِ الوضعَ اليدويّ."); return; }
       if (cancelled()) return;
       try { await vis.ensureLoaded(); }

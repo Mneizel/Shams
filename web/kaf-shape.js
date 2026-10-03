@@ -135,6 +135,37 @@ export function palmWidth(mask, w, h, px) {
   return res[Math.floor(res.length / 2)];
 }
 
+
+/** الإبهام من القناع: السُّلامى الأولى (الظفريّة) من مفصلِه إلى حدِّ القناع، والثانية من مفصلِ القاعدة إلى مفصلِه،
+ *  وعُقدةُ مفصلِه. يُعيدُ نسبةَ الأولى إلى الثانية (أو null إن لم يصحّ القياس). */
+export function measureThumb(mask, w, h, px) {
+  const fp = fingerProfile(mask, w, h, px, [P.THUMB_CMC, P.THUMB_MCP, P.THUMB_IP, P.THUMB_TIP]);
+  const second = len(sub(px[P.THUMB_IP], px[P.THUMB_MCP]));
+  const first = fp.L;
+  const okW = (v) => Number.isFinite(v) && v > 2;
+  const base = [fp.wMidMid, fp.w45].filter(okW);
+  const knot = okW(fp.wDip) && base.length === 2 ? +(fp.wDip / ((base[0] + base[1]) / 2)).toFixed(3) : null;
+  return { ratio: second > 2 ? +(first / second).toFixed(3) : null, knot, w45: fp.w45 };
+}
+
+/** بروزُ تلَّي الزهرة (كُرةِ الإبهام) والقمر (حافّةِ الكفّ تحت الخنصر) من حدودِ القناع:
+ *  بُعدُ حافّةِ القناعِ عن محورِ اليد (الرسغ ⇐ مفصلِ الوسطى) في أسفلِ الراحة، منسوبًا إلى عرضِ الراحة. */
+export function mountBulges(mask, w, h, px, palmW) {
+  const axis = norm(sub(px[P.MID_MCP], px[P.WRIST]));
+  const palm = len(sub(px[P.MID_MCP], px[P.WRIST]));
+  const across = norm(sub(px[P.PINKY_MCP], px[P.IDX_MCP]));
+  const toThumb = { x: -across.x, y: -across.y };
+  const reach = (f, dir) => {
+    const c = { x: px[P.WRIST].x + axis.x * palm * f, y: px[P.WRIST].y + axis.y * palm * f };
+    const s = spanAt(mask, w, h, c, dir, palm * 1.2);
+    return s ? s.toThumb : NaN;
+  };
+  const avg = (fs, dir) => { const v = fs.map((f) => reach(f, dir)).filter(Number.isFinite); return v.length >= 2 ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
+  const W = palmW || palm * 0.9;
+  const venus = avg([0.2, 0.3, 0.4], toThumb) / W, moon = avg([0.2, 0.3, 0.4], across) / W;
+  return { venus: Number.isFinite(venus) ? +venus.toFixed(3) : null, moon: Number.isFinite(moon) ? +moon.toFixed(3) : null };
+}
+
 /** كلُّ قياساتِ الشكل + الأحكام المشتقّة منها (أو null حيث لا يصحّ). */
 export function measureShape(mask, w, h, px) {
   const m = cropToHand(mask, w, h, px);
@@ -145,7 +176,7 @@ export function measureShape(mask, w, h, px) {
     fingers[k] = { ...tipShape(fp), knot: knots(fp), distalLen: +(fp.L / palmLen).toFixed(3), prof: fp.prof.map((p) => p.w) };
   }
   const pw = palmWidth(m, w, h, px);
-  return { fingers, palmWidth: pw, palmRatio: pw ? +(pw / palmLen).toFixed(3) : null, palmLen };
+  return { fingers, palmWidth: pw, palmRatio: pw ? +(pw / palmLen).toFixed(3) : null, palmLen, thumb: measureThumb(m, w, h, px), mounts: mountBulges(m, w, h, px, pw) };
 }
 
 /** نوعُ اليد من القياسات وفقَ تعريفاتِ الكتاب ([ب] الفصل ١). يُعيدُ {type, why} أو {type:null, why}. */

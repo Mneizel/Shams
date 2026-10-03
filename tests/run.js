@@ -1286,6 +1286,19 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(wl.lotSign === "السنبلة" && wl.lord === "عطارد" && m.luminary === "القمر" && f.luminary === "الشمس" && m.items.length >= 2, "المالُ من صاحب سهم السعادة، والزواجُ من القمر للرجل والشمس للمرأة");
 }
 
+// ── الإبهامُ والتلّان من قناعِ اليد ──
+{
+  const S = await import("../web/kaf-shape.js");
+  // قناعٌ اصطناعيّ: راحةٌ مستطيلة وإبهامٌ مستقيم (سُلامَيان متساويتان) ⇒ نسبةٌ قريبةٌ من ١ ⇒ لا حكم
+  const w = 400, h = 400, m = new Uint8Array(w * h);
+  const fill = (x0, y0, x1, y1) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) m[y * w + x] = 1; };
+  fill(120, 150, 280, 360); fill(71, 200, 120, 230);
+  const px = Array.from({ length: 21 }, () => ({ x: 200, y: 200 }));
+  Object.assign(px, { 0: { x: 200, y: 350 }, 9: { x: 200, y: 160 }, 5: { x: 140, y: 160 }, 17: { x: 260, y: 160 }, 1: { x: 125, y: 215 }, 2: { x: 110, y: 215 }, 3: { x: 90, y: 215 }, 4: { x: 72, y: 215 } });
+  const t = S.measureThumb(m, w, h, px);
+  ok(t.ratio != null && t.ratio > 0.7 && t.ratio < 1.3, "الإبهام: سُلامَيان متقاربتان ⇒ لا حكمَ بكِبَرٍ ولا صِغَر");
+}
+
 // ── قراءتك الكاملة ──
 {
   const qiraa = (await import("../engines/qiraa.js")).default;

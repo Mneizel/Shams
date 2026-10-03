@@ -3,9 +3,9 @@
 //   • OpenCV.js (vendor/opencv.js) داخل kaf-cv-worker.js (خيطٌ منفصل): إبرازُ تجاعيدِ الراحةِ في صورة.
 //   لا يعملُ على file:// — يلزمُ خادمٌ محلّيّ (افتح-قراءة-الكف.bat).
 
-import { measureShape, handTypeFrom, TIP_AR, FINGER_AR } from "./kaf-shape.js?v=2026-10-02e";
+import { measureShape, handTypeFrom, TIP_AR, FINGER_AR } from "./kaf-shape.js?v=2026-10-03a";
 const MP_BASE = "../vendor/mediapipe";
-export const KAF_VER = "2026-10-02e";
+export const KAF_VER = "2026-10-03a";
 let HL = null, FR = null, IS = null, landmarker = null, landmarkerLoading = null;
 
 function withTimeout(promise, ms, msg) {
@@ -214,6 +214,19 @@ function applyShape(feats, shape) {
   feats.handHint.tips = Object.fromEntries(Object.entries(shape.fingers).map(([k, f]) => [k, f.shape]));
   const kn = Object.values(shape.fingers).map((f) => f.knot).filter((v) => v != null);
   if (kn.length >= 3 && kn.filter((k) => k >= 1.15).length >= 3) feats.fingerSet = [...new Set([...(feats.fingerSet || []), "knotty"])];
+  // الإبهامُ والتلّان من القناع — يُحكَمُ فقط حين يبتعدُ القياسُ عن المعتادِ بوضوح (جُرِّب على صورٍ لليدِ نفسِها:
+  // نسبةُ السُّلامَيَين ١٫٠٢–١٫٠٨ عادةً وشذّت صورةٌ إلى ٠٫٧٥، وبروزُ الزهرة ٠٫٧٨–٠٫٩٥ بحسب وضعِ الإبهام)
+  const th = shape.thumb || {}, mt = shape.mounts || {};
+  feats.thumb = feats.thumb || {};
+  if (th.ratio != null) {
+    if (th.ratio >= 1.3) { feats.thumb.firstPhalanx = "large"; feats.thumb.secondPhalanx = "short"; }
+    else if (th.ratio <= 0.7) { feats.thumb.firstPhalanx = "small"; feats.thumb.secondPhalanx = "long"; }
+  }
+  if (th.knot != null && th.knot >= 1.15) feats.thumb.joint = "knotty";
+  feats.mounts = feats.mounts || {};
+  if (mt.venus != null) { if (mt.venus >= 1.05) { feats.mounts.venus = "full"; feats.thumb.ball = "full"; } else if (mt.venus <= 0.6) { feats.mounts.venus = "flat"; feats.thumb.ball = "flat"; } }
+  if (mt.moon != null) { if (mt.moon >= 0.55) feats.mounts.luna = "full"; else if (mt.moon <= 0.3) feats.mounts.luna = "flat"; }
+  feats._thumbMounts = { ratio: th.ratio, knot: th.knot, venus: mt.venus, moon: mt.moon };
 }
 // صورةُ التحقّق: حدودُ اليدِ كما رآها النموذج، مرسومةً على الصورة
 function maskOutline(source, mask, W, H, maxSide = 700) {
