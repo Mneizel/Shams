@@ -302,7 +302,7 @@ function monthVoices(ctx, y, m) {
     const ask0 = `كيف يكون حالي في ${MONTHS[m]} ${abjadDate(y)}`;
     try {
       const rr = raml.reading({ name: ctx.name, mother: ctx.mother, question: ask0, when: first });
-      const s = (rr.score ?? 0) > 0.5 ? 1 : (rr.score ?? 0) < -0.5 ? -1 : 0;
+      const s = rr.voidChart ? 0 : (rr.score ?? 0) > 0.5 ? 1 : (rr.score ?? 0) < -0.5 ? -1 : 0;
       if (s) push("divination", s, s > 0 ? "تيسيرٌ وقبول" : "تعسّرٌ وتعطيل", `الرمل لأوّلِ الشهر: ${rr.house?.figure?.ar || ""} — ${rr.verdict}`, ["all"], "raml");
     } catch {}
     try {
@@ -523,7 +523,7 @@ export function ask(c, question, opt = {}) {
   const r = raml.reading({ name: c.name, mother: c.mother, question, when: now });
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
-  const rs = r.score ?? 0;
+  const rs = r.voidChart ? 0 : r.score ?? 0;
   let qv = null, jv = null;
   try { qv = qura.cast(c.name, c.mother, question, now); } catch {}
   try { jv = jafr.extractAnswer(question, { name: c.name, mother: c.mother }); } catch {}

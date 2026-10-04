@@ -406,11 +406,18 @@ export function reading(opt = {}, cfg = {}) {
   }
 
   // أحكامُ الطوخي في الرمل (تجاربي وبرهاني): قواعدُ خاصّةٌ بكلّ موضوع على البيوت الستّةَ عشر
+  // قاعدةُ الأوروبيّين (Skinner، Geomancy ١٩٨٠، ص ٢١٢): الحمرةُ أو ذنبُ التنين (ومعهما العتبةُ عند بعضهم) في البيت الأوّل
+  // ⇒ «الطالعُ غيرُ صالحٍ للحكم، ولا يُعادُ السؤالُ قبل ساعات». تُعلَّمُ ولا تُلغي حكمَ المصادر العربيّة.
+  const h1 = c.houses[0].figure;
+  const voidChart = ["humra", "dhanab", "habs"].includes(h1.id)
+    ? { figure: h1.ar, note: `«${h1.ar}» في البيت الأوّل: عند Skinner (عن التقليد الأوروبيّ) الطالعُ غيرُ صالحٍ للحكم، فالأولى إعادةُ السؤال بعد ساعات.`, src: "Stephen Skinner, Terrestrial Astrology: Divination by Geomancy (1980)" }
+    : null;
   let tukhi = null;
   try { tukhi = tukhiRaml.judge(c, opt.question || "", figureByRows); } catch {}
   return {
     question: q,
     tukhi,
+    voidChart,
     house: { n: house.n, name: house.name, topic: house.topic, figure: hf },
     buriedHouse,
     judge,

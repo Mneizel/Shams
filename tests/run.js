@@ -381,6 +381,17 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // Skinner: مطابقةُ الأشكال الستّةَ عشر (الصفوف والكواكب) + قاعدةُ الطالع غير الصالح
+  {
+    const want = { tariq: ["1111", "القمر"], jamaa: ["2222", "القمر"], qabid_dakhil: ["2121", "المشتري"], qabid_kharij: ["1212", "الزهرة"], farah: ["1222", "المشتري"], ankis: ["2221", "زحل"], nusra_dakhila: ["2211", "الشمس"], nusra_kharija: ["1122", "الشمس"], ghulam: ["1121", "المريخ"], jariya: ["1211", "الزهرة"], humra: ["2122", "المريخ"], bayad: ["2212", "عطارد"], ijtimaa: ["2112", "عطارد"], habs: ["1221", "زحل"], raas: ["2111", "العقدة الصاعدة"], dhanab: ["1112", "العقدة الهابطة"] };
+    ok(raml.FIGURES.length === 16 && raml.FIGURES.every((f) => want[f.id] && want[f.id][0] === f.rows.join("") && want[f.id][1] === f.planet), "أشكالُ الرمل الستّةَ عشر وكواكبُها مطابقةٌ لجدول Skinner");
+    // التحويلُ (Skinner, Oracle of Geomancy، الملحق السابع): قلبُ كلِّ صفٍّ يُعطي الشكلَ المقابل
+    const inv = (id) => raml.FIGURES.find((f) => f.rows.join("") === raml.FIGURES.find((g) => g.id === id).rows.map((v) => 3 - v).join("")).id;
+    eq([["tariq", "jamaa"], ["ghulam", "bayad"], ["qabid_kharij", "qabid_dakhil"], ["nusra_dakhila", "nusra_kharija"], ["ijtimaa", "habs"], ["jariya", "humra"], ["ankis", "dhanab"], ["farah", "raas"]].every(([a, b]) => inv(a) === b), true, "أزواجُ التحويل الثمانية كما في Skinner");
+    let vc = null;
+    for (let i = 0; i < 400 && !vc; i++) { const r = raml.reading({ name: "س" + i, mother: "ص", question: "هل", when: new Date(Date.UTC(2026, 0, 1, i)) }); if (r.voidChart) vc = r; }
+    ok(vc && ["الحمرة (الأحمر)", "ذنب التنين", "العتبة (الحبس)"].includes(vc.voidChart.figure), "الحمرةُ/الذنبُ/العتبةُ في البيت الأوّل ⇒ طالعٌ غيرُ صالحٍ للحكم");
+  }
   // Lilly ج٣: التسييرُ الحقيقيّ للطالع ووسط السماء + عودةُ الكواكب في التحويل
   {
     const nat = falak.snapshot(new Date("1990-03-15T08:30:00Z"), 31.95, 35.93);

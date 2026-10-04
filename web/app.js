@@ -1416,6 +1416,7 @@ PANELS.raml = (main) => {
       ${card({
         title: `الحكم عن: «${esc(c.question)}»`, k: `البيت ${AR(r.house.n)} — ${esc(r.house.name)}`,
         body: `<div class="big">${esc(r.verdict)}</div>
+          ${r.voidChart ? `<div class="warn" style="margin:.4rem 0">${esc(r.voidChart.note)}<small class="src"> — ${esc(r.voidChart.src)}</small></div>` : ""}
           ${r.tukhi?.details?.length ? `<ul class="kv" style="margin:.4rem 0;padding-inline-start:1.1rem">${r.tukhi.details.map((x) => `<li>${esc(x.text)}<small class="src"> — ${esc(r.tukhi.src)}، ص ${AR(x.page)}</small></li>`).join("")}</ul>` : ""}
           <div class="gloss">وُجِّه السؤالُ إلى «البيت ${AR(r.house.n)} (${esc(r.house.name)})» لأنّ فيه كلمةً تخصّه (${esc(r.house.topic)}). ثمّ حُكِم بمزجِ عدّة موازين.</div>
           <div class="kv" style="margin-top:.4rem"><b>بصراحة:</b> صيغةُ حكم الرمل ثابتةٌ («يتمّ الأمر / لا يتمّ») لأنّها مبنيّةٌ لأسئلة «هل يحدُث كذا؟» — إن كان سؤالُك تشخيصيًّا («هل سببُه كذا؟») فاقرأ «يتمّ» على أنّه «الاحتمالُ قائمٌ ويُرجَّح» و«لا يتمّ» على أنّه «الاحتمالُ ضعيف»، لا حرفيًّا.</div>
