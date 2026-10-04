@@ -1128,6 +1128,14 @@ PANELS.awfaq = (main) => {
       <div class="fld"><label>الرتبة</label><select id="wn"><option value="">تلقائيّة</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div>
       <button class="btn" id="wg">ولّد</button>
     </div><div id="wout"></div>
+    <h2>وفقُ النقلة: من حالِك الآن إلى ما تريد</h2>
+    <div class="form">
+      <div class="fld"><label for="trf">حالُك الآن</label><input id="trf" value="فقير"></div>
+      <div class="fld"><label for="trt">ما تريدُه</label><input id="trt" value="غني"></div>
+      <button class="btn" id="trg">ولّد</button>
+    </div>
+    <div class="gloss">أمثلةُ الكتاب: ${awfaq.TRANSITION_PAIRS.map(([x, y]) => `${esc(x)} ⇐ ${esc(y)}`).join("، ")}</div>
+    <div id="trout"></div>
     <h2>الأغراض ← عمليّة وفقٍ كاملة</h2>
     <div class="form"><div class="fld"><label>الغرض</label><select id="op">${awfaq.listPurposes().map((p) => `<option value="${p.id}">${esc(p.title)} (رتبة ${AR(p.order)})</option>`).join("")}</select></div><button class="btn" id="opg">اعرض العمل</button></div>
     <div class="form" id="op-target-wrap" hidden>
@@ -1158,6 +1166,18 @@ PANELS.awfaq = (main) => {
         <b>بخورها:</b> ${o.incense.map((s) => /سامّ/.test(s) ? `<b style="color:var(--warn)">${esc(s)}</b>` : esc(s)).join("، ")}</div>` })),
   ].join("");
 
+  $("#trg", main).onclick = () => {
+    const w = awfaq.transitionWafq($("#trf", main).value.trim(), $("#trt", main).value.trim());
+    $("#trout", main).innerHTML = !w.square ? `<div class="warn">${esc(w.note)}</div>` : `<div class="grid wide">${card({
+      title: `من «${esc(w.from)}» إلى «${esc(w.to)}»`, k: `${w.order === 3 ? "مثلّث" : "مربّع"} ${esc(w.kind)} · كوكبُه ${esc(w.planet)}`,
+      body: talisman.svgWafq(w.square).replace("<svg", '<svg class="seal big printable"') +
+        `<button class="btn sm sec printbtn" type="button">🖨️ اطبع هذا الوفق / احفظه PDF</button>
+         <div class="kv" style="text-align:center">يبدأ بحالِك (${AR(w.key)}) وينتهي بما تريد (${AR(w.lock)})، ومجموعُ كلّ صفٍّ وعمود = <b>${AR(w.magic)}</b></div>`,
+      basis: `${esc(w.note)} <span class="src">${esc(w.source)}</span>`,
+      reveal: awfaq.toText(w.square),
+    })}</div>`;
+    wireCards(main);
+  };
   $("#wg", main).onclick = () => {
     const raw = $("#wt", main).value.trim();
     const forced = +$("#wn", main).value || 0;
@@ -1396,6 +1416,7 @@ PANELS.raml = (main) => {
       ${card({
         title: `الحكم عن: «${esc(c.question)}»`, k: `البيت ${AR(r.house.n)} — ${esc(r.house.name)}`,
         body: `<div class="big">${esc(r.verdict)}</div>
+          ${r.tukhi?.details?.length ? `<ul class="kv" style="margin:.4rem 0;padding-inline-start:1.1rem">${r.tukhi.details.map((x) => `<li>${esc(x.text)}<small class="src"> — ${esc(r.tukhi.src)}، ص ${AR(x.page)}</small></li>`).join("")}</ul>` : ""}
           <div class="gloss">وُجِّه السؤالُ إلى «البيت ${AR(r.house.n)} (${esc(r.house.name)})» لأنّ فيه كلمةً تخصّه (${esc(r.house.topic)}). ثمّ حُكِم بمزجِ عدّة موازين.</div>
           <div class="kv" style="margin-top:.4rem"><b>بصراحة:</b> صيغةُ حكم الرمل ثابتةٌ («يتمّ الأمر / لا يتمّ») لأنّها مبنيّةٌ لأسئلة «هل يحدُث كذا؟» — إن كان سؤالُك تشخيصيًّا («هل سببُه كذا؟») فاقرأ «يتمّ» على أنّه «الاحتمالُ قائمٌ ويُرجَّح» و«لا يتمّ» على أنّه «الاحتمالُ ضعيف»، لا حرفيًّا.</div>
           <div class="kv" style="margin-top:.5rem">شكلُ بيت المسألة: <b>${esc(r.house.figure.ar)}</b><br>

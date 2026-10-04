@@ -513,10 +513,92 @@ export function bookFigure(order) {
   };
 }
 
-export const SOURCES = { ...SOURCES_META, qudra: QUDRA_SRC };
+// ── من «تجاربي وبرهاني» للطوخي ─────────────────────────────────────────
+const TAJARIB_SRC = "الطوخي، تجاربي وبرهاني في الفلك والروحاني";
+// المربّعُ البونيّ الذي ينزلُ فيه الكتاب (المفتاح في خانة «١» والجبرُ من الخانة ١٣)
+const JUPITER_BUNI = [[8, 11, 14, 1], [13, 2, 7, 12], [3, 16, 9, 6], [10, 5, 4, 15]];
+
+/** ينزّلُ مدى [from → to] في مرآة: التنقّل = الفرق ÷ (عدد البيوت − ١)، والباقي في «بيت الجبر» فما بعده [ص ٣٢–٣٥] */
+function nuzul(mirror, from, to, jabrFrom) {
+  const cells = mirror.length * mirror.length, diff = to - from, sgn = diff < 0 ? -1 : 1;
+  const step = Math.trunc(Math.abs(diff) / (cells - 1)), rem = Math.abs(diff) - step * (cells - 1);
+  const square = mirror.map((r) => r.map((x) => from + sgn * ((x - 1) * step + (x >= jabrFrom ? rem : 0))));
+  return { square, step: sgn * step, jabr: sgn * rem, magic: verify(square).magic };
+}
+
+/**
+ * وفقُ النقلة من حالٍ إلى حال [تجاربي وبرهاني ص ٣٢–٣٥]: جملةُ «الحال الآن» في المفتاح
+ * وجملةُ «المطلوب» في المغلاق. الفرقُ ÷ ٨ بلا باقٍ ⇒ مثلّث، وإلّا ⇒ مربّعٌ بتنقّل (الفرق ÷ ١٥)
+ * والباقي في بيت الجبر (١٣). موجبٌ إن كان المطلوبُ أكبر، وسالبٌ إن كان أصغر.
+ */
+export function transitionWafq(fromWord, toWord) {
+  const fromN = abjad.jummal(abjad.normalize(fromWord)), toN = abjad.jummal(abjad.normalize(toWord));
+  const diff = toN - fromN;
+  if (diff === 0) return { from: fromWord, to: toWord, fromN, toN, square: null, note: "الحالُ والمطلوبُ متساويان في العدد: لا نقلة." };
+  const order = Math.abs(diff) % 8 === 0 ? 3 : 4;
+  const r = order === 3 ? nuzul(BUDUH.numbers, fromN, toN, 99) : nuzul(JUPITER_BUNI, fromN, toN, 13);
+  return {
+    from: fromWord, to: toWord, fromN, toN, diff, order, kind: diff > 0 ? "إيجابيّ" : "سلبيّ",
+    planet: order === 3 ? "زحل" : "المشتري", ...r, key: fromN, lock: toN,
+    note: `المفتاح ${fromN} («${fromWord}») والمغلاق ${toN} («${toWord}»)؛ الفرق ${Math.abs(diff)} ${order === 3 ? "يقبلُ القسمةَ على ٨ ⇒ مثلّث" : `لا يقبلُ القسمةَ على ٨ ⇒ مربّعٌ بتنقّل ${Math.abs(r.step)}${r.jabr ? ` وجبرٍ ${Math.abs(r.jabr)}` : ""}`}.`,
+    source: `${TAJARIB_SRC}، ص ٣٢–٣٥`,
+  };
+}
+
+/** أزواجُ الحال والمطلوب كما مثّل بها الكتاب [ص ٣٣] */
+export const TRANSITION_PAIRS = [["فقير", "غني"], ["خائف", "أمان"], ["فاشل", "ناجح"], ["مريض", "يشفى"], ["مظلوم", "ينصر"], ["ضعيف", "يقوى"], ["كاره", "يحب"], ["ذليل", "عزيز"], ["غضبان", "يصطلح"], ["عاطل", "يشغل"]];
+
+/**
+ * «كن فيكون» [ص ٣٦–٣٨]: جملةُ الطلب ÷ ٤ ⇒ الباقي ١ مثلّث (زحل)، ٢ مربّع (المشتري)، ٣ مخمّس (المريخ)،
+ * ٠ مسبّع (الزهرة)؛ المفتاح «كن» = ٧٠ والمغلاق «فيكون» = ١٦٦.
+ */
+export function kunFayakun(text) {
+  const n = abjad.jummal(abjad.normalize(text));
+  const order = { 1: 3, 2: 4, 3: 5, 0: 7 }[n % 4];
+  const planet = { 3: "زحل", 4: "المشتري", 5: "المريخ", 7: "الزهرة" }[order];
+  const mirror = order === 3 ? BUDUH.numbers : order === 4 ? JUPITER_BUNI : baseSquare(order);
+  const r = nuzul(mirror, 70, 166, order === 4 ? 13 : order * order + 1);
+  return { text, total: n, remainder: n % 4, order, planet, ...r, source: `${TAJARIB_SRC}، ص ٣٦–٣٨` };
+}
+
+/**
+ * النجمةُ الخماسيّة [ص ٢٧١–٢٧٢]: (الجملة − ٦) ÷ ٣ = المفتاح؛ البيوتُ ١–٥ بتنقّل واحد، والبيتُ ٦ = ضعفُ البيت ٣،
+ * وباقي الثلث يُزادُ على البيت ٣. الميزان: ١+٣+٥ = ٢+٣+٤ = ٦+٣ = الجملة.
+ */
+export function pentagramWafq(total) {
+  const k = Math.floor((total - 6) / 3), rem = total - 6 - 3 * k;
+  const cells = [k, k + 1, k + 2 + rem, k + 3, k + 4, 2 * (k + 2)];
+  const sums = [cells[0] + cells[2] + cells[4], cells[1] + cells[2] + cells[3], cells[5] + cells[2]];
+  return { total, key: k, jabr: rem, cells, sums, ok: sums.every((s) => s === total), source: `${TAJARIB_SRC}، ص ٢٧١–٢٧٢` };
+}
+
+/** النجمةُ السداسيّة [ص ٢٧٠–٢٧١]: (الجملة − ١١) ÷ ٣ = المفتاح، سبعُ خاناتٍ بتنقّل واحد، والجبرُ على بيت الوسط (٧). */
+export function hexagramWafq(total) {
+  const k = Math.floor((total - 11) / 3), rem = total - 11 - 3 * k;
+  const cells = Array.from({ length: 7 }, (_, i) => k + i + (i === 6 ? rem : 0));
+  const sums = [[0, 5], [1, 4], [2, 3]].map(([a, b]) => cells[a] + cells[b] + cells[6]);
+  return { total, key: k, jabr: rem, cells, sums, ok: sums.every((s) => s === total), source: `${TAJARIB_SRC}، ص ٢٧٠–٢٧١` };
+}
+
+/** مفتاحُ المزامير [ص ٩١]: جملةُ (الاسم + اسم الأمّ + بلد الميلاد + تاريخ الميلاد) ÷ ١٥١، والباقي رقمُ المزمور (صفر ⇒ ١٥١). */
+export function psalmKey({ name = "", mother = "", city = "", date = "" } = {}) {
+  const words = abjad.jummal(abjad.normalize(`${name} ${mother} ${city}`));
+  const digits = String(date).replace(/\D/g, "");
+  const dateN = digits ? +digits.split("").reduce((a, d) => a + +d, 0) : 0;
+  const total = words + dateN, r = total % 151;
+  return { total, psalm: r || 151, note: "التاريخُ يُدخَلُ بمجموع أرقامه.", source: `${TAJARIB_SRC}، ص ٩١` };
+}
+
+export const SOURCES = { ...SOURCES_META, qudra: QUDRA_SRC, tajarib: TAJARIB_SRC };
 export const WAFQ_PROPERTIES = QUDRA_PROPERTIES;
 
 export default {
+  transitionWafq,
+  TRANSITION_PAIRS,
+  kunFayakun,
+  pentagramWafq,
+  hexagramWafq,
+  psalmKey,
   magicConstant,
   triangleSquare,
   geometricTriangle,

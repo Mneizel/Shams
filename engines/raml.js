@@ -20,6 +20,7 @@
 import { FIGURE_NATURE as ISK_NATURE, ISKANDARI_SRC } from "../data/raml-iskandari.data.js";
 import { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC } from "../data/raml-nafhat.data.js";
 import abjad from "./abjad.js";
+import tukhiRaml from "./raml-tukhi.js";
 import {
   FIGURES, HOUSES, TOPIC_HOUSE,
   HOUSE_ELEMENTS, ELEMENTS, ELEMENT_VICTORY, ELEMENT_FRIENDS, PLANET_OPPOSITION,
@@ -404,8 +405,12 @@ export function reading(opt = {}, cfg = {}) {
     witnessNote = `الشاهدان متّفقان في الطبع (${wR.nature}) ⇒ يُقوّيان حكمَ القاضي.`;
   }
 
+  // أحكامُ الطوخي في الرمل (تجاربي وبرهاني): قواعدُ خاصّةٌ بكلّ موضوع على البيوت الستّةَ عشر
+  let tukhi = null;
+  try { tukhi = tukhiRaml.judge(c, opt.question || "", figureByRows); } catch {}
   return {
     question: q,
+    tukhi,
     house: { n: house.n, name: house.name, topic: house.topic, figure: hf },
     buriedHouse,
     judge,

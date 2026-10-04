@@ -381,6 +381,27 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // تجاربي وبرهاني (الطوخي): أمثلةُ الكتاب نفسُها
+  {
+    const w1 = awfaq.transitionWafq("فقير", "غني");
+    ok(w1.fromN === 390 && w1.toN === 1060 && w1.order === 4 && w1.step === 44 && w1.jabr === 10 && awfaq.verify(w1.square).ok, "وفقُ النقلة: فقير ٣٩٠ ⇐ غني ١٠٦٠ (مربّع، تنقّل ٤٤، جبر ١٠) كما في الكتاب");
+    ok(w1.square.flat().includes(390) && w1.square.flat().includes(1060), "المفتاحُ والمغلاقُ في الوفق");
+    const w2 = awfaq.transitionWafq("فاشل", "ناجح");
+    ok(w2.fromN === 411 && w2.toN === 62 && w2.step === -23 && w2.jabr === -4 && w2.kind === "سلبيّ" && awfaq.verify(w2.square).ok, "وفقُ النقلة السالب: فاشل ٤١١ ⇐ ناجح ٦٢ (تنقّل ٢٣، جبر ٤)");
+    eq(awfaq.pentagramWafq(66).cells, [20, 21, 22, 23, 24, 44], "النجمةُ الخماسيّة لـ٦٦ كما في الكتاب");
+    eq(awfaq.pentagramWafq(18).cells, [4, 5, 6, 7, 8, 12], "النجمةُ الخماسيّة لـ١٨ كما في الكتاب");
+    ok(awfaq.pentagramWafq(67).ok && awfaq.pentagramWafq(68).ok, "النجمةُ الخماسيّة تتّزنُ مع الباقي");
+    eq(awfaq.hexagramWafq(71).key, 20, "النجمةُ السداسيّة لـ٧١ مفتاحُها ٢٠");
+    ok(awfaq.hexagramWafq(79).ok, "النجمةُ السداسيّة لـ٧٩ (بباقٍ) تتّزن");
+    const kf = awfaq.kunFayakun("يا رب");
+    ok(kf.square.flat().includes(70) && kf.square.flat().includes(166) && awfaq.verify(kf.square).ok, "كن فيكون: المفتاح ٧٠ والمغلاق ١٦٦");
+    const ps = awfaq.psalmKey({ name: "محمد", mother: "امنة", city: "عمان", date: "1990-05-12" });
+    ok(ps.psalm >= 1 && ps.psalm <= 151, "مفتاحُ المزامير بين ١ و١٥١");
+    const rt = raml.reading({ name: "محمد", mother: "امنة", question: "هل يرد القرض", when: new Date("2026-10-04T10:00:00Z") });
+    ok(rt.tukhi && rt.tukhi.topic === "debt" && rt.tukhi.details.length >= 1, "الرمل: أحكامُ الطوخي في القرض");
+    const rt2 = raml.reading({ name: "محمد", mother: "امنة", question: "ابني محبوس", when: new Date("2026-10-04T10:00:00Z") });
+    eq(rt2.tukhi.topic, "prison", "الرمل: «محبوس» حبسٌ لا حبّ");
+  }
   // horary: مقياسُ الزمن مدمجٌ + جنسُ المرض في مسائل البدن
   const hh = falak.horary("هل أشفى من المرض هذا العام", WHEN, LAT, LON);
   ok(!hh.timing || (hh.timing.unit && falak.SPECIAL_DEGREE_TABLES.TIMING_TABLE), "توقيتُ الحكم يستعمل جدول مقياس الزمن");
