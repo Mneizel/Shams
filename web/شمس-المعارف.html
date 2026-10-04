@@ -22012,10 +22012,45 @@ function revolutions(c, natal, fromYear, toYear) {
       const hm = hRev(rev.planets[mal].longitude);
       if ([1, 4, 7, 10, 6, 8, 12, 2].includes(hm)) add(mal === "زحل" ? -1 : -0.5, HOUSE_BAD_PLAIN[hm], `${mal} في البيت ${hm} من التحويل`, HOUSE_BAD_TOPIC[hm] || ["all"]);
     }
+    // ٥) الكوكبُ في التحويل على موضعِ كوكبٍ من الميلاد (Lilly CA ف١٧٣)
+    for (const [a, b, s, plain, topics] of RETURNS) {
+      if (sepDeg(rev.planets[a].longitude, natal.planets[b].longitude) <= 3) add(s, plain, `${a} في التحويل على موضعِ ${b} في الميلاد`, topics);
+    }
     out.push({ y, when, asc: SIGNS[rA], natalHouse: natalHouseOfRevAsc, lord, voices: V });
   }
   return out;
 }
+
+// ── عودةُ الكواكب في التحويل إلى مواضع كواكب الميلاد (Lilly, Christian Astrology ف١٧٣) — المختارُ الصريحُ منها
+const RETURNS = [
+  ["زحل", "زحل", 0.5, "مكانةٌ ومالٌ إن كان زحلُ حسنَ الحال", ["work", "money"]],
+  ["زحل", "المشتري", 0.5, "خيرٌ في البدن والمال", ["money", "health"]],
+  ["زحل", "الشمس", -1, "خصومةٌ مع أصحاب النفوذ وضعفٌ في البصر", ["work", "health"]],
+  ["زحل", "القمر", -1, "همٌّ وكآبةٌ وتعبٌ في البدن", ["health", "love"]],
+  ["زحل", "عطارد", -0.5, "تشوّشٌ في الفكر ومتاعبُ من كلامٍ وأوراق", ["study"]],
+  ["المشتري", "المشتري", 1, "مالٌ وصحّةٌ ومكانة، وقد يأتي ولد", ["all", "money"]],
+  ["المشتري", "المريخ", 0.5, "ربحٌ من سفرٍ وتجارة", ["money"]],
+  ["المشتري", "الشمس", 0.5, "زيادةٌ في المكانة والسمعة", ["work"]],
+  ["المشتري", "الزهرة", 0.5, "استقرارٌ وزيادةٌ من جهة الشريك", ["love", "money"]],
+  ["المشتري", "عطارد", 0.5, "إقبالٌ على العلم والتعلّم", ["study"]],
+  ["المشتري", "القمر", 1, "صحّةٌ وزيادةٌ في المال وسمعةٌ حسنة", ["all", "health", "money"]],
+  ["المريخ", "زحل", -1, "تعطّلٌ في الأعمال وخصومات", ["work"]],
+  ["المريخ", "المشتري", 0.5, "ربحٌ من الأقارب", ["money"]],
+  ["المريخ", "الشمس", -1, "غضبُ صاحبِ سلطة، وكثرةُ انفعال", ["work"]],
+  ["المريخ", "عطارد", -0.5, "خطرٌ من الكلام، فاحذرْ ما تقول وتكتب", ["work", "study"]],
+  ["المريخ", "القمر", -0.5, "أسفارٌ كثيرةٌ وتوتّرٌ مع النساء", ["love"]],
+  ["الزهرة", "المشتري", 0.5, "صداقاتٌ نافعةٌ وزياراتُ أهلٍ وأصحاب", ["love"]],
+  ["الزهرة", "المريخ", 0.5, "زواجٌ أو ميلٌ إليه", ["love"]],
+  ["الزهرة", "الزهرة", 1, "تيسيرٌ في الأمور وصحّةٌ حسنة", ["all", "health"]],
+  ["الزهرة", "القمر", 0.5, "تحسّنُ الحال ومعارفُ جديدة", ["all"]],
+  ["عطارد", "زحل", 0.5, "ربحٌ من الأرض ومن كبار السنّ", ["money"]],
+  ["عطارد", "المشتري", 1, "وظيفةٌ أو ربحٌ من تجارة", ["work", "money"]],
+  ["عطارد", "عطارد", 0.5, "تقدّمٌ بجهدك أو بتوصيةٍ من غيرك", ["work"]],
+  ["القمر", "المشتري", 0.5, "أسفارٌ مربحة", ["money"]],
+  ["القمر", "المريخ", -0.5, "خطرُ حمّى أو انفعال، وحذرٌ في السفر", ["health"]],
+  ["القمر", "الشمس", -0.5, "تنقّلٌ ومخاطرُ وتعبٌ في العينين", ["health"]],
+  ["القمر", "الزهرة", 0.5, "صحّةٌ ورضًا", ["health", "love"]],
+];
 
 // ── التسيير (الثمرة، الكلمة ٧٩): «سيّر درجةَ الطالع لأعراض الجسد، ودرجةَ سهم السعادة لذات اليد، ودرجةَ القمر لتصرّف الجسد
 // مع النفس، ودرجةَ الشمس لحظوظه من السلطان، ودرجةَ وسط السماء لما يعانيه من الأعمال — لكلّ درجةٍ سنة». يُسيَّرُ الدليلُ درجةً
@@ -22032,7 +22067,16 @@ const TASYIR_POINTS = [
   { key: "sun", ar: "الشمس", topics: ["work"], good: "حظوةٌ ورفعةٌ عند أصحاب الأمر", bad: "خصومةٌ مع ذوي السلطان" },
   { key: "mc", ar: "وسط السماء", topics: ["work"], good: "نجاحٌ في الأعمال", bad: "عثرةٌ في الأعمال" },
 ];
-function tasyir(natal, ageYears) {
+/** الطالعُ من المطالع المستقيمة لوسط السماء والعرض */
+function ascFromRamc(ramcDeg, lat, eps = 23.4393) {
+  const r = Math.PI / 180, a = Math.atan2(Math.cos(ramcDeg * r), -(Math.sin(ramcDeg * r) * Math.cos(eps * r) + Math.tan(lat * r) * Math.sin(eps * r))) / r;
+  return ((a % 360) + 360) % 360;
+}
+function tasyir(natal, ageYears, lat = null) {
+  // الطالعُ ووسطُ السماء يُسيَّران تسييرًا حقيقيًّا: يُزادُ على المطالع المستقيمة لوسط السماء درجةٌ لكلّ سنة
+  // (فيكونُ الطالعُ المسيَّرُ طالعَ تلك المطالع في عرض البلد)؛ وسائرُ الأدلّة بدرجة البروج تقريبًا.
+  const ramc = natal.ascendant.localSiderealTime ?? 0;
+  const directed = lat == null ? null : { asc: ascFromRamc(ramc + ageYears, lat), mc: midheaven(ramc + ageYears) };
   const base = {
     asc: natal.ascendant.longitude, sun: natal.planets["الشمس"].longitude, moon: natal.planets["القمر"].longitude,
     lot: natal.lots?.lots?.["سهم السعادة"]?.longitude, mc: midheaven(natal.ascendant.localSiderealTime ?? 0),
@@ -22040,7 +22084,7 @@ function tasyir(natal, ageYears) {
   const out = [];
   for (const pt of TASYIR_POINTS) {
     if (base[pt.key] == null) continue;
-    const dir = base[pt.key] + ageYears; // درجةٌ لكلّ سنة
+    const dir = directed && directed[pt.key] != null ? directed[pt.key] : base[pt.key] + ageYears; // درجةٌ لكلّ سنة
     for (const pr of ["المشتري", "الزهرة", "زحل", "المريخ"]) {
       const asp = aspectOf(dir, natal.planets[pr].longitude, 0.6);
       if (!asp) continue;
@@ -22077,6 +22121,8 @@ function natalPoints(sky, female = false) {
     { key: "venus", ar: "زهرتِك", lon: sky.planets["الزهرة"].longitude, topics: ["love"] },
   ];
   if (lot) pts.push({ key: "lot", ar: "سهمِ رزقِك", lon: lot.longitude, topics: ["money"] });
+  // وسطُ السماء: «الأيّامُ السعيدةُ إذا نظر المشتري أو الزهرةُ إلى درجة الطالع أو وسط السماء» (Lilly CA ف١٧٤)
+  pts.push({ key: "mc", ar: "وسطِ سمائك", lon: midheaven(sky.ascendant.localSiderealTime ?? 0), topics: ["work"] });
   // للمرأة: الشمسُ دليلُ الزوج عند بطليموس (م٤ ف٥)، والمريخُ دليلُه في المسائل
   if (female) { pts[1].topics = ["all", "work", "love"]; pts.push({ key: "mars", ar: "مريخِك", lon: sky.planets["المريخ"].longitude, topics: ["love"] }); }
   // عودةُ المشتري وزحل إلى موضعَيهما في الميلاد
@@ -22118,7 +22164,7 @@ function monthVoices(ctx, y, m) {
     push("periods", sP, sP > 0 ? "السنةُ في صالحك" : sP < 0 ? "السنةُ فيها شدّة" : "", `سنةُ العمر ${P.age} يحكمُها ${P.yearLord} (بيتُ ${P.houseName})${dP > 0 ? "، وهو قويٌّ في ميلادِك" : dP < 0 ? "، وهو ضعيفٌ في ميلادِك" : ""}`, HOUSE_TOPIC[P.profectedHouse] || ["all"], "profection");
   }
   // ١أ) التسيير: درجةٌ لكلِّ سنةٍ من العمر
-  if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000))) push("periods", v.s, v.plain, v.why, v.topics, "tasyir");
+  if (date > ctx.birth) for (const v of tasyir(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000), ctx.lat)) push("periods", v.s, v.plain, v.why, v.topics, "tasyir");
   // ١أ٢) القاسم وشريكُه
   if (date > ctx.birth) {
     const q = qasim(ctx.sky, (date - ctx.birth) / (365.2422 * 86400000));
@@ -22137,9 +22183,11 @@ function monthVoices(ctx, y, m) {
     if (pt.only === "jup") { if (aspectOf(J, pt.lon) === "conj") push("sky", 1, "بدايةُ دورةِ خيرٍ جديدة", "المشتري يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     if (pt.only === "sat") { if (aspectOf(S, pt.lon) === "conj") push("sky", -1, "مرحلةُ مراجعةٍ وثقلٍ ومسؤوليّة", "زحل يعودُ إلى موضعِه في ميلادِك", pt.topics); continue; }
     const aj = aspectOf(J, pt.lon), as = aspectOf(S, pt.lon), am = aspectOf(M, pt.lon, 3);
-    if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" || pt.key === "mars" ? "مودّةٌ وقرب" : pt.key === "sun" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
-    if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" || pt.key === "mars" ? "برودٌ في العلاقة" : pt.key === "sun" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
-    if (am && ["conj", "square", "opp"].includes(am) && ["asc", "sun", "moon"].includes(pt.key)) push("sky", -0.5, "توتّرٌ وعصبيّة", `المريخ ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[am]} ${pt.ar}`, pt.topics);
+    if (aj && ["conj", "trine", "sextile"].includes(aj)) push("sky", 1, pt.key === "lot" ? "بابُ رزقٍ ينفتح" : pt.key === "venus" || pt.key === "mars" ? "مودّةٌ وقرب" : pt.key === "sun" || pt.key === "mc" ? "فرصةٌ أو ظهورٌ في الشغل" : pt.key === "moon" ? "راحةٌ في البيت والنفس" : "بابُ فرصةٍ ينفتح", `المشتري ${({ conj: "يقارن", trine: "يثلّث", sextile: "يسدّس" })[aj]} ${pt.ar}`, pt.topics);
+    if (as && ["conj", "square", "opp"].includes(as)) push("sky", -1, pt.key === "lot" ? "ضيقٌ في المال" : pt.key === "venus" || pt.key === "mars" ? "برودٌ في العلاقة" : pt.key === "sun" || pt.key === "mc" ? "ضغطٌ في الشغل" : pt.key === "moon" ? "همٌّ في النفس أو البيت" : "ثقلٌ وضغط", `زحل ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[as]} ${pt.ar}`, pt.topics);
+    const av = aspectOf(pos["الزهرة"].longitude, pt.lon, 2);
+    if (av && ["trine", "sextile"].includes(av) && ["asc", "mc"].includes(pt.key) && !aj) push("sky", 0.5, pt.key === "mc" ? "تيسيرٌ في الشغل" : "خفّةٌ ورضًا", `الزهرة ${({ trine: "تثلّث", sextile: "تسدّس" })[av]} ${pt.ar}`, pt.topics, "venus");
+    if (am && ["conj", "square", "opp"].includes(am) && ["asc", "sun", "moon", "mc"].includes(pt.key)) push("sky", -0.5, "توتّرٌ وعصبيّة", `المريخ ${({ conj: "يقارن", square: "يربّع", opp: "يقابل" })[am]} ${pt.ar}`, pt.topics);
   }
   // الكسوف: الشهرُ الذي يقعُ فيه وشهران بعده
   for (const e of ctx.eclipses) {
@@ -22220,6 +22268,7 @@ function timeline(c, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
   const sky = falak.snapshot(c.birth, c.lat, c.lon);
   const ctx = {
+    lat: c.lat,
     birth: new Date(c.birth), sky, byNight: sky.lots?.sect === "ليليّ", points: natalPoints(sky, c.sex === "f"), ascIdx: signIdx(sky.ascendant.longitude),
     name: c.name, mother: c.mother, bn: birthNumber(c.birthDay || new Date(c.birth).getUTCDate()), namePlanet: c.mother ? ak.reading(c.name, c.mother).planet.name : null,
   };

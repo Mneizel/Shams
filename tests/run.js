@@ -381,6 +381,17 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // Lilly ج٣: التسييرُ الحقيقيّ للطالع ووسط السماء + عودةُ الكواكب في التحويل
+  {
+    const nat = falak.snapshot(new Date("1990-03-15T08:30:00Z"), 31.95, 35.93);
+    const arif = (await import("../engines/arif.js")).default;
+    const t0 = arif.tasyir(nat, 0, 31.95);
+    ok(Array.isArray(t0), "التسييرُ بالعرض يعمل");
+    const r = nat.ascendant.localSiderealTime;
+    ok(Math.abs(arif.midheaven(r + 30) - arif.midheaven(r)) > 25, "وسطُ السماء المسيَّرُ يتحرّكُ بالمطالع المستقيمة");
+    const rv = arif.revolutions({ birth: new Date("1990-03-15T08:30:00Z"), lat: 31.95, lon: 35.93 }, nat, 2020, 2035);
+    ok(rv.every((x) => Array.isArray(x.voices)), "التحويلات تُحسَب مع العودات");
+  }
   // المدخل الكبير: سنو الكواكب، والفرداراتُ توافقُ جدولَنا
   {
     const py = falak.planetYears();
