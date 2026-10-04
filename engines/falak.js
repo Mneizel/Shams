@@ -50,6 +50,7 @@ import {
 } from "../data/falak-mundane.data.js";
 import abjad from "./abjad.js";
 import bari from "./bari.js";
+import { PLANET_YEARS, PLANET_YEARS_SRC, NODE_FIRDAR } from "../data/horary-bari.data.js";
 
 const DEG = 180 / Math.PI;
 const RAD = Math.PI / 180;
@@ -1139,6 +1140,8 @@ export function snapshot(when, lat, lon, elev = 0) {
 }
 
 export const SOURCES = { ...SOURCES_META, ahkam1: AHKAM_SRC, ahkam4: MUNDANE_SRC };
+/** سنو الكواكب الأربعة (العظمى/الكبرى/الوسطى/الصغرى) والفردارات [المدخل الكبير ٧:٨] */
+export function planetYears(planet) { return planet ? (PLANET_YEARS[planet] ? { planet, ...PLANET_YEARS[planet], src: PLANET_YEARS_SRC } : null) : { table: PLANET_YEARS, nodes: NODE_FIRDAR, src: PLANET_YEARS_SRC }; }
 export const SPECIAL_DEGREE_TABLES = {
   FORTUNATE_DEGREES, PITTED_DEGREES, AZEMENA_DEGREES,
   SIGN_TEMPERAMENT, SIGN_TEMPERAMENT_NOTE, ASPECT_AFFINITY,
@@ -1147,6 +1150,7 @@ export const SPECIAL_DEGREE_TABLES = {
 
 export default {
   dayRuler,
+  planetYears,
   sunTimes,
   planetaryHours,
   planetaryHoursForMoment,

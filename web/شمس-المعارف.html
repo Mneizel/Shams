@@ -3500,7 +3500,24 @@ const LOSS_CAUSE = {
   "الشمس": "بسبب صاحبِ سلطان", "الزهرة": "لهوٌ أو فرح", "عطارد": "كتبٌ أو انشغالٌ بالأخبار", "القمر": "خدمٌ أو رسل",
 };
 
-;__exports["BARI_SRC"]=BARI_SRC;__exports["MONEY_SOURCE"]=MONEY_SOURCE;__exports["HARM_SOURCE"]=HARM_SOURCE;__exports["MARRIAGE_GOOD_BY_ASPECT"]=MARRIAGE_GOOD_BY_ASPECT;__exports["BEAUTY_SIGNS"]=BEAUTY_SIGNS;__exports["PLAIN_SIGNS"]=PLAIN_SIGNS;__exports["HOUSE_BODY"]=HOUSE_BODY;__exports["ELEMENT_HUMOR"]=ELEMENT_HUMOR;__exports["QUALITY_COURSE"]=QUALITY_COURSE;__exports["MOON_SIGN_TIME"]=MOON_SIGN_TIME;__exports["TRAVEL_BENEFIC_HOUSE"]=TRAVEL_BENEFIC_HOUSE;__exports["TRAVEL_BENEFIC_FROM"]=TRAVEL_BENEFIC_FROM;__exports["TRAVEL_MALEFIC"]=TRAVEL_MALEFIC;__exports["THIEF_LOOK"]=THIEF_LOOK;__exports["PLANET_SUBSTANCE"]=PLANET_SUBSTANCE;__exports["PLANET_PLACE_IN_HOUSE"]=PLANET_PLACE_IN_HOUSE;__exports["ELEMENT_DIRECTION"]=ELEMENT_DIRECTION;__exports["ANGLE_DIRECTION"]=ANGLE_DIRECTION;__exports["QUALITY_HEIGHT"]=QUALITY_HEIGHT;__exports["PRISON_CAUSE"]=PRISON_CAUSE;__exports["PRISON_BY_MOON_SIGN"]=PRISON_BY_MOON_SIGN;__exports["PRISON_BY_HOUR"]=PRISON_BY_HOUR;__exports["SIGN_CRAFT"]=SIGN_CRAFT;__exports["DREAM_MATTER"]=DREAM_MATTER;__exports["JUDGE_BY_PLANET"]=JUDGE_BY_PLANET;__exports["DISPUTE_CAUSE"]=DISPUTE_CAUSE;__exports["LOSS_CAUSE"]=LOSS_CAUSE;return __exports;})();
+/**
+ * سنو الكواكب [أبو معشر، المدخل الكبير، القول ٧ الفصل ٨ — مخطوط dedupmrg، الصفحة المزدوجة ١٤٥]:
+ * «إنّ للكواكب أعدادًا معلومة يُقال لبعضها فردارات ولبعضها سنون… فأمّا سنوها فهي على أربعة أنواع:
+ * العظمى والكبرى والوسطى والصغرى». (وسطى القمر في المخطوط «تسعٌ وثلاثون» بلا «ونصف»؛ أثبتناها كما هي.)
+ */
+const PLANET_YEARS_SRC = "أبو معشر، المدخل الكبير، القول السابع، الفصل الثامن";
+const PLANET_YEARS = {
+  "الشمس":   { firdar: 10, greatest: 1461, greater: 120, middle: 39.5, least: 19 },
+  "الزهرة":  { firdar: 8,  greatest: 1151, greater: 82,  middle: 45,   least: 8 },
+  "عطارد":   { firdar: 13, greatest: 480,  greater: 76,  middle: 48,   least: 20 },
+  "القمر":   { firdar: 9,  greatest: 520,  greater: 108, middle: 39,   least: 25 },
+  "زحل":     { firdar: 11, greatest: 265,  greater: 57,  middle: 43.5, least: 30 },
+  "المشتري": { firdar: 12, greatest: 427,  greater: 79,  middle: 45.5, least: 12 },
+  "المريخ":  { firdar: 7,  greatest: 284,  greater: 66,  middle: 40.5, least: 15 },
+};
+const NODE_FIRDAR = { "الرأس": 3, "الذنب": 2 };
+
+;__exports["BARI_SRC"]=BARI_SRC;__exports["MONEY_SOURCE"]=MONEY_SOURCE;__exports["HARM_SOURCE"]=HARM_SOURCE;__exports["MARRIAGE_GOOD_BY_ASPECT"]=MARRIAGE_GOOD_BY_ASPECT;__exports["BEAUTY_SIGNS"]=BEAUTY_SIGNS;__exports["PLAIN_SIGNS"]=PLAIN_SIGNS;__exports["HOUSE_BODY"]=HOUSE_BODY;__exports["ELEMENT_HUMOR"]=ELEMENT_HUMOR;__exports["QUALITY_COURSE"]=QUALITY_COURSE;__exports["MOON_SIGN_TIME"]=MOON_SIGN_TIME;__exports["TRAVEL_BENEFIC_HOUSE"]=TRAVEL_BENEFIC_HOUSE;__exports["TRAVEL_BENEFIC_FROM"]=TRAVEL_BENEFIC_FROM;__exports["TRAVEL_MALEFIC"]=TRAVEL_MALEFIC;__exports["THIEF_LOOK"]=THIEF_LOOK;__exports["PLANET_SUBSTANCE"]=PLANET_SUBSTANCE;__exports["PLANET_PLACE_IN_HOUSE"]=PLANET_PLACE_IN_HOUSE;__exports["ELEMENT_DIRECTION"]=ELEMENT_DIRECTION;__exports["ANGLE_DIRECTION"]=ANGLE_DIRECTION;__exports["QUALITY_HEIGHT"]=QUALITY_HEIGHT;__exports["PRISON_CAUSE"]=PRISON_CAUSE;__exports["PRISON_BY_MOON_SIGN"]=PRISON_BY_MOON_SIGN;__exports["PRISON_BY_HOUR"]=PRISON_BY_HOUR;__exports["SIGN_CRAFT"]=SIGN_CRAFT;__exports["DREAM_MATTER"]=DREAM_MATTER;__exports["JUDGE_BY_PLANET"]=JUDGE_BY_PLANET;__exports["DISPUTE_CAUSE"]=DISPUTE_CAUSE;__exports["LOSS_CAUSE"]=LOSS_CAUSE;__exports["PLANET_YEARS_SRC"]=PLANET_YEARS_SRC;__exports["PLANET_YEARS"]=PLANET_YEARS;__exports["NODE_FIRDAR"]=NODE_FIRDAR;return __exports;})();
 __M["huruf-tibb-ghazali.data"]=(function(){"use strict";const __exports={};
 // data/huruf-tibb-ghazali.data.js — «الطبّ الروحانيّ للجسم الإنسانيّ» المنسوبُ إلى الإمام الغزاليّ (طبعة مصريّة مصوَّرة،
 // text/sources/hekma2/altbalro7ani). تبيّن عند المقابلة أنّ أبوابَ الرجالِ فيه هي نفسُها نصُّ «السرّ المكشوف» للطوخي حرفًا بحرف
@@ -18272,7 +18289,7 @@ const {
   BARI_SRC, MONEY_SOURCE, HARM_SOURCE, MARRIAGE_GOOD_BY_ASPECT, BEAUTY_SIGNS, PLAIN_SIGNS, HOUSE_BODY,
   ELEMENT_HUMOR, QUALITY_COURSE, MOON_SIGN_TIME, TRAVEL_BENEFIC_HOUSE, TRAVEL_BENEFIC_FROM, TRAVEL_MALEFIC,
   THIEF_LOOK, PLANET_SUBSTANCE, PLANET_PLACE_IN_HOUSE, ELEMENT_DIRECTION, ANGLE_DIRECTION, QUALITY_HEIGHT,
-  PRISON_CAUSE, PRISON_BY_MOON_SIGN, PRISON_BY_HOUR, SIGN_CRAFT, DREAM_MATTER, JUDGE_BY_PLANET, DISPUTE_CAUSE, LOSS_CAUSE,
+  PRISON_CAUSE, PRISON_BY_MOON_SIGN, PLANET_YEARS, PLANET_YEARS_SRC, PRISON_BY_HOUR, SIGN_CRAFT, DREAM_MATTER, JUDGE_BY_PLANET, DISPUTE_CAUSE, LOSS_CAUSE,
 }=__M["horary-bari.data"];
 
 const BEN = new Set(["المشتري", "الزهرة"]);
@@ -18369,6 +18386,10 @@ function work(T, ch, add) {
   if (T.H("المشتري") === 10) add("المشتري في وسط السماء: رفعةٌ وزيادة.", 0.3, 90);
   if (T.H("زحل") === 10 && T.H("المريخ") === 10) add("زحل والمريخ في وسط السماء: ظلمٌ وخلافٌ في العمل.", -0.3, 90);
   if ([6, 12].includes(T.H(ch.ascLord))) add("صاحبُ الطالع في السادس أو الثاني عشر: خصومٌ يعطّلون أمرَك.", -0.2, 90);
+  // مدّةُ البقاء في العمل بسني الكوكب الصغرى [البارع ٩٤؛ والسنون من المدخل الكبير لأبي معشر]
+  const in10 = ["الشمس", "القمر", "عطارد", "الزهرة", "المريخ", "المشتري", "زحل"].filter((p) => T.H(p) === 10).sort((x, y) => T.strength(y) - T.strength(x))[0] || l10;
+  const yrs = PLANET_YEARS[in10]?.least;
+  if (yrs) { const strong = (ch.dig?.(in10) ?? 0) >= 4 && T.angular(T.H(in10)); add(`مدّةُ البقاء في هذا العمل على أكثر تقدير: نحو ${yrs} ${strong ? "سنة" : "شهرًا"} (سنو ${in10} الصغرى${strong ? "، وهو قويٌّ في وتد" : ""}).`, 0, 94); }
   craft(T, ch, add);
 }
 
@@ -18683,6 +18704,7 @@ const {
 }=__M["falak-mundane.data"];
 const abjad=__M["abjad"].default;
 const bari=__M["bari"].default;
+const { PLANET_YEARS, PLANET_YEARS_SRC, NODE_FIRDAR }=__M["horary-bari.data"];
 
 const DEG = 180 / Math.PI;
 const RAD = Math.PI / 180;
@@ -19772,6 +19794,8 @@ function snapshot(when, lat, lon, elev = 0) {
 }
 
 const SOURCES = { ...SOURCES_META, ahkam1: AHKAM_SRC, ahkam4: MUNDANE_SRC };
+/** سنو الكواكب الأربعة (العظمى/الكبرى/الوسطى/الصغرى) والفردارات [المدخل الكبير ٧:٨] */
+function planetYears(planet) { return planet ? (PLANET_YEARS[planet] ? { planet, ...PLANET_YEARS[planet], src: PLANET_YEARS_SRC } : null) : { table: PLANET_YEARS, nodes: NODE_FIRDAR, src: PLANET_YEARS_SRC }; }
 const SPECIAL_DEGREE_TABLES = {
   FORTUNATE_DEGREES, PITTED_DEGREES, AZEMENA_DEGREES,
   SIGN_TEMPERAMENT, SIGN_TEMPERAMENT_NOTE, ASPECT_AFFINITY,
@@ -19780,6 +19804,7 @@ const SPECIAL_DEGREE_TABLES = {
 
 __exports.default = {
   dayRuler,
+  planetYears,
   sunTimes,
   planetaryHours,
   planetaryHoursForMoment,
@@ -19824,7 +19849,7 @@ __exports.default = {
   SPECIAL_DEGREE_TABLES,
 };
 
-;__exports["dayRuler"]=dayRuler;__exports["sunTimes"]=sunTimes;__exports["planetaryHours"]=planetaryHours;__exports["planetaryHoursForMoment"]=planetaryHoursForMoment;__exports["currentHour"]=currentHour;__exports["zodiacOf"]=zodiacOf;__exports["planetPositions"]=planetPositions;__exports["moonMansion"]=moonMansion;__exports["ascendant"]=ascendant;__exports["dignities"]=dignities;__exports["specialDegrees"]=specialDegrees;__exports["timingUnit"]=timingUnit;__exports["lunarNodes"]=lunarNodes;__exports["signCharacter"]=signCharacter;__exports["skinDiseaseSigns"]=skinDiseaseSigns;__exports["longShortAscension"]=longShortAscension;__exports["diseaseNature"]=diseaseNature;__exports["orientalOccidental"]=orientalOccidental;__exports["translationOfLight"]=translationOfLight;__exports["collectionOfLight"]=collectionOfLight;__exports["fathAlBab"]=fathAlBab;__exports["mundaneForecast"]=mundaneForecast;__exports["aspectBetween"]=aspectBetween;__exports["aspectsBetween"]=aspectsBetween;__exports["houseOf"]=houseOf;__exports["wholeSignHouses"]=wholeSignHouses;__exports["moonState"]=moonState;__exports["combustState"]=combustState;__exports["lots"]=lots;__exports["almuten"]=almuten;__exports["classifyAstroTopic"]=classifyAstroTopic;__exports["horary"]=horary;__exports["annualProfection"]=annualProfection;__exports["firdaria"]=firdaria;__exports["dayQuality"]=dayQuality;__exports["election"]=election;__exports["snapshot"]=snapshot;__exports["SOURCES"]=SOURCES;__exports["SPECIAL_DEGREE_TABLES"]=SPECIAL_DEGREE_TABLES;return __exports;})();
+;__exports["dayRuler"]=dayRuler;__exports["sunTimes"]=sunTimes;__exports["planetaryHours"]=planetaryHours;__exports["planetaryHoursForMoment"]=planetaryHoursForMoment;__exports["currentHour"]=currentHour;__exports["zodiacOf"]=zodiacOf;__exports["planetPositions"]=planetPositions;__exports["moonMansion"]=moonMansion;__exports["ascendant"]=ascendant;__exports["dignities"]=dignities;__exports["specialDegrees"]=specialDegrees;__exports["timingUnit"]=timingUnit;__exports["lunarNodes"]=lunarNodes;__exports["signCharacter"]=signCharacter;__exports["skinDiseaseSigns"]=skinDiseaseSigns;__exports["longShortAscension"]=longShortAscension;__exports["diseaseNature"]=diseaseNature;__exports["orientalOccidental"]=orientalOccidental;__exports["translationOfLight"]=translationOfLight;__exports["collectionOfLight"]=collectionOfLight;__exports["fathAlBab"]=fathAlBab;__exports["mundaneForecast"]=mundaneForecast;__exports["aspectBetween"]=aspectBetween;__exports["aspectsBetween"]=aspectsBetween;__exports["houseOf"]=houseOf;__exports["wholeSignHouses"]=wholeSignHouses;__exports["moonState"]=moonState;__exports["combustState"]=combustState;__exports["lots"]=lots;__exports["almuten"]=almuten;__exports["classifyAstroTopic"]=classifyAstroTopic;__exports["horary"]=horary;__exports["annualProfection"]=annualProfection;__exports["firdaria"]=firdaria;__exports["dayQuality"]=dayQuality;__exports["election"]=election;__exports["snapshot"]=snapshot;__exports["SOURCES"]=SOURCES;__exports["planetYears"]=planetYears;__exports["SPECIAL_DEGREE_TABLES"]=SPECIAL_DEGREE_TABLES;return __exports;})();
 __M["asma-khuddam"]=(function(){"use strict";const __exports={};
 // engines/asma-khuddam.js
 // ─────────────────────────────────────────────────────────────────────────────

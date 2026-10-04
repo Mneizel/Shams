@@ -381,6 +381,14 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // المدخل الكبير: سنو الكواكب، والفرداراتُ توافقُ جدولَنا
+  {
+    const py = falak.planetYears();
+    ok(Object.values(py.table).reduce((a, x) => a + x.firdar, 0) + py.nodes["الرأس"] + py.nodes["الذنب"] === 75, "الفردارات في المدخل مجموعُها ٧٥");
+    eq([falak.planetYears("زحل").least, falak.planetYears("المشتري").least, falak.planetYears("الشمس").greater], [30, 12, 120], "سنو زحل الصغرى ٣٠، المشتري ١٢، الشمس الكبرى ١٢٠");
+    const hw = falak.horary("هل أحصل على الوظيفة", new Date("2026-11-20T18:00:00Z"), 31.95, 35.93);
+    ok(hw.bari.details.some((x) => /مدّةُ البقاء في هذا العمل/.test(x.text)), "العمل: مدّةُ البقاء بسني الكوكب الصغرى");
+  }
   // تجاربي وبرهاني (الطوخي): أمثلةُ الكتاب نفسُها
   {
     const w1 = awfaq.transitionWafq("فقير", "غني");

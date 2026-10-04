@@ -11,7 +11,7 @@ import {
   BARI_SRC, MONEY_SOURCE, HARM_SOURCE, MARRIAGE_GOOD_BY_ASPECT, BEAUTY_SIGNS, PLAIN_SIGNS, HOUSE_BODY,
   ELEMENT_HUMOR, QUALITY_COURSE, MOON_SIGN_TIME, TRAVEL_BENEFIC_HOUSE, TRAVEL_BENEFIC_FROM, TRAVEL_MALEFIC,
   THIEF_LOOK, PLANET_SUBSTANCE, PLANET_PLACE_IN_HOUSE, ELEMENT_DIRECTION, ANGLE_DIRECTION, QUALITY_HEIGHT,
-  PRISON_CAUSE, PRISON_BY_MOON_SIGN, PRISON_BY_HOUR, SIGN_CRAFT, DREAM_MATTER, JUDGE_BY_PLANET, DISPUTE_CAUSE, LOSS_CAUSE,
+  PRISON_CAUSE, PRISON_BY_MOON_SIGN, PLANET_YEARS, PLANET_YEARS_SRC, PRISON_BY_HOUR, SIGN_CRAFT, DREAM_MATTER, JUDGE_BY_PLANET, DISPUTE_CAUSE, LOSS_CAUSE,
 } from "../data/horary-bari.data.js";
 
 const BEN = new Set(["المشتري", "الزهرة"]);
@@ -108,6 +108,10 @@ function work(T, ch, add) {
   if (T.H("المشتري") === 10) add("المشتري في وسط السماء: رفعةٌ وزيادة.", 0.3, 90);
   if (T.H("زحل") === 10 && T.H("المريخ") === 10) add("زحل والمريخ في وسط السماء: ظلمٌ وخلافٌ في العمل.", -0.3, 90);
   if ([6, 12].includes(T.H(ch.ascLord))) add("صاحبُ الطالع في السادس أو الثاني عشر: خصومٌ يعطّلون أمرَك.", -0.2, 90);
+  // مدّةُ البقاء في العمل بسني الكوكب الصغرى [البارع ٩٤؛ والسنون من المدخل الكبير لأبي معشر]
+  const in10 = ["الشمس", "القمر", "عطارد", "الزهرة", "المريخ", "المشتري", "زحل"].filter((p) => T.H(p) === 10).sort((x, y) => T.strength(y) - T.strength(x))[0] || l10;
+  const yrs = PLANET_YEARS[in10]?.least;
+  if (yrs) { const strong = (ch.dig?.(in10) ?? 0) >= 4 && T.angular(T.H(in10)); add(`مدّةُ البقاء في هذا العمل على أكثر تقدير: نحو ${yrs} ${strong ? "سنة" : "شهرًا"} (سنو ${in10} الصغرى${strong ? "، وهو قويٌّ في وتد" : ""}).`, 0, 94); }
   craft(T, ch, add);
 }
 
