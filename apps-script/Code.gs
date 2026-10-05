@@ -14,6 +14,8 @@ function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName("answers");
   if (!sh) { sh = ss.insertSheet("answers"); sh.appendRow(COLS); sh.setFrozenRows(1); }
+  // الأعمدةُ النصّيّة تبقى نصًّا: Sheets يحوّلُ «0000…» إلى 0 و«2026-09» إلى تاريخ
+  ["at", "person", "month", "fams", "state", "sent"].forEach(function (c) { sh.getRange(1, COLS.indexOf(c) + 1, sh.getMaxRows(), 1).setNumberFormat("@"); });
   return sh;
 }
 
@@ -45,7 +47,8 @@ function doPost(e) {
     const r = clean_(JSON.parse(raw));
     if (!r) return out({ ok: false, error: "bad shape" });
     const lock = LockService.getScriptLock(); lock.waitLock(10000);
-    try { sheet_().appendRow(COLS.map(function (c) { return c === "sent" ? "" : r[c]; })); } finally { lock.releaseLock(); }
+    const TEXT = ["at", "person", "month", "fams", "state"];
+    try { sheet_().appendRow(COLS.map(function (c) { return c === "sent" ? "" : TEXT.indexOf(c) >= 0 && r[c] !== "" ? "'" + r[c] : r[c]; })); } finally { lock.releaseLock(); }
     return out({ ok: true });
   } catch (err) { return out({ ok: false, error: String(err) }); }
 }
@@ -63,6 +66,9 @@ function pushToGitHub() {
     if (o.fams) { try { o.fams = JSON.parse(o.fams); } catch (x) { o.fams = {}; } }
     o.ok = o.ok === true || o.ok === "TRUE" || o.ok === "true";
     if (o.at instanceof Date) o.at = o.at.toISOString();
+    if (o.month instanceof Date) o.month = Utilities.formatDate(o.month, "UTC", "yyyy-MM");
+    o.person = String(o.person);
+    if (!/^[0-9a-f]{16}$/.test(o.person)) continue;   // سطرٌ تالف (بصمةٌ حوّلها Sheets رقمًا) لا يُرسَل
     rows.push(o); idx.push(i + 1);
   }
   if (!rows.length) return;
