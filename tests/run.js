@@ -422,6 +422,10 @@ import falak from "../engines/falak.js";
       ok(r.tukhi && r.tukhi.details.every((x) => x.text && Number.isFinite(x.page)) && Math.abs(r.tukhi.score) <= 1, `الرمل الطوخيّ: «${q}» (${rt.topicOf(q)})`);
     }
   }
+  for (const k of ["خالي الوسط", "خالي الجنب"]) {
+    const sq = awfaq.hollowTriangle(k).square, v = (x) => x ?? 0;
+    ok(sq.every((r) => r.reduce((a, x) => a + v(x), 0) === 12) && [0, 1, 2].every((c) => sq.reduce((a, r) => a + v(r[c]), 0) === 12), `المثلّث ${k}: كلُّ صفٍّ وعمودٍ = ١٢ (كما في قدرة الخلاق ص ٤٦)`);
+  }
   // حساباتُ التعلّم (engines/learn.js): المقارنةُ بالصدفة، وصوتٌ لكلّ شخص، والشهرُ العاديّ لا يُحتسَب
   {
     const L = (await import("../engines/learn.js")).default;

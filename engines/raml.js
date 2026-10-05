@@ -407,6 +407,11 @@ export function reading(opt = {}, cfg = {}) {
   } else {
     witnessNote = `الشاهدان متّفقان في الطبع (${wR.nature}) ⇒ يُقوّيان حكمَ القاضي.`;
   }
+  // التضادُّ الكوكبيّ [الفلك المشحون]: أشكالُ المشتري ضدُّ أشكال المريخ — يُذكَرُ ولا يُغيّرُ الحكم (الكتابُ لا يذكرُ أثرَه)
+  const opposedPairs = [["الشاهدين", wR, wL], ["شكلِ بيت المسألة والقاضي", hf, judge]].filter(([, a, b]) => a !== b && arePlanetOpposed(a, b));
+  const planetOpposition = opposedPairs.length
+    ? opposedPairs.map(([who, a, b]) => `بين ${who} تضادٌّ: «${a.ar}» من أشكال ${a.planet} و«${b.ar}» من أشكال ${b.planet}، وهما ضدّان في «الفلك المشحون».`).join(" ")
+    : null;
 
   // أحكامُ الطوخي في الرمل (تجاربي وبرهاني): قواعدُ خاصّةٌ بكلّ موضوع على البيوت الستّةَ عشر
   // قاعدةُ الأوروبيّين (Skinner، Geomancy ١٩٨٠، ص ٢١٢): الحمرةُ أو ذنبُ التنين (ومعهما العتبةُ عند بعضهم) في البيت الأوّل
@@ -437,6 +442,7 @@ export function reading(opt = {}, cfg = {}) {
     houseFigureMeaning, houseFigureNafhat, houseFigureIskandari: figureIskandari(hf),
     aspect,
     witnessNote,
+    planetOpposition,
     timing,
     threePart,
     figureLore: figureLore(hf),
@@ -459,6 +465,7 @@ export function reading(opt = {}, cfg = {}) {
       `طبائعُ الشكل: ${figureProps(hf).motion}، ${figureProps(hf).stability}، عنصرُه ${hf.element}.`,
       `نظرُ الطالع (البيت ١) إلى بيتِ المسألة: ${aspect}.`,
       `${witnessNote}`,
+      ...(planetOpposition ? [planetOpposition] : []),
       `الوزن الفلكيّ = ${sStd} | الوزن العُمانيّ = ${sOmani} ⇒ المزجُ الموزون = ${blended}.`,
       `القراءةُ الثلاثيّة (المثلث): الماضي ${threePart.past.mood}، الحاضر ${threePart.present.mood}، المستقبل ${threePart.future.mood}.`,
       `تقديرُ الوقت من عنصرِ الشكل (${hf.element}) وعددِ نقاطه (${toAr(figureProps(hf).points)}): ${timing.text}${timing.lore ? ` (وفي المثلث: ${timing.lore})` : ""}.`,

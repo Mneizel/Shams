@@ -31,6 +31,7 @@ import khawass from "../engines/khawass.js";
 import art from "../engines/spirit-art.js";
 import qura from "../engines/qura.js";
 import debunk from "../engines/debunk.js";
+import { SECTIONS as BOOK_SECTIONS } from "../data/chapters.data.js";
 import kaf from "../engines/kaf.js";
 import hal from "../engines/hal.js";
 import qiraa from "../engines/qiraa.js";
@@ -301,7 +302,7 @@ const NAV = [
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
   ["العمل والعلاج", [["talismans", "✒️ الطلاسم"], ["spirits", "👁 الأرواح والملوك"], ["taskhir", "🔥 التسخير والتصريف"], ["khawass", "📿 الخواصّ"]]],
-  ["المرجع وكشف الدجل", [["debunk", "🃏 ألعاب العرافة وحِيَلها"], ["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
+  ["المرجع وكشف الدجل", [["debunk", "🃏 ألعاب العرافة وحِيَلها"], ["fihris", "🗂 فهرس الكتاب"], ["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
 ];
 
 // ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──
@@ -329,6 +330,7 @@ const BRIEF = {
   khawass: "كتالوجُ الأسماء الحسنى والآيات والأدعية والموادّ وخواصِّها.",
   debunk: "شرحٌ صريحٌ لحيلٍ شائعةٍ عند بعض العرّافين — طبقةٌ توعويّةٌ منفصلة.",
   corpus: "بحثٌ داخل نصّ «شمس المعارف الكبرى».",
+  fihris: "أبوابُ «شمس المعارف الكبرى» بموضوعاتها، وبجانب كلِّ بابٍ الأداةُ التي تطبّقُه في الموقع.",
   manual: "دليلُ استخدامِ كلّ أداة: ما هي، وماذا تُدخِل، وكيف تقرأ الناتج.",
   infoOnly: "معلوماتٌ للاطّلاع فقط لا تدخل في الحساب.",
 };
@@ -967,6 +969,9 @@ PANELS.debunk = (main) => {
       <div class="fld"><label>الجهة</label><select id="disd"><option>—</option><option>الأيمن</option><option>الأيسر</option><option>العليا</option><option>السفلى</option></select></div></div><div id="diout"></div>
     <h2>زهر الطاولة</h2>
     <div class="form"><div class="fld"><label>الفصّان</label><select id="dd1">${[1,2,3,4,5,6].map((n)=>`<option>${n}</option>`).join("")}</select> <select id="dd2">${[1,2,3,4,5,6].map((n)=>`<option>${n}</option>`).join("")}</select></div></div><div id="ddout"></div>
+    <h2>جرّبْ بنفسك: اسحبْ ورقة</h2>
+    <p class="kv">اسحبْ ورقةً عشوائيّة، واقرأ ما يقولُه العرّافُ فيها، وقُلْ: هل تنطبقُ عليك؟ كرّرْها عدّةَ مرّات.</p>
+    <div class="form"><button class="btn" id="dkdraw">اسحبْ ورقة</button></div><div id="dkexp"></div>
     <h2>الكوتشينة — فردةُ سبع ورقات (حتميّة من اسمك وسؤالك)</h2><div id="dkout"></div>
     <h2>ألعاب الحساب (إكراه رياضيّ)</h2><div class="grid" id="dpout"></div>`;
 
@@ -998,7 +1003,28 @@ PANELS.debunk = (main) => {
       ${sp.cards.map((x) => `<tr><td>${esc(x.position)}</td><td class="mono">${esc(x.card)}</td><td>${esc(x.meaning)}</td></tr>`).join("")}</table>
       <div class="gloss">${esc(sp.note)}</div>` });
 
-  $("#dpout", main).innerHTML = [
+  // تجربةُ الورقة: كلُّ ورقةٍ عشوائيّة، ويُحصى كم انطبق منها ⇒ يرى الزائرُ أثرَ بارنوم بنفسه
+  const exp = { draws: 0, fit: 0 };
+  $("#dkdraw", main).onclick = () => {
+    const cards = debunk.listCards(), k = debunk.kotshinaCard(cards[Math.floor(Math.random() * cards.length)]);
+    $("#dkexp", main).innerHTML = card({ title: `سحبتَ: ${esc(k.card)}`, k: "يقولُ العرّاف",
+      body: `<div class="big" style="font-size:1.1rem">${esc(k.meaning)}</div>
+        <div class="arif-did"><span>هل ينطبقُ هذا على حياتك؟</span><button type="button" class="btn sm sec" data-fit="1">نعم، ينطبق</button><button type="button" class="btn sm sec" data-fit="0">لا</button></div><div id="dkres"></div>` });
+    $("#dkexp", main).querySelectorAll("[data-fit]").forEach((b) => b.addEventListener("click", () => {
+      exp.draws++; if (b.dataset.fit === "1") exp.fit++;
+      $("#dkexp", main).querySelectorAll("[data-fit]").forEach((x) => (x.disabled = true));
+      $("#dkres", main).innerHTML = `<div class="arif-insight" style="margin-top:.5rem">${exp.draws < 3 ? `اسحبْ ورقةً أخرى (${AR(exp.draws)} من ٣ على الأقلّ).` :
+        `<b>النتيجة:</b> انطبق عليك ${AR(exp.fit)} من ${AR(exp.draws)} ورقة — مع أنّ كلَّ ورقةٍ سُحبت عشوائيًّا تمامًا. ${exp.fit / exp.draws >= 0.5 ? "هذا هو «أثرُ بارنوم»: العباراتُ عامّةٌ («خبرٌ سارّ»، «رجلٌ يُعين»)، فيجدُ كلُّ واحدٍ في حياته ما يطابقُها، ويظنُّ أنّ الورقةَ «عرفته»." : "أنت أدقُّ من أغلب الناس: لاحظتَ أنّ العباراتِ لا تخصّك. أكثرُ الناس يقولون «نعم» لمعظمها."}<div class="gloss" style="margin-top:.3rem">${esc(k.note)}</div>`}</div>`;
+    }, { once: true }));
+    wireCards(main);
+  };
+
+  // تجربةُ الأشياء الثلاثة: يختارُ الزائرُ سرًّا، فيكشفُه الحساب، ثمّ يرى السرّ
+  const seatSel = (id) => `<select id="${id}">${[1, 2, 3].map((n) => `<option value="${n}">المقعد ${AR(n)}</option>`).join("")}</select>`;
+  $("#dpout", main).innerHTML = `<div class="card" style="grid-column:1/-1"><h3>جرّبْ: الأشياء الثلاثة المخبَّأة</h3>
+      <div class="kv">${esc(debunk.parlor("الأشياء الثلاثة المخبَّأة").claim)}</div>
+      <div class="form" style="margin-top:.4rem"><div class="fld"><label for="dp1">القلم مع</label>${seatSel("dp1")}</div><div class="fld"><label for="dp2">الخاتم مع</label>${seatSel("dp2")}</div><div class="fld"><label for="dp3">المنديل مع</label>${seatSel("dp3")}</div><button class="btn" id="dpgo">اكشفْ</button></div>
+      <div id="dpres"></div></div>` + [
     (() => { const t = debunk.threeObjects(3, 1, 2); return card({ title: "الأشياء الثلاثة المخبَّأة", k: t.correct ? "الحيلة تعمل" : "—",
       body: `<div class="kv">مثال: صاحب القلم في مقعد ٣، الخاتم ٢، المنديل... ⇒ ح٤−٢٥٠ = <b>${AR(t.steps.minus250)}</b> ⇒ استُخرِج (${AR(t.recovered.obj1)}، ${AR(t.recovered.obj2)}، ${AR(t.recovered.obj3)})</div>
         <div class="gloss">${esc(t.identity)}</div>`, basis: `${esc(t.source)} · حيلة: ${esc(t.technique)}` }); })(),
@@ -1006,6 +1032,12 @@ PANELS.debunk = (main) => {
       body: `<div class="kv">${AR(r.descending)} − ${AR(r.ascending)} = <b>${AR(r.difference)}</b>، ومجموعُ أرقامِه = <b>${AR(r.digitSum)}</b></div>
         <div class="gloss">${esc(r.explain)}</div>`, basis: `${esc(r.source)} · حيلة: ${esc(r.technique)}` }); })(),
   ].join("");
+  $("#dpgo", main).onclick = () => {
+    const t = debunk.threeObjects(+$("#dp1", main).value, +$("#dp2", main).value, +$("#dp3", main).value), P = debunk.parlor("الأشياء الثلاثة المخبَّأة");
+    $("#dpres", main).innerHTML = `<div class="kv" style="margin-top:.5rem"><b>العرّافُ يطلبُ منك حسابًا</b> (دون أن تخبره بشيء): ضاعِفْ مقعدَ القلم وزِدْ ٥ واضربْ في ٥ ⇒ ${AR(t.steps.h1)}؛ زِدْ مقعدَ الخاتم ⇒ ${AR(t.steps.h2)}؛ اضربْ في ١٠ ⇒ ${AR(t.steps.h3)}؛ زِدْ مقعدَ المنديل ⇒ <b>${AR(t.steps.h4)}</b>، وتقولُ له هذا الرقمَ فقط.</div>
+      <div class="big" style="font-size:1.1rem;margin:.4rem 0">«القلمُ في المقعد ${AR(t.recovered.obj1)}، والخاتمُ في ${AR(t.recovered.obj2)}، والمنديلُ في ${AR(t.recovered.obj3)}» ${t.correct ? "— أصاب!" : ""}</div>
+      <details class="intro"><summary>اكشفِ السرّ</summary><div class="body">يطرحُ ٢٥٠ من رقمِك فيخرجُ ${AR(t.steps.minus250)}: خانةُ المئات مقعدُ القلم، والعشراتُ مقعدُ الخاتم، والآحادُ مقعدُ المنديل. ${esc(P.identity)}</div></details>`;
+  };
   wireCards(main);
 };
 
@@ -1133,6 +1165,14 @@ function letterGridHTML(g) {
   return `<table class="tbl" style="margin:auto">${g.map((r) =>
     `<tr>${r.map((ch) => `<td class="mono" style="text-align:center;min-width:2.2em">${esc(ch)}</td>`).join("")}</tr>`).join("")}</table>`;
 }
+// مثلّثا «قدرة الخلاق» الخاليا الخانة (ص ٤٦) — في صفحة الأوفاق
+function hollowCards() {
+  return ["خالي الوسط", "خالي الجنب"].map((k) => { const h = awfaq.hollowTriangle(k);
+      return card({ title: `مثلّثٌ ${esc(k)}`, k: "∑ الصفّ والعمود = ١٢",
+        body: `<table class="tbl" style="width:auto;margin:auto">${h.square.map((r) => `<tr>${r.map((x) => `<td style="min-width:2.4rem;text-align:center">${x == null ? "" : AR(x)}</td>`).join("")}</tr>`).join("")}</table>
+          <div class="gloss">من أرقام ١ إلى ٨ وخانةٌ فارغة${k === "خالي الوسط" ? " في الوسط" : " في جنبه"}: مجموعُ كلِّ صفٍّ وكلِّ عمودٍ ١٢. يعرضُه الكتابُ صورةً دون أن يذكرَ لها غرضًا.</div>`,
+        basis: `${esc(h.source)}، ص ٤٦ («صور مثلّث خالي خانة»).` }); }).join("");
+}
 PANELS.awfaq = (main) => {
   const c0 = ctx();
   main.innerHTML = `${head('awfaq', 'الأوفاق')}
@@ -1142,6 +1182,8 @@ PANELS.awfaq = (main) => {
     <h2>بُدُوح وطبائع الرتب</h2>
     <p class="kv">مربّعُ بُدُوح (أول بطاقة) له استعمالٌ مباشرٌ موضَّحٌ بداخله. بقيّةُ البطاقات مرجعٌ يوضّح متى يُستعمَل كلّ رتبةٍ (يوم/ساعة/غرض) — الوفقُ الجاهز نفسُه تجده بقسم «الأغراض» أسفل.</p>
     <div class="grid" id="lore"></div>
+    <h2>المثلّثان الخاليا الخانة («قدرة الخلاق»)</h2>
+    <div class="grid">${hollowCards()}</div>
     <h2>وفق الاسم / العدد (بالتعمير)</h2>
     <p class="kv">مولِّدُ وفقٍ شخصيٍّ عامٍّ — معبَّأٌ افتراضيًّا باسمك من بطاقتك؛ غيِّره لو أردت وفقَ اسمٍ آخر أو رقم. بدون ربطه بغرضٍ معيّن. إذا تريد وفقًا لغرضٍ محدَّد فاستعمل قسم «الأغراض» أسفل بدلًا منه؛ وإن أردت وفقًا حِرزيًّا عامًّا فقط، يُكتَب هذا ويُحمَل مثل أيّ وفقٍ شخصيّ.</p>
     <div class="form">
@@ -1451,6 +1493,7 @@ PANELS.raml = (main) => {
           ${r.houseFigureNafhat ? `<span class="gloss">وفي «نفحات الأسرار» («${esc(r.houseFigureNafhat.name)}» في هذا البيت): ${esc(r.houseFigureNafhat.text)}</span><br>` : ""}
           القاضي: <b>${esc(r.judge.ar)}</b> — ${esc(r.judgeMeaning)}<br>
           الشاهدان: ${esc(ch.witnesses.right.ar)} / ${esc(ch.witnesses.left.ar)} — ${esc(r.witnessNote)}<br>
+          ${r.planetOpposition ? `<span class="gloss">${esc(r.planetOpposition)}</span><br>` : ""}
           سهم القسمة: ${esc(ch.reconciler.ar)}<br>
           نظرُ الطالع إلى بيت المسألة: <b>${esc(r.aspect)}</b><br>
           تقديرُ الوقت: <b>${esc(r.timing.text)}</b> (من عنصر الشكل وعدد نقاطه)${r.timing.muthallath ? `<br><span class="gloss">${esc(r.timing.muthallath)}</span>` : ""}<br>
@@ -2772,6 +2815,28 @@ PANELS.full = (main) => {
     </div>` : ""}`);
 };
 
+// فهرسُ الكتاب ─────────────────────────────────────────────────────
+// كلُّ بابٍ من data/chapters.data.js، والأدواتُ التي تطبّقُه (المفتاحُ معرّفُ الباب)
+const SECTION_TOOLS = {
+  "basmala-huruf": ["jummal", "jafr"], jummal: ["jummal"], awfaq: ["awfaq"], "asma-husna": ["asma", "khawass"],
+  "quran-khawass": ["khawass"], "falak-saat": ["falak", "reading"], "manazil-qamar": ["falak"], ruhaniyyat: ["spirits", "asma"],
+  "khawatim-tilasmat": ["talismans"], jafr: ["jafr"], zairja: ["zairja"], "aqsam-amal": ["taskhir"], "raml-nujum": ["raml", "falak"],
+};
+PANELS.fihris = (main) => {
+  const label = (id) => { for (const [, items] of NAV) for (const [i, l] of items) if (i === id) return l; return id; };
+  main.innerHTML = `${head("fihris", "فهرس الكتاب")}
+    <p class="kv">«شمس المعارف الكبرى» بأبوابها الكبرى. الطبعاتُ تختلفُ في ترتيب الفصول وعناوينها، وهذا التقسيمُ بحسب الموضوع. اضغطْ على أداةٍ لتفتحَها، أو ابحثْ عن البابِ في نصّ الكتاب.</p>
+    <div class="grid">${BOOK_SECTIONS.map((sec, i) => card({
+      title: `${AR(i + 1)}. ${sec.title}`,
+      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${sec.topics.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+        <div class="form" style="margin-top:.5rem;flex-wrap:wrap">${(SECTION_TOOLS[sec.id] || []).map((id) => `<button type="button" class="btn sm" data-go="${id}">${esc(label(id))}</button>`).join("")}
+          <button type="button" class="btn sm sec" data-find="${esc(sec.title.split(/[:،]/)[0])}">ابحثْ في نصّ الكتاب</button></div>`,
+    })).join("")}</div>`;
+  main.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => route(b.dataset.go)));
+  main.querySelectorAll("[data-find]").forEach((b) => b.addEventListener("click", () => { try { sessionStorage.setItem("smk-cq", b.dataset.find); } catch {} route("corpus"); }));
+  wireCards(main);
+};
+
 // 15) نصّ الكتاب ───────────────────────────────────────────────────
 PANELS.corpus = (main) => {
   if (!corpus) {
@@ -2782,7 +2847,7 @@ PANELS.corpus = (main) => {
   const st = corpus.stats();
   main.innerHTML = `${head('corpus', 'نصّ الكتاب — بحث')}
     <p class="kv">${AR(st.chunks)} مقطعًا من نسخة الكبرى (OCR — يجد الموضع؛ الحروف قد لا تكون مضبوطة ١٠٠٪).</p>
-    <div class="form"><input id="cq" placeholder="اكتب كلمةً أو عبارة…" value="الاسم الاعظم" style="min-width:340px"><button class="btn" id="cb">ابحث</button></div>
+    <div class="form"><input id="cq" placeholder="اكتب كلمةً أو عبارة…" value="${esc(sessionStorage.getItem("smk-cq") || "الاسم الاعظم")}" style="min-width:340px"><button class="btn" id="cb">ابحث</button></div>
     <div id="cout"></div>`;
   const run = () => {
     const res = corpus.search($("#cq", main).value, { limit: 40 });
