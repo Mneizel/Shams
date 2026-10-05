@@ -28788,7 +28788,8 @@ const arifFbKey = () => { const c = ctx(); return `${ARIF_FB0}:${abjad.normalize
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 // «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
-// إرسالُ الإجابة إلى Google Apps Script (إن ضُبط عنوانُه): بلا أسماء — بصمةُ الشخص SHA-256 من الاسم واسم الأمّ والميلاد
+// إرسالُ الإجابة إلى Google Apps Script (إن ضُبط عنوانُه) مع معطيات الشخص كاملةً (ليُعادَ حسابُ قراءته عند التشخيص)،
+// وبصمةُ SHA-256 تجمعُ إجاباتِ الشخص الواحد
 async function arifSend(rec) {
   if (!FEEDBACK_URL || !globalThis.crypto?.subtle) return;
   try {
@@ -28797,7 +28798,7 @@ async function arifSend(rec) {
     const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
     const age = c.date ? new Date().getFullYear() - +c.date.slice(0, 4) : undefined;
     // نصٌّ عاديّ بلا ترويساتٍ خاصّة: Google Apps Script لا يقبلُ طلبَ الفحص المسبق (CORS preflight)
-    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age, name: (c.name || "").trim().slice(0, 40), sex: c.sex === "f" ? "f" : "m", ver: arif.ENGINE_VER }) });
+    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age, name: (c.name || "").trim().slice(0, 40), mother: (c.mother || "").trim().slice(0, 40), date: c.date || "", time: c.time || "", city: c.city || "", resCity: c.resCity || "", sex: c.sex === "f" ? "f" : "m", ver: arif.ENGINE_VER }) });
   } catch {}
 }
 function arifWeights() {

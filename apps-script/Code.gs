@@ -8,8 +8,8 @@
 
 const KINDS = ["month", "marriage", "ask"];
 const TOPICS = ["all", "work", "money", "love", "health", "study"];
-const COLS = ["at", "name", "kind", "ok", "topic", "month", "said", "q", "score", "fams", "meths", "state", "first", "age", "sex", "ver", "person", "sent"];
-const TEXT = ["at", "name", "month", "said", "q", "fams", "meths", "state", "ver", "person", "sent"];
+const COLS = ["at", "name", "mother", "date", "time", "city", "resCity", "kind", "ok", "topic", "month", "said", "q", "score", "fams", "meths", "state", "first", "age", "sex", "ver", "person", "sent"];
+const TEXT = ["at", "name", "mother", "date", "time", "city", "resCity", "month", "said", "q", "fams", "meths", "state", "ver", "person", "sent"];
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -31,6 +31,10 @@ function clean_(b) {
   const txt = (v, n) => (typeof v === "string" ? v.replace(/[\r\n\t]+/g, " ").trim().slice(0, n) : "");
   const nums = (o, re) => { const f = {}; Object.keys(o || {}).forEach(function (k) { if (re.test(k) && isFinite(o[k])) f[k] = Math.round(o[k] * 100) / 100; }); return JSON.stringify(f); };
   r.name = txt(b.name, 40); r.said = txt(b.said, 300);
+  // معطياتُ الميلاد لإعادة القراءة نفسها عند التشخيص
+  r.mother = txt(b.mother, 40); r.city = txt(b.city, 60); r.resCity = txt(b.resCity, 60);
+  r.date = /^\d{4}-\d{2}-\d{2}$/.test(b.date || "") ? b.date : "";
+  r.time = /^\d{2}:\d{2}$/.test(b.time || "") ? b.time : "";
   r.sex = b.sex === "f" ? "f" : b.sex === "m" ? "m" : "";
   r.ver = /^[0-9a-z.-]{1,20}$/i.test(b.ver || "") ? b.ver : "";
   if (b.kind === "month" || b.kind === "ask") {
