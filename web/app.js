@@ -2440,7 +2440,7 @@ PANELS.arif = (main) => {
       <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? `كان شهرًا ${({ "ممتاز": "ممتازًا", "جيّد": "جيّدًا", "عاديّ": "عاديًّا", "ثقيل": "ثقيلًا", "صعب": "صعبًا" })[lvl] || lvl}` : `شهرٌ ${esc(lvl)}`}</div>
       <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
       ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
-      ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
+      ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button>${fb ? `<span class="saved">انحفظ ✓</span>` : ""}</div>`
         : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
     </div>`;
@@ -2460,13 +2460,18 @@ PANELS.arif = (main) => {
   $("#arifAsk", main).addEventListener("submit", (e) => {
     e.preventDefault();
     const q = $("#arifQ", main).value.trim(); if (!q) return;
-    let A; try { A = arif.ask(C, q, { weights: arifWeights() }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
+    let A; try { A = arif.ask(C, q, { weights: arifWeights(), marriageFb: lsGet(arifFbKey() + "|marriage", null) }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
     arifInterest(A.topic !== "all" ? A.topic : null);
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>` : ""}
+      ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
+    $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
+      lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
+      $("#arifAsk", main).requestSubmit();
+    }));
     draw(); month();
   });
   $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });

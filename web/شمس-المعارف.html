@@ -467,7 +467,8 @@ body:not(.reveal-on) .src{display:none !important}
 @media (max-width:560px){.arif-yr{grid-template-columns:1fr}}
 .arif-lvl{font-family:var(--f-display);font-size:1.7rem;line-height:1.3}
 .arif-did{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-top:.5rem}
-.arif-did [aria-pressed="true"]{border-color:var(--gold);color:var(--ink)}
+.arif-did .btn[aria-pressed="true"],.arif-did .btn[aria-pressed="true"]:hover{background:var(--gold);border-color:var(--gold);color:#14202c;font-weight:700}
+.arif-did .saved{font-size:.85rem;color:var(--gold)}
 .arif-turns{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:1rem}
 .arif-turn{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .arif-turn .when{font-family:var(--font-head);color:var(--gold-hi)}
@@ -22118,6 +22119,80 @@ function qasim(natal, ageYears) {
 const CHEIRO_DAYS = { 1: ["الأحد", "الاثنين"], 2: ["الأحد", "الاثنين", "الجمعة"], 3: ["الخميس", "الجمعة", "الثلاثاء"], 4: ["السبت", "الأحد", "الاثنين"], 5: ["الأربعاء", "الجمعة"], 6: ["الثلاثاء", "الخميس", "الجمعة"], 7: ["الأحد", "الاثنين"], 8: ["السبت", "الأحد", "الاثنين"], 9: ["الثلاثاء", "الخميس", "الجمعة"] };
 const ownDates = (n) => [n, n + 9, n + 18, n + 27].filter((d) => d <= 31);
 
+// ── سنواتُ الزواج من الخريطة: تُجمَعُ شهاداتُ عدّة طرقٍ لكلِّ سنةٍ من العمر، وتُختارُ السنواتُ التي تتّفقُ عليها أكثرُها:
+//  • الانتهاء: السنةُ التي يبلغُ فيها الانتهاءُ البيتَ السابعَ أو برجَ الزهرة أو سهمَ الزواج (بطليموس م٤ ف١٠؛ Lilly ف١٦٨)
+//  • الفردارات: فترةُ الزهرة الكبرى أو الصغرى (أبو معشر/البيروني)
+//  • التسيير: بلوغُ النيّر (القمر للرجل والشمس للمرأة) أو وسطِ السماء نظرَ الزهرة (بطليموس م٤ ف٥؛ Lilly ف١٦٥)
+//  • العبور: مرورُ المشتري على الزهرة أو سهمِ الزواج أو السابع (Lilly ف١٧٤)
+//  • بطليموس م٤ ف٥: النيّرُ المشرقيّ ⇒ زواجٌ مبكّر، والمغربيّ ⇒ متأخّر؛ وفي برجٍ ذي جسدين ⇒ أكثرُ من زواج
+function marriageYears(c, sky, opt = {}) {
+  const female = c.sex === "f", birth = new Date(c.birth);
+  const ascL = sky.ascendant.longitude, desc = (ascL + 180) % 360;
+  const venus = sky.planets["الزهرة"].longitude, lotM = sky.lots?.lots?.["سهم الزواج"]?.longitude;
+  const lum = female ? "الشمس" : "القمر", lumL = sky.planets[lum].longitude;
+  const M = life.marriage(sky, female ? "f" : "m");
+  if (M.items.some((x) => /لا يتزوّجُ أصلًا/.test(x))) return { never: true, windows: [], multi: false, src: "بطليموس م٤ ف٥" };
+  const byNight = (() => { const h = ((signIdx(sky.planets["الشمس"].longitude) - signIdx(ascL) + 12) % 12) + 1; return h < 7; })();
+  const venusSign = signIdx(venus), descSign = signIdx(desc), lotSign = lotM == null ? -1 : signIdx(lotM);
+  const years = [];
+  for (let age = 16; age <= 60; age++) {
+    const at = new Date(birth.getTime() + (age + 0.5) * 365.2422 * 86400000);
+    let s = 0; const why = [];
+    const prof = (signIdx(ascL) + age) % 12;
+    if (prof === descSign) { s += 1; why.push("الانتهاءُ في البيت السابع"); }
+    else if (prof === venusSign || prof === lotSign) { s += 0.7; why.push(prof === venusSign ? "الانتهاءُ في برج الزهرة" : "الانتهاءُ في برج سهم الزواج"); }
+    const F = falak.firdaria(birth, at, { byNight });
+    if (F.majorLord === "الزهرة" || F.minorLord === "الزهرة") { s += F.minorLord === "الزهرة" ? 1 : 0.5; why.push("فترةُ الزهرة"); }
+    if (female && F.minorLord === "المريخ") { s += 0.3; why.push("فترةُ المريخ (دليلُ الزوج)"); }
+    const dLum = (lumL + age) % 360, dMc = (midheaven((sky.ascendant.localSiderealTime ?? 0) + age)) % 360;
+    const aL = aspectOf(dLum, venus, 1.2), aM = aspectOf(dMc, venus, 1.2);
+    if (aL && aL !== "square" && aL !== "opp") { s += 1; why.push(`تسييرُ ${lum} إلى الزهرة`); }
+    if (aM && aM !== "square" && aM !== "opp") { s += 0.7; why.push("تسييرُ وسط السماء إلى الزهرة"); }
+    let jHit = false;
+    for (const q of [0.1, 0.35, 0.6, 0.85]) {
+      const J = falak.planetPositions(new Date(birth.getTime() + (age + q) * 365.2422 * 86400000))["المشتري"].longitude;
+      if (aspectOf(J, venus, 4) === "conj" || (lotM != null && aspectOf(J, lotM, 4) === "conj") || aspectOf(J, desc, 4) === "conj") jHit = true;
+    }
+    if (jHit) { s += 0.8; why.push("المشتري يمرُّ على الزهرة أو سهم الزواج أو السابع"); }
+    // بطليموس: مبكّرٌ أو متأخّر
+    if (M.east ? age <= 28 : age >= 26 && age <= 40) s += 0.4;
+    years.push({ age, year: birth.getUTCFullYear() + age, s: Math.round(s * 10) / 10, why });
+  }
+  // النوافذ: سنواتٌ متتاليةٌ فوق الحدّ، تُرتَّبُ بقوّتها
+  const TH = 1.8, wins = [];
+  for (let i = 0; i < years.length; i++) {
+    if (years[i].s < TH) continue;
+    let j = i; while (j + 1 < years.length && years[j + 1].s >= TH - 0.4) j++;
+    const seg = years.slice(i, j + 1), peak = seg.reduce((a, b) => (b.s > a.s ? b : a));
+    wins.push({ from: seg[0].year, to: seg.at(-1).year, ageFrom: seg[0].age, ageTo: seg.at(-1).age, peak: peak.year, strength: peak.s, why: peak.why });
+    i = j;
+  }
+  // الأولى: أقوى نافذةٍ داخلَ مدى بطليموس (المبكّر ١٨–٢٨، المتأخّر ٢٦–٤٠)، وإلّا أقواها بعد العشرين
+  const [lo, hi] = M.east ? [18, 28] : [26, 40];
+  const pick = (arr) => arr.slice().sort((a, b) => b.strength - a.strength || a.from - b.from)[0] || null;
+  const first = pick(wins.filter((w) => w.ageTo >= lo && w.ageFrom <= hi)) || pick(wins.filter((w) => w.ageFrom >= 20));
+  const second = M.multi && first ? wins.filter((w) => w.from >= first.to + 4).sort((a, b) => b.strength - a.strength)[0] || null : null;
+  return { never: false, early: M.east, multi: M.multi, first, second, windows: wins, years, src: "الانتهاء + الفردارات + التسيير + عبور المشتري + بطليموس م٤ ف٥" };
+}
+
+/** حالُ الزواج الآن بحسب العمر: قبل نافذة الزواج الأولى أم بعدها */
+function marriageStatus(c, sky, now = new Date(), fb = null) {
+  const MY = marriageYears(c, sky);
+  const y = now.getUTCFullYear();
+  // تصحيحُ صاحب البطاقة: «مش صح» على «متزوّج» ⇒ تُؤخَذُ النافذةُ القادمةُ بدل الماضية
+  if (fb && fb.ok === false && MY.first && y > MY.first.to) {
+    const next = MY.windows.filter((w) => w.to >= y).sort((a, b) => a.from - b.from)[0];
+    return next ? { state: y >= next.from ? "now" : "before", MY: { ...MY, first: next, second: null }, corrected: true } : { state: "unclear", MY, corrected: true };
+  }
+  if (MY.never) return { state: "never", MY };
+  if (!MY.first) return { state: "unclear", MY };
+  if (y < MY.first.from) return { state: "before", MY };
+  if (y <= MY.first.to) return { state: "now", MY };
+  if (MY.second && y < MY.second.from) return { state: "married_second_ahead", MY };
+  if (MY.second && y <= MY.second.to) return { state: "second_now", MY };
+  return { state: "married", MY };
+}
+
 /** المواضعُ الحسّاسةُ في خريطة الميلاد وموضوعاتُها */
 function natalPoints(sky, female = false) {
   const lot = sky.lots?.lots?.["سهم السعادة"];
@@ -22389,7 +22464,7 @@ function read(c, opt = {}) {
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
   const areas = [
-    { key: "love", title: "الزواج والعائلة", text: `${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
+    { key: "love", title: "الزواج والعائلة", text: `${marriageLine(c, ctx, k_)}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
     { key: "work", title: "الشغل", text: `${k_("يناسبُك", "يناسبُكِ")}: ${L.work.text.split("؛")[0]}. يقوى بين ${W.work.best.label}${W.work.worst.v < -0.45 ? `، ويثقلُ بين ${W.work.worst.label}` : ""}.`, src: "صاحبُ العمل (بطليموس م٤ ف٤) + المرورُ على الشمس والعاشر + الأزمنة" },
     { key: "study", title: "العلم والسفر", text: `أنسبُ وقتٍ لدراسةٍ أو دورةٍ أو سفرٍ نافع بين ${W.study.best.label}.`, src: "المرورُ على البيت التاسع + الأزمنة" },
     { key: "money", title: "المال", text: L.wealth ? `${L.wealth.text}${L.wealth.strong ? "" : "، لكن متأخّرًا"}. أحسنُ وقتٍ للمال بين ${W.money.best.label}${W.money.worst.v < -0.45 ? `، ولا ${k_("تُقرضْ ولا تدخلْ", "تُقرضي ولا تدخلي")} في دَينٍ بين ${W.money.worst.label}` : ""}.` : `أحسنُ وقتٍ للمال بين ${W.money.best.label}.`, src: "سهمُ السعادة وصاحبُه (بطليموس م٤ ف٢) + المرورُ عليه" },
@@ -22427,6 +22502,15 @@ function read(c, opt = {}) {
   return { summary, pills, areas, insights, luckyDays, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
 }
 
+function marriageLine(c, ctx, k_) {
+  try {
+    const st = marriageStatus(c, ctx.sky, c.now ? new Date(c.now) : new Date()), w = st.MY.first;
+    if (!w) return "";
+    const span = w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`;
+    return st.state === "before" ? `سنواتُ الزواج في خريطتِ${k_("ك", "كِ")} ${span}. ` : st.state === "now" ? `${k_("أنت", "أنتِ")} في سنوات الزواج (${span}). ` : `الحسابُ يدلُّ على زواجٍ ${span}${st.MY.second ? `، وزواجٍ ثانٍ ${st.MY.second.from === st.MY.second.to ? `سنة ${st.MY.second.from}` : `بين ${st.MY.second.from} و${st.MY.second.to}`}` : ""}. `;
+  } catch { return ""; }
+}
+
 /** «اسأل العارف»: الرملُ للحظةِ السؤال + الخطُّ الزمنيّ لموضوعه ⇒ جوابٌ واضحٌ وأنسبُ وقت */
 function ask(c, question, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
@@ -22454,10 +22538,27 @@ function ask(c, question, opt = {}) {
   if (hz) votes.push({ fam: "horary", s: hz.score > 1 ? 1 : hz.score < -1 ? -1 : 0, why: `علمُ المسائل: ${hz.verdict} (الطالعُ ${typeof hz.ascendant === "string" ? hz.ascendant : hz.ascendant?.sign || ""}، صاحبُه ${hz.ascLord || ""})` });
   const sum = votes.reduce((a, v) => a + v.s, 0);
   const F_ = c.sex === "f";
-  const big = sum >= 2 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum === 1 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
+  let big = sum >= 2 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum === 1 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
   const locked = /محبوس/.test(r.timing?.text || "");
   const tStr = !locked && r.timing?.magnitude && r.timing?.unit ? `، وأوّلُ ما يظهرُ منه بعد نحو ${r.timing.magnitude} ${r.timing.unit}` : locked ? "، لكنّه لا يظهرُ قريبًا" : "";
-  const text = `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
+  // سؤالُ الزواج: يُجابُ أوّلًا بحسب ما تدلُّ عليه الخريطةُ من سنوات الزواج (قبلَها / فيها / بعدَها)
+  let marriage = null;
+  if (key === "زواج") {
+    const st = marriageStatus(c, T.ctx.sky, now, opt.marriageFb), MY = st.MY, fw = MY.first, k_ = (m, f) => (F_ ? f : m);
+    const span = (w) => (w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`);
+    const love = `أحسنُ فترةٍ للعلاقة بين ${W.best.label}${W.worst.v < -0.45 ? `، وأصعبُها بين ${W.worst.label}` : ""}`;
+    const msg = {
+      never: () => `الخريطةُ (على قول بطليموس) لا تُظهرُ زواجًا واضحًا؛ والأحسنُ للعلاقات بين ${W.best.label}.`,
+      unclear: () => `الطرقُ لا تتّفقُ على سنةٍ بعينها للزواج؛ ${love}.`,
+      before: () => `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} ${span(fw)} (أقواها ${fw.peak})${MY.early ? "، وهو زواجٌ مبكّرٌ نسبيًّا" : ""}.`,
+      now: () => `${k_("أنت", "أنتِ")} الآن في سنوات الزواج التي تدلُّ عليها الخريطة (${span(fw)}، أقواها ${fw.peak})؛ ${love}.`,
+      married: () => `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} كان ${span(fw)}، فالأرجحُ أنّ${k_("ك", "كِ")} ${k_("متزوّج", "متزوّجة")}. وعن الزواج الآن: ${love}.`,
+      married_second_ahead: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، والخريطةُ تُظهرُ زواجًا ثانيًا ${span(MY.second)}. وعن العلاقة الآن: ${love}.`,
+      second_now: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، و${k_("أنت", "أنتِ")} الآن في سنوات زواجٍ ثانٍ (${span(MY.second)}).`,
+    }[st.state]();
+    marriage = { corrected: !!st.corrected, state: st.state, text: msg, first: fw, second: MY.second, multi: MY.multi, why: fw?.why || [], src: MY.src };
+  }
+  const text = marriage ? marriage.text : `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
   let bestDay = null;
   try {
     const fromD = new Date(Date.UTC(W.best.from.y, W.best.from.m, 1, 6));
@@ -22467,12 +22568,13 @@ function ask(c, question, opt = {}) {
     const cand = (el.best || []).map((x) => ({ ...x, d: new Date(x.start) })).sort((a, b) => (b.score + (bd && bd.includes(WD[b.d.getUTCDay()]) ? 1 : 0)) - (a.score + (bd && bd.includes(WD[a.d.getUTCDay()]) ? 1 : 0)));
     if (cand[0]) bestDay = { date: cand[0].d, weekday: WD[cand[0].d.getUTCDay()], hourRuler: cand[0].hourRuler, label: `${WD[cand[0].d.getUTCDay()]} ${cand[0].d.getUTCDate()} ${MONTHS[cand[0].d.getUTCMonth()]} ${cand[0].d.getUTCFullYear()}` };
   } catch {}
-  return { topic, topicAr: TOPICS[topic], big, text, bestDay, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
+  if (marriage && ["married", "married_second_ahead"].includes(marriage.state)) big = sum >= 0 ? "العلاقةُ في عمومها طيّبةٌ هذه الفترة." : "العلاقةُ تحتاجُ صبرًا ومراعاةً هذه الفترة.";
+  return { topic, topicAr: TOPICS[topic], big, text, bestDay, marriage, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-__exports.default = { timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
+__exports.default = { marriageYears, marriageStatus, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
 
-;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["revolutions"]=revolutions;__exports["midheaven"]=midheaven;__exports["tasyir"]=tasyir;__exports["qasim"]=qasim;__exports["CHEIRO_DAYS"]=CHEIRO_DAYS;__exports["ownDates"]=ownDates;__exports["abjadDate"]=abjadDate;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
+;__exports["MONTHS"]=MONTHS;__exports["FAMILIES"]=FAMILIES;__exports["TOPICS"]=TOPICS;__exports["eclipses"]=eclipses;__exports["revolutions"]=revolutions;__exports["midheaven"]=midheaven;__exports["tasyir"]=tasyir;__exports["qasim"]=qasim;__exports["CHEIRO_DAYS"]=CHEIRO_DAYS;__exports["ownDates"]=ownDates;__exports["marriageYears"]=marriageYears;__exports["marriageStatus"]=marriageStatus;__exports["abjadDate"]=abjadDate;__exports["timeline"]=timeline;__exports["read"]=read;__exports["ask"]=ask;return __exports;})();
 __M["awfaq"]=(function(){"use strict";const __exports={};
 // engines/awfaq.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28775,7 +28877,7 @@ PANELS.arif = (main) => {
       <div class="arif-lvl" style="color:${colorOf(d.scores[topic])}">${d.past ? `كان شهرًا ${({ "ممتاز": "ممتازًا", "جيّد": "جيّدًا", "عاديّ": "عاديًّا", "ثقيل": "ثقيلًا", "صعب": "صعبًا" })[lvl] || lvl}` : `شهرٌ ${esc(lvl)}`}</div>
       <div class="kv">${d.past ? "كان فيه: " : ""}${esc(AR(d.text[topic]))}</div>
       ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
-      ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button></div>`
+      ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button>${fb ? `<span class="saved">انحفظ ✓</span>` : ""}</div>`
         : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
     </div>`;
@@ -28795,13 +28897,18 @@ PANELS.arif = (main) => {
   $("#arifAsk", main).addEventListener("submit", (e) => {
     e.preventDefault();
     const q = $("#arifQ", main).value.trim(); if (!q) return;
-    let A; try { A = arif.ask(C, q, { weights: arifWeights() }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
+    let A; try { A = arif.ask(C, q, { weights: arifWeights(), marriageFb: lsGet(arifFbKey() + "|marriage", null) }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
     arifInterest(A.topic !== "all" ? A.topic : null);
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>` : ""}
+      ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
+    $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
+      lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
+      $("#arifAsk", main).requestSubmit();
+    }));
     draw(); month();
   });
   $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });

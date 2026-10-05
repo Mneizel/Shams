@@ -381,6 +381,22 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // سنواتُ الزواج من الخريطة: الجوابُ يتبعُ العمر (قبل سنوات الزواج / بعدها)
+  {
+    const arif = (await import("../engines/arif.js")).default;
+    const base = { name: "محمد", mother: "سميرة", sex: "m", birth: new Date("1960-05-10T07:00:00Z"), lat: 31.95, lon: 35.93 };
+    const sky = falak.snapshot(base.birth, base.lat, base.lon);
+    const MY = arif.marriageYears(base, sky);
+    ok(MY.never || (MY.windows.length >= 1 && MY.first && MY.first.from >= 1976), "سنواتُ الزواج تُحسَبُ من الخريطة");
+    if (MY.first) {
+      const old = arif.ask({ ...base, now: new Date("2026-10-05T10:00:00Z") }, "متى أتزوج");
+      ok(old.marriage && old.marriage.state !== "before" && !/الحسابُ يدلُّ على أنّ زواجَك (بين|سنة) 20[2-9]/.test(old.text), "كبيرٌ في العمر: لا يُقالُ له «زواجُك قريب» بل يُذكَرُ زواجُه الماضي");
+      const fixed = arif.ask({ ...base, now: new Date("2026-10-05T10:00:00Z") }, "متى أتزوج", { marriageFb: { ok: false } });
+      ok(fixed.marriage.corrected && !["married", "married_second_ahead"].includes(fixed.marriage.state), "«مش صح» على «متزوّج» ⇒ تُؤخَذُ النافذةُ القادمة");
+      const young = arif.ask({ ...base, now: new Date(Date.UTC(MY.first.from - 3, 5, 1)) }, "متى أتزوج");
+      ok(young.marriage && young.marriage.state === "before" && young.text.includes(String(MY.first.from)), "قبل سنوات الزواج: تُذكَرُ سنواتُه القادمة");
+    }
+  }
   // Skinner: مطابقةُ الأشكال الستّةَ عشر (الصفوف والكواكب) + قاعدةُ الطالع غير الصالح
   {
     const want = { tariq: ["1111", "القمر"], jamaa: ["2222", "القمر"], qabid_dakhil: ["2121", "المشتري"], qabid_kharij: ["1212", "الزهرة"], farah: ["1222", "المشتري"], ankis: ["2221", "زحل"], nusra_dakhila: ["2211", "الشمس"], nusra_kharija: ["1122", "الشمس"], ghulam: ["1121", "المريخ"], jariya: ["1211", "الزهرة"], humra: ["2122", "المريخ"], bayad: ["2212", "عطارد"], ijtimaa: ["2112", "عطارد"], habs: ["1221", "زحل"], raas: ["2111", "العقدة الصاعدة"], dhanab: ["1112", "العقدة الهابطة"] };
