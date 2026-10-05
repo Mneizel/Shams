@@ -53,6 +53,9 @@ function clean_(b) {
     if (typeof b.state !== "string" || b.state.length > 30) return null;
     r.state = b.state; r.first = (b.first === null || isNaN(b.first)) ? "" : Math.trunc(b.first);
     r.lines = keys(b.lines);
+    // تاريخُ الزواج الحقيقيّ (سنة، أو سنة-شهر، أو سنة-شهر-يوم) أو «لم يتزوّج»، وأصابت/أخطأت لكلّ طريقة (+١/−١)
+    r.item = /^\d{4}(-\d{2}(-\d{2})?)?$/.test(b.item || "") || b.item === "لم يتزوّج" ? b.item : "";
+    r.meths = nums(b.meths, /^[a-z0-9]{2,20}$/);
   }
   if (isFinite(b.age) && b.age >= 0 && b.age < 130) r.age = Math.trunc(b.age);
   return r;
@@ -108,7 +111,7 @@ function pushToGitHub() {
 
 const AR_FAM = { periods: "أزمنةُ العمر", sky: "مرورُ الكواكب", numbers: "علمُ الأرقام", name: "الاسم", divination: "الرملُ والجفر", question: "لحظةُ السؤال", horary: "علمُ المسائل", "periods+sky": "الخطُّ الزمنيّ" };
 const AR_METH = { firdaria: "الفردارات", profection: "الانتهاء", tasyir: "التسيير", qisma: "القاسم", revolution: "تحويلُ السنة", sky: "مرورُ المشتري وزحل والمريخ", venus: "مرورُ الزهرة", house: "المشتري وزحل في البيوت", eclipse: "الكسوف", raml: "الرمل", jafr: "الجفر", numbers: "الأرقام", name: "الاسم" };
-const AR_MARR = { prof7: "الانتهاء إلى السابع", profvenus: "الانتهاء إلى الزهرة/سهم الزواج", firdaria: "فترةُ الزهرة", firdariamars: "فترةُ المريخ", dirlum: "تسييرُ النيّر إلى الزهرة", dirmc: "تسييرُ وسط السماء إلى الزهرة", jupiter: "عبورُ المشتري" };
+const AR_MARR = { prof7: "الانتهاء إلى السابع", profvenus: "الانتهاء إلى الزهرة/سهم الزواج", firdaria: "فترةُ الزهرة", firdariamars: "فترةُ المريخ", dirlum: "تسييرُ النيّر إلى الزهرة", dirmc: "تسييرُ وسط السماء إلى الزهرة", jupiter: "عبورُ المشتري", ptolemy: "قاعدةُ بطليموس (مبكّر/متأخّر)" };
 const AR_LINE = {"chart":"مزاجُ الخريطة","name":"مزاجُ حروفِ الاسم","manners":"دليلُ الأخلاق","sign":"برجُ دليلِ الأخلاق","wit":"عطاردُ والقمر","ptol_signs":"بروجُ عطاردَ والقمر","ptol_ruler":"حاكمُ النفس","ptol_moon":"حالُ القمر","am_asc":"طالعُ المولد (أبو معشر)","name_sign":"برجُ الاسم (كشف المكتوم)","asc_degree":"درجةُ الطالع (كتاب الدرج)","birth_number":"رقمُ يوم الميلاد (Cheiro)","th_social":"الطالعُ وصاحبُه (الثمرة)","th_merc":"عطاردُ في بُرجَي زحلَ أو المريخ (الثمرة)","dalil":"مرتبةُ الطالع (دليل الحيران)"};
 const AR_TOPIC = { all: "عامّ", work: "شغل", money: "فلوس", love: "حبّ وزواج", health: "صحّة", study: "دراسة" };
 
@@ -132,7 +135,9 @@ function buildReport() {
       Object.keys(m).forEach(function (k) { if (m[k]) add("meth", k, ok === (Math.sign(m[k]) === Math.sign(sc))); });
     } else if (kind === "marriage") {
       add("marr_state", r[col("state")], ok);
-      L(r[col("lines")]).forEach(function (k) { add("marr", k, ok); });
+      const mm = J(r[col("meths")]);
+      if (Object.keys(mm).length) Object.keys(mm).forEach(function (k) { add("marr", k, mm[k] > 0); });
+      else L(r[col("lines")]).forEach(function (k) { add("marr", k, ok); });
     } else if (kind === "trait") {
       add("trait", String(r[col("said")] || r[col("item")]), ok);
       L(r[col("lines")]).forEach(function (k) { add("line", k, ok); });

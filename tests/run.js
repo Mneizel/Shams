@@ -399,6 +399,18 @@ import falak from "../engines/falak.js";
     const hLow = hal.reading({ ...base, lineWeights: Object.fromEntries(allLines.map((l) => [l, 0.5])) });
     ok(Object.values(hLow.groups).flatMap((g) => g.firm).length < Object.values(h0.groups).flatMap((g) => g.firm).length, "كتبٌ أضعفُ دقّةً ⇒ صفاتٌ مؤكّدةٌ أقلّ");
   }
+  // تاريخُ الزواج الحقيقيّ: أيُّ الطرق أصابت وأيُّها أخطأت (محمد/سميرة ٩/١١/١٩٩١ ٤:٣٥، تزوّج ٢٦/١٠/٢٠٢٢)
+  {
+    const arif = (await import("../engines/arif.js")).default;
+    const me = { name: "محمد", mother: "سميرة", sex: "m", birth: new Date("1991-11-09T02:35:00Z"), lat: 31.95, lon: 35.93, now: new Date("2026-10-05T10:00:00Z") };
+    const sky = falak.snapshot(me.birth, me.lat, me.lon);
+    const dx = arif.marriageDiagnose(me, sky, { y: 2022, m: 10, d: 26 });
+    eq(dx.ages, [30], "٢٦/١٠/٢٠٢٢ قبل عيد الميلاد (٩/١١) ⇒ عمرُ ٣٠");
+    ok(dx.hits.includes("prof7") && dx.misses.includes("ptolemy") && !dx.correct, "الانتهاءُ إلى السابع أصاب، وقاعدةُ بطليموس (مبكّر) أخطأت");
+    eq(arif.marriageDiagnose(me, sky, { y: 2022 }).ages, [30, 31], "بلا شهر ⇒ سنتا عمرٍ محتملتان");
+    const A = arif.ask(me, "متى أتزوج", { marriageFb: { ok: false, actual: { y: 2022, m: 10, d: 26 } } });
+    ok(A.marriage.actual && /تزوّجتَ سنة 2022/.test(A.text) && A.marriage.diagnose, "بعد التاريخ الحقيقيّ: «تزوّجتَ سنة 2022» ومعه المقارنة");
+  }
   // سنواتُ الزواج من الخريطة: الجوابُ يتبعُ العمر (قبل سنوات الزواج / بعدها)
   {
     const arif = (await import("../engines/arif.js")).default;

@@ -242,17 +242,20 @@ export function marriageYears(c, sky, opt = {}) {
       if (aspectOf(J, venus, 4) === "conj" || (lotM != null && aspectOf(J, lotM, 4) === "conj") || aspectOf(J, desc, 4) === "conj") jHit = true;
     }
     if (jHit) hit("jupiter", 0.8, "المشتري يمرُّ على الزهرة أو سهم الزواج أو السابع");
-    // بطليموس: مبكّرٌ أو متأخّر
-    if (M.east ? age <= 28 : age >= 26 && age <= 40) s += 0.4;
+    // بطليموس: مبكّرٌ أو متأخّر (طريقةٌ تُتعلَّمُ كغيرها)
+    if (M.east ? age <= 28 : age >= 26 && age <= 40) hit("ptolemy", 0.4, M.east ? "بطليموس: زواجٌ مبكّر" : "بطليموس: زواجٌ متأخّر");
     years.push({ age, year: birth.getUTCFullYear() + age, s: Math.round(s * 10) / 10, why, meths });
   }
+  // سنةُ العمر تبدأُ بعيد الميلاد: عمرُ ٣٠ لمولودِ نوفمبر ١٩٩١ = من نوفمبر ٢٠٢١ إلى نوفمبر ٢٠٢٢
+  const bm = birth.getUTCMonth(), by = birth.getUTCFullYear();
+  const ageLabel = (a1, a2 = a1) => `بين ${MONTHS[bm]} ${by + a1} و${MONTHS[bm]} ${by + a2 + 1}`;
   // النوافذ: سنواتٌ متتاليةٌ فوق الحدّ، تُرتَّبُ بقوّتها
   const TH = 1.8, wins = [];
   for (let i = 0; i < years.length; i++) {
     if (years[i].s < TH) continue;
     let j = i; while (j + 1 < years.length && years[j + 1].s >= TH - 0.4) j++;
     const seg = years.slice(i, j + 1), peak = seg.reduce((a, b) => (b.s > a.s ? b : a));
-    wins.push({ from: seg[0].year, to: seg.at(-1).year, ageFrom: seg[0].age, ageTo: seg.at(-1).age, peak: peak.year, strength: peak.s, why: peak.why, meths: [...new Set(seg.flatMap((x) => x.meths))] });
+    wins.push({ from: seg[0].year, to: seg.at(-1).year + 1, ageFrom: seg[0].age, ageTo: seg.at(-1).age, label: ageLabel(seg[0].age, seg.at(-1).age), peak: peak.year, strength: peak.s, why: peak.why, meths: [...new Set(seg.flatMap((x) => x.meths))] });
     i = j;
   }
   // الأولى: أقوى نافذةٍ داخلَ مدى بطليموس (المبكّر ١٨–٢٨، المتأخّر ٢٦–٤٠)، وإلّا أقواها بعد العشرين
@@ -260,14 +263,49 @@ export function marriageYears(c, sky, opt = {}) {
   const pick = (arr) => arr.slice().sort((a, b) => b.strength - a.strength || a.from - b.from)[0] || null;
   const first = pick(wins.filter((w) => w.ageTo >= lo && w.ageFrom <= hi)) || pick(wins.filter((w) => w.ageFrom >= 20));
   const second = M.multi && first ? wins.filter((w) => w.from >= first.to + 4).sort((a, b) => b.strength - a.strength)[0] || null : null;
-  return { never: false, early: M.east, multi: M.multi, first, second, windows: wins, years, src: "الانتهاء + الفردارات + التسيير + عبور المشتري + بطليموس م٤ ف٥" };
+  return { never: false, early: M.east, multi: M.multi, first, second, windows: wins, years, ageLabel, src: "الانتهاء + الفردارات + التسيير + عبور المشتري + بطليموس م٤ ف٥" };
+}
+
+const MARR_AR = { prof7: "الانتهاءُ إلى البيت السابع", profvenus: "الانتهاءُ إلى برج الزهرة أو سهم الزواج", firdaria: "فترةُ الزهرة", firdariamars: "فترةُ المريخ", dirlum: "تسييرُ النيّر إلى الزهرة", dirmc: "تسييرُ وسط السماء إلى الزهرة", jupiter: "عبورُ المشتري", ptolemy: "قاعدةُ بطليموس (مبكّر/متأخّر)" };
+/**
+ * مقارنةُ تاريخ الزواج الحقيقيّ بما حسبه العارف: أيُّ الطرق شهدت سنةَ الزواج الحقيقيّة (أصابت)،
+ * وأيُّها صنعت السنةَ المحسوبة ولم تشهدِ الحقيقيّة (أخطأت). السنةُ إلزاميّة، والشهرُ واليومُ يدقّقان سنةَ العمر.
+ */
+export function marriageDiagnose(c, sky, actual, weights = null) {
+  const MY = marriageYears(c, sky, { weights }), birth = new Date(c.birth), by = birth.getUTCFullYear();
+  const y = +actual.y, m = actual.m ? +actual.m - 1 : null, d = actual.d ? +actual.d : 15;
+  let ages;
+  if (m != null) {
+    const at = new Date(Date.UTC(y, m, d)), bd = new Date(Date.UTC(y, birth.getUTCMonth(), birth.getUTCDate()));
+    ages = [y - by - (at < bd ? 1 : 0)];
+  } else ages = [y - by - 1, y - by];   // بلا شهر: سنتا عمرٍ محتملتان
+  const rows = MY.years.filter((r) => ages.includes(r.age));
+  const hits = [...new Set(rows.flatMap((r) => r.meths))];
+  const pred = MY.first, predMeths = pred?.meths || [];
+  const misses = predMeths.filter((k) => !hits.includes(k));
+  const sameWindow = pred && ages.some((a) => a >= pred.ageFrom && a <= pred.ageTo);
+  const ar = (ks) => ks.map((k) => MARR_AR[k] || k).join("، ");
+  const text = sameWindow ? `الحسابُ أصاب: زواجُك وقع في السنوات التي حسبها (${pred.label}).`
+    : `زواجُك الحقيقيّ كان بعمر ${ages.length === 1 ? ages[0] : `${ages[0]}–${ages[1]}`}. ${hits.length ? `في تلك السنة كان شاهدًا: ${ar(hits)}` : "لم تشهدْ تلك السنةَ أيُّ طريقةٍ من طرقنا"}.${pred ? ` والحسابُ اختار ${pred.label} بسبب: ${ar(predMeths)}.` : ""}`;
+  const meths = {};
+  for (const k of hits) meths[k] = 1;
+  for (const k of misses) meths[k] = -1;
+  return { ages, hits, misses, predicted: pred ? { label: pred.label, from: pred.from, meths: predMeths } : null, correct: !!sameWindow, meths, text };
 }
 
 /** حالُ الزواج الآن بحسب العمر: قبل نافذة الزواج الأولى أم بعدها */
 export function marriageStatus(c, sky, now = new Date(), fb = null, weights = null) {
   const MY = marriageYears(c, sky, { weights });
   const y = now.getUTCFullYear();
-  // تصحيحُ صاحب البطاقة: «مش صح» على «متزوّج» ⇒ تُؤخَذُ النافذةُ القادمةُ بدل الماضية
+  // صاحبُ البطاقة أعطى تاريخَ زواجه الحقيقيّ ⇒ هو الحكم، ومعه مقارنةُ ما حسبناه
+  if (fb && fb.actual && fb.actual.y) {
+    const ay = +fb.actual.y, dx = marriageDiagnose(c, sky, fb.actual, weights);
+    const second = MY.multi ? MY.windows.filter((w) => w.from >= ay + 4).sort((a, b) => b.strength - a.strength)[0] || null : null;
+    const first = { from: ay, to: ay, label: `سنة ${ay}`, actual: true, meths: dx.hits };
+    const st = second && y < second.from ? "married_second_ahead" : second && y <= second.to ? "second_now" : "married";
+    return { state: st, MY: { ...MY, first, second }, corrected: true, actual: fb.actual, diagnose: dx };
+  }
+  // «ما تزوّجت» ⇒ تُؤخَذُ النافذةُ القادمةُ بدل الماضية
   if (fb && fb.ok === false && MY.first && y > MY.first.to) {
     const next = MY.windows.filter((w) => w.to >= y).sort((a, b) => a.from - b.from)[0];
     return next ? { state: y >= next.from ? "now" : "before", MY: { ...MY, first: next, second: null }, corrected: true } : { state: "unclear", MY, corrected: true };
@@ -638,18 +676,18 @@ export function ask(c, question, opt = {}) {
   let marriage = null;
   if (key === "زواج") {
     const st = marriageStatus(c, T.ctx.sky, now, opt.marriageFb, opt.weights), MY = st.MY, fw = MY.first, k_ = (m, f) => (F_ ? f : m);
-    const span = (w) => (w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`);
+    const span = (w) => w.label || (w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`);
     const love = `أحسنُ فترةٍ للعلاقة بين ${W.best.label}${W.worst.v < -0.45 ? `، وأصعبُها بين ${W.worst.label}` : ""}`;
     const msg = {
       never: () => `الخريطةُ (على قول بطليموس) لا تُظهرُ زواجًا واضحًا؛ والأحسنُ للعلاقات بين ${W.best.label}.`,
       unclear: () => `الطرقُ لا تتّفقُ على سنةٍ بعينها للزواج؛ ${love}.`,
-      before: () => `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} ${span(fw)} (أقواها ${fw.peak})${MY.early ? "، وهو زواجٌ مبكّرٌ نسبيًّا" : ""}.`,
-      now: () => `${k_("أنت", "أنتِ")} الآن في سنوات الزواج التي تدلُّ عليها الخريطة (${span(fw)}، أقواها ${fw.peak})؛ ${love}.`,
-      married: () => `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} كان ${span(fw)}، فالأرجحُ أنّ${k_("ك", "كِ")} ${k_("متزوّج", "متزوّجة")}. وعن الزواج الآن: ${love}.`,
-      married_second_ahead: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، والخريطةُ تُظهرُ زواجًا ثانيًا ${span(MY.second)}. وعن العلاقة الآن: ${love}.`,
-      second_now: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، و${k_("أنت", "أنتِ")} الآن في سنوات زواجٍ ثانٍ (${span(MY.second)}).`,
+      before: () => `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} ${span(fw)}${MY.early ? "، وهو زواجٌ مبكّرٌ نسبيًّا" : ""}.`,
+      now: () => `${k_("أنت", "أنتِ")} الآن في سنوات الزواج التي تدلُّ عليها الخريطة (${span(fw)})؛ ${love}.`,
+      married: () => fw.actual ? `${k_("تزوّجتَ", "تزوّجتِ")} ${span(fw)}. وعن الزواج الآن: ${love}.` : `الحسابُ يدلُّ على أنّ زواجَ${k_("ك", "كِ")} كان ${span(fw)}، فالأرجحُ أنّ${k_("ك", "كِ")} ${k_("متزوّج", "متزوّجة")}. وعن الزواج الآن: ${love}.`,
+      married_second_ahead: () => `${fw.actual ? `${k_("تزوّجتَ", "تزوّجتِ")} ${span(fw)}` : `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}`}، والخريطةُ تُظهرُ زواجًا ثانيًا ${span(MY.second)}. وعن العلاقة الآن: ${love}.`,
+      second_now: () => `${fw.actual ? `${k_("تزوّجتَ", "تزوّجتِ")} ${span(fw)}` : `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}`}، و${k_("أنت", "أنتِ")} الآن في سنوات زواجٍ ثانٍ (${span(MY.second)}).`,
     }[st.state]();
-    marriage = { meths: fw?.meths || [], corrected: !!st.corrected, state: st.state, text: msg, first: fw, second: MY.second, multi: MY.multi, why: fw?.why || [], src: MY.src };
+    marriage = { diagnose: st.diagnose || null, actual: st.actual || null, meths: fw?.meths || [], corrected: !!st.corrected, state: st.state, text: msg, first: fw, second: MY.second, multi: MY.multi, why: fw?.why || [], src: MY.src };
   }
   const text = marriage ? marriage.text : `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
   let bestDay = null;
@@ -665,4 +703,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, bestDay, marriage, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { ENGINE_VER, marriageYears, marriageStatus, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
+export default { ENGINE_VER, marriageYears, marriageStatus, marriageDiagnose, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };

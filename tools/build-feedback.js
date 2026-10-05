@@ -56,7 +56,9 @@ for (const t of ["all", "work", "money", "love", "health", "study"]) byTopic[t] 
 const marriage = {}, marrTally = {};
 for (const e of recs.filter((r) => r.kind === "marriage")) {
   const m = (marriage[e.state] = marriage[e.state] || { right: 0, wrong: 0 }); e.ok ? m.right++ : m.wrong++;
-  for (const k of e.lines || []) bump(marrTally, `marriage:${k}`, e.ok, wtOf(e));
+  // مع تاريخ الزواج الحقيقيّ: لكلّ طريقةٍ أصابت (+١) أو أخطأت (−١)؛ وإلّا فالقديم: «صح/مش صح» على طرق النافذة
+  if (e.meths && Object.keys(e.meths).length) for (const [k, v] of Object.entries(e.meths)) bump(marrTally, `marriage:${k}`, v > 0, wtOf(e));
+  else for (const k of e.lines || []) bump(marrTally, `marriage:${k}`, e.ok, wtOf(e));
 }
 const marriageWeights = toW(marrTally, 10);
 

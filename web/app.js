@@ -2534,15 +2534,47 @@ PANELS.arif = (main) => {
     }
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>` : ""}
+    const yNow = new Date().getFullYear(), MON12 = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>
+      <form class="form" id="marrFix" hidden style="margin-top:.4rem;align-items:flex-end">
+        <div class="fld"><label for="mf-y">${F ? "تزوّجتِ" : "تزوّجتَ"} سنة <span class="gloss">(إلزاميّ)</span></label><input id="mf-y" type="number" min="1930" max="${yNow}" required style="width:7rem"></div>
+        <div class="fld"><label for="mf-m">الشهر <span class="gloss">(اختياريّ)</span></label><select id="mf-m"><option value="">—</option>${MON12.map((m, i) => `<option value="${i + 1}">${m}</option>`).join("")}</select></div>
+        <div class="fld"><label for="mf-d">اليوم <span class="gloss">(اختياريّ)</span></label><input id="mf-d" type="number" min="1" max="31" style="width:5rem"></div>
+        <button class="btn" type="submit">احفظ</button>
+        <button class="btn sec" type="button" id="mf-never">${F ? "ما تزوّجت" : "ما تزوّجت"}</button>
+      </form>` : ""}
+      ${A.marriage?.diagnose ? `<div class="arif-insight" style="margin-top:.4rem"><b>مقارنةُ الحساب بزواجِ${F ? "كِ" : "ك"} الحقيقيّ:</b> ${esc(AR(A.marriage.diagnose.text))} <button type="button" class="btn sm sec" id="mf-reset">غيّرِ التاريخ</button></div>` : ""}
       ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
+    // «صح» ⇒ تُصدَّقُ طرقُ النافذة؛ «مش صح» ⇒ يُطلَبُ تاريخُ الزواج الحقيقيّ (أو «ما تزوّجت») لتُعرَفَ الطرقُ التي أصابت والتي أخطأت
+    const resend = () => $("#arifAsk", main).requestSubmit();
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
-      lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
-      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null, said: A.text.slice(0, 300), lines: A.marriage.meths || [] });
-      $("#arifAsk", main).requestSubmit();
+      if (b.dataset.mok === "0") { const f = $("#marrFix", main); f.hidden = false; $("#mf-y", main).focus(); return; }
+      lsSet(arifFbKey() + "|marriage", { ok: true, at: Date.now() });
+      arifSend({ kind: "marriage", ok: true, state: A.marriage.state, first: A.marriage.first?.from ?? null, said: A.text.slice(0, 300), lines: A.marriage.meths || [], meths: Object.fromEntries((A.marriage.meths || []).map((k) => [k, 1])) });
+      resend();
     }));
+    const mf = $("#marrFix", main);
+    if (mf) {
+      mf.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const y = +$("#mf-y", main).value, m = +$("#mf-m", main).value || null, d = m ? +$("#mf-d", main).value || null : null;
+        if (!y || y < 1930 || y > yNow) { $("#mf-y", main).reportValidity(); return; }
+        const actual = { y, m, d };
+        let dx = null; try { dx = arif.marriageDiagnose(C, falak.snapshot(C.birth, C.lat, C.lon), actual, arifWeights()); } catch {}
+        lsSet(arifFbKey() + "|marriage", { ok: false, actual, at: Date.now() });
+        arifSend({ kind: "marriage", ok: false, state: A.marriage.state, first: A.marriage.first?.from ?? null, item: [y, m && String(m).padStart(2, "0"), d && String(d).padStart(2, "0")].filter(Boolean).join("-"), said: (dx?.text || A.text).slice(0, 300), lines: dx?.hits || [], meths: dx?.meths || {} });
+        resend();
+      });
+      $("#mf-never", main).addEventListener("click", () => {
+        lsSet(arifFbKey() + "|marriage", { ok: false, at: Date.now() });
+        arifSend({ kind: "marriage", ok: false, state: A.marriage.state, first: A.marriage.first?.from ?? null, item: "لم يتزوّج", said: A.text.slice(0, 300), lines: [], meths: Object.fromEntries((A.marriage.meths || []).map((k) => [k, -1])) });
+        resend();
+      });
+    }
+    const mr = $("#mf-reset", main);
+    if (mr) mr.addEventListener("click", () => { try { localStorage.removeItem(arifFbKey() + "|marriage"); } catch {} resend(); });
     draw(); month();
   });
   // أسئلةٌ سابقةٌ حان وقتُها: «هل صار؟»
