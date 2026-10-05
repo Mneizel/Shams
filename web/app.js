@@ -447,14 +447,16 @@ function cachedReading(c) {
   }
   return _readingCache.r;
 }
-function decoBlock({ eb, glyph, name, small, desc, rows = [], src }) {
+function decoBlock({ eb, glyph, name, small, desc, rows = [], src, help }) {
   return `<div class="eb">${esc(eb)}</div>
     <div class="sealbox"><svg aria-hidden="true"><use href="#i-seal"/></svg>${glyph ? `<span class="glyph">${esc(glyph)}</span>` : ""}</div>
     <div class="nm${small ? " sm" : ""}">${esc(name)}</div>
     ${desc ? `<p class="ds">${esc(desc)}</p>` : ""}
-    ${rows.length ? `<dl class="rows">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
+    ${rows.length ? `<dl class="rows">${rows.filter(([, v]) => v).map(([k, v, h]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>${h ? `<div style="display:block;border:0;padding-top:0;font-size:.78rem;opacity:.75;line-height:1.5">${esc(h)}</div>` : ""}`).join("")}</dl>` : ""}
+    ${help ? `<p class="ds" style="font-size:.8rem;opacity:.8;margin-top:.4rem">${esc(help)}</p>` : ""}
     ${src ? `<div class="src">${svgI("book")} ${esc(src)}</div>` : ""}`;
 }
+const PLANET_DAY = { الشمس: "الأحد", القمر: "الاثنين", المريخ: "الثلاثاء", عطارد: "الأربعاء", المشتري: "الخميس", الزهرة: "الجمعة", زحل: "السبت" };
 function renderDeco() {
   const box = $("#deco");
   if (!box || !window.matchMedia || !window.matchMedia("(min-width:1280px)").matches) return;
@@ -471,7 +473,16 @@ function renderDeco() {
   const f = r.fortune || {};
   let h;
   if (["home", "card", "asma", "spirits", "taskhir", "hal", "full", "arif"].includes(id)) {
-    h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel, desc: `الملَكُ الموكَّل باسم ${who}.`, rows: [["الروحانيّ", I.spirit], ["الخادم", I.servantName], ["الكوكب", I.planet], ["العنصر", I.element]], src: "من جُمّل الاسم واسم الأمّ" });
+    h = decoBlock({ eb: "روحانيّةُ الاسم", glyph: AR(I.total), name: I.angel,
+      desc: `الرقمُ ${AR(I.total)} هو مجموعُ حروفِ اسمِك واسمِ أمّك بحساب الجُمّل، ومنه يُستخرَجُ كلُّ ما تحته. وفوقَه الملَكُ الموكَّلُ باسم ${who}: يُذكَرُ في أوّل الحرز أو الدعاء الخاصّ بك عند أهل هذا العلم.`,
+      rows: [
+        ["الروحانيّ", I.spirit, "الروحُ العلويّةُ لاسمِك: يُقرَنُ بالملَك في العزائم والأوفاق المكتوبة باسمك."],
+        ["الخادم", I.servantName, "الاسمُ الذي يُكتَبُ في وفقِ اسمك وحرزِك (في كتب الأوفاق «خادمُ الوفق»)."],
+        ["الكوكب", I.planet, `كوكبُ اسمِك: يومُه ${PLANET_DAY[I.planet] || "—"} وساعاتُه أنسبُ الأوقات لأعمالك وكتابة حرزك.`],
+        ["العنصر", I.element, "طبعُك الغالبُ من حروف اسمك (ناريّ/هوائيّ/مائيّ/ترابيّ)، وعليه يُختارُ البخورُ واتّجاهُ العمل."],
+      ],
+      help: "كيف تُستعمَل: أعمالُ الحروز والأوفاق بها في صفحتي «الأسماء والخدّام» و«الأوفاق». هذه أقوالُ الكتب كما هي.",
+      src: "من جُمّل الاسم واسم الأمّ" });
   } else if (id === "session" || id === "compat" || id === "diagnosis") {
     h = decoBlock({ eb: "صاحبُ السؤال", glyph: AR(I.total), name: who, small: 1, rows: [["الملَك", I.angel], ["الكوكب", I.planet], ["برجُ الميلاد", sunSign(r.sky)], ["برجُ الاسم", I.sign], ["المنزلة", I.mansion?.name], ["يومُه", f.luckyDay], ["ساعتُه", f.luckyHourRuler && "ساعة " + f.luckyHourRuler]], src: "محسوبٌ من بطاقتك" });
   } else if (id === "falak" || id === "reading") {
@@ -2585,7 +2596,7 @@ PANELS.arif = (main) => {
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
     const yNow = new Date().getFullYear(), MON12 = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>
+    $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && A.marriage.corrected && !A.marriage.actual ? `<div class="arif-did"><span>${F ? "سجّلتِ أنّكِ لم تتزوّجي بعد." : "سجّلتَ أنّك لم تتزوّج بعد."}</span><button type="button" class="btn sm sec" id="mf-reset">غيّرْ</button></div>` : ""}${A.marriage && !A.marriage.corrected ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>
       <form class="form" id="marrFix" hidden style="margin-top:.4rem;align-items:flex-end">
         <div class="fld"><label for="mf-y">${F ? "تزوّجتِ" : "تزوّجتَ"} سنة <span class="gloss">(إلزاميّ)</span></label><input id="mf-y" type="number" min="1930" max="${yNow}" required style="width:7rem"></div>
         <div class="fld"><label for="mf-m">الشهر <span class="gloss">(اختياريّ)</span></label><select id="mf-m"><option value="">—</option>${MON12.map((m, i) => `<option value="${i + 1}">${m}</option>`).join("")}</select></div>
