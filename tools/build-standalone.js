@@ -4,6 +4,10 @@
 //   node tools/build-standalone.js
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
+import { writeVersion } from "./build-version.js";
+
+// نسخةُ الحسابات تُحدَّثُ أوّلًا (بصمةُ ملفّات المحرّك)
+writeVersion();
 
 const ROOT = process.cwd();
 const KEY = (spec) => basename(spec).replace(/\.js$/, "");
@@ -14,7 +18,8 @@ const FILES = [
   ...readdirSync("engines").filter((f) => f.endsWith(".js")).map((f) => "engines/" + f),
   "vendor/astronomy-engine.js",
   "text/corpus.data.js",
-  ...readdirSync("web").filter((f) => f.endsWith(".data.js")).map((f) => "web/" + f)
+  ...readdirSync("web").filter((f) => f.endsWith(".data.js")).map((f) => "web/" + f),
+  "web/feedback-config.js",
 ];
 
 const mods = FILES.map((path) => {

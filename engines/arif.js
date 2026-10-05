@@ -24,6 +24,7 @@ import * as AE from "../vendor/astronomy-engine.js";
 import { birthNumber } from "./hal.js";
 import { PLANET_GOVERNS } from "../data/falak-ahkam.data.js";
 import { AGES } from "../data/ages-ptolemy.data.js";
+import { ENGINE_VER } from "../data/engine-version.data.js";
 
 export const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 export const FAMILIES = { periods: "أزمنةُ العمر", sky: "مرورُ الكواكب", numbers: "علمُ الأرقام", name: "الاسم", divination: "الرملُ والجفر", question: "لحظةُ السؤال" };
@@ -441,8 +442,11 @@ function monthVoices(ctx, y, m) {
 }
 
 /** درجةُ الشهر لموضوع: متوسّطُ كلِّ عائلة ثمّ المجموع (والأوزانُ من «صح/غلط» إن وُجدت) */
-/** نسخةُ حسابات العارف: تُرسَلُ مع كلّ إجابة ليُفرَّقَ بين ما قيل بحساباتٍ قديمةٍ وجديدة */
-export const ENGINE_VER = "2026-10-05";
+/** موضوعُ العارف لكلّ نوعٍ من المسائل (classifyAstroTopic) */
+const TOPIC_OF_KEY = { زواج: "love", حب: "love", طلاق: "love", ولد: "love", حمل: "love", صديق: "love", رزق: "money", مال: "money", دين: "money", سرقة: "money", ضالة: "money", "بيع وشراء": "money", عقار: "money", كنز: "money", عمل: "work", وظيفة: "work", سلطان: "work", صناعة: "work", شركة: "work", سفر: "study", دراسة: "study", علم: "study", مرض: "health", صحة: "health", شفاء: "health" };
+export const topicOfQuestion = (q) => TOPIC_OF_KEY[falak.classifyAstroTopic(q || "")] || "all";
+/** نسخةُ حسابات العارف (بصمةُ ملفّات المحرّك، تُولَّدُ آليًّا): تُرسَلُ مع كلّ إجابة ليُفرَّقَ بين ما قيل بحساباتٍ قديمةٍ وجديدة */
+export { ENGINE_VER };
 function scoreFor(V, topic = "all", weights = {}) {
   const fam = {};
   for (const v of V) {
@@ -646,7 +650,7 @@ function marriageLine(c, ctx, k_, weights) {
 export function ask(c, question, opt = {}) {
   const now = c.now ? new Date(c.now) : new Date();
   const key = falak.classifyAstroTopic(question || "");
-  const topic = { زواج: "love", حب: "love", طلاق: "love", ولد: "love", حمل: "love", صديق: "love", رزق: "money", مال: "money", دين: "money", سرقة: "money", ضالة: "money", "بيع وشراء": "money", عقار: "money", كنز: "money", عمل: "work", وظيفة: "work", سلطان: "work", صناعة: "work", شركة: "work", سفر: "study", دراسة: "study", علم: "study", مرض: "health", صحة: "health", شفاء: "health" }[key] || "all";
+  const topic = TOPIC_OF_KEY[key] || "all";
   const r = raml.reading({ name: c.name, mother: c.mother, question, when: now });
   const T = opt.timeline || timeline(c, opt);
   const W = windows(T.months, topic);
@@ -703,4 +707,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, bestDay, marriage, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { ENGINE_VER, marriageYears, marriageStatus, marriageDiagnose, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
+export default { ENGINE_VER, topicOfQuestion, marriageYears, marriageStatus, marriageDiagnose, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };

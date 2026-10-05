@@ -331,7 +331,7 @@ export function reading(c) {
     } else if (opp && n >= 1 && no >= 1) {
       done.add(id); done.add(opp);
       const [a, b] = n >= no ? [id, opp] : [opp, id];
-      g.sometimes.push({ ids: [a, b], ar: `أحيانًا ${AR_(a)}، وأحيانًا ${AR_(b)}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
+      g.sometimes.push({ ids: [a, b], names: { [a]: AR_(a), [b]: AR_(b) }, ar: `أحيانًا ${AR_(a)}، وأحيانًا ${AR_(b)}`, support: { [a]: [...lines(a)], [b]: [...lines(b)] }, evidence: [...ev[a], ...ev[b]] });
     } else if (n >= 2) {
       done.add(id);
       g.firm.push({ id, ar: AR_(id), lines: [...lines(id)], books: booksOf(ev[id]), evidence: ev[id] });

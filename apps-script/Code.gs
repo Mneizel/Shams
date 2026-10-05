@@ -42,6 +42,8 @@ function clean_(b) {
   if (b.kind === "trait" || b.kind === "palm") {
     r.item = txt(b.item, 80); if (!r.item) return null;
     r.lines = keys(b.lines);
+    // حالك: لكلّ كتابٍ أصاب (+١) أو أخطأ (−١) — في «أحيانًا» يُصدَّقُ كتابُ الجهة المختارة ويُكذَّبُ كتابُ الأخرى
+    if (b.kind === "trait") r.meths = nums(b.meths, /^[a-z0-9_]{2,24}$/);
   } else if (b.kind === "month" || b.kind === "ask") {
     if (TOPICS.indexOf(b.topic) < 0 || typeof b.month !== "string" || !/^\d{4}-\d{2}$/.test(b.month)) return null;
     r.topic = b.topic; r.month = b.month;
@@ -140,7 +142,9 @@ function buildReport() {
       else L(r[col("lines")]).forEach(function (k) { add("marr", k, ok); });
     } else if (kind === "trait") {
       add("trait", String(r[col("said")] || r[col("item")]), ok);
-      L(r[col("lines")]).forEach(function (k) { add("line", k, ok); });
+      const tv = J(r[col("meths")]);
+      if (Object.keys(tv).length) Object.keys(tv).forEach(function (k) { add("line", k, tv[k] > 0); });
+      else L(r[col("lines")]).forEach(function (k) { add("line", k, ok); });
     } else if (kind === "palm") add("palm", r[col("item")], ok);
   });
   const ss = SpreadsheetApp.getActiveSpreadsheet();

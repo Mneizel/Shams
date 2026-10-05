@@ -1406,12 +1406,16 @@ PANELS.raml = (main) => {
   const c0 = ctx();
   main.innerHTML += subjectBar(c0) +
     `<div class="qline">السؤال (من البطاقة): <b>${c0.question ? "«" + esc(c0.question) + "»" : "لم تختر سؤالًا"}</b></div>
+     <div id="ramlDue"></div>
      <div class="form"><button class="btn" id="rg">اضرب الطالع الرمليّ</button></div>
      <div id="rout"></div>`;
+  dueAsks($("#ramlDue", main), c0.sex === "f");
   $("#rg", main).onclick = () => {
     const c = ctx();
     if (!c.question) { $("#rout", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
     const r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.when });
+    // متابعة: «هل صار؟» بعد الوقت الذي قدّره الرمل (لا يُحفَظُ إن كان الطالعُ غيرَ صالحٍ للحكم)
+    if (!r.voidChart) saveAsk({ src: "raml", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: r.verdict, due: dueFrom(r.timing?.magnitude, r.timing?.unit), votes: { divination: r.score > 0.5 ? 1 : r.score < -0.5 ? -1 : 0 } });
     const ch = r.chart;
     const line = (label, arr) => `<tr><th>${label}</th>${arr.map((f) => `<td>${esc(f.ar)}<br>${figCell(f)}</td>`).join("")}</tr>`;
     $("#rout", main).innerHTML = `<div class="grid wide">
@@ -1453,7 +1457,7 @@ PANELS.falak = (main) => {
   main.innerHTML += subjectBar(c) +
     `<p class="kv">اللحظةُ المحسوبة: <b>${esc(fmtDateTime(c.now))}</b> (الآن، لا وقتَ ميلادك) عند (${AR(c.lat)}، ${AR(c.lon)}). كلّ ما يلي حسابٌ فلكيٌّ دقيقٌ عبر astronomy-engine؛ والأحكامُ المبنيّةُ عليه من كتب أحكام النجوم.</p>
     <h2>خاصّتُك أنت (من تاريخ ميلادك — لا تتغيّر اليوم)</h2><div id="natal"></div>
-    <h2>حكم سؤالك الآن (على طريقة الاختيارات)</h2><div id="horary"></div>
+    <h2>حكم سؤالك الآن (على طريقة الاختيارات)</h2><div id="horaryDue"></div><div id="horary"></div>
     <h2>السماءُ الآن — اللحظة الحاليّة</h2><div id="fout"></div>
     <h2>حال القمر وجودة اليوم — قواعدُ عمليّة</h2><div id="ahkamKeep"></div>
     <h2>جدول الساعات الكوكبية لهذا اليوم — لاختيار ساعةٍ تعمل بها</h2><div id="hours"></div>`;
@@ -1490,6 +1494,9 @@ PANELS.falak = (main) => {
 
   // ── حكم السؤال + توقّع السنة ─────────────────────────────────────
   const hor = c.question ? falak.horary(c.question, c.now, c.lat, c.lon) : null;
+  // متابعة: «هل صار؟» بعد الوقت الذي قدّره علمُ المسائل (أو بعد شهرٍ إن لم يُقدَّر)
+  dueAsks($("#horaryDue", main), c.sex === "f");
+  if (hor && !/الصنعةُ|مادّةُ الرؤيا/.test(hor.verdict)) saveAsk({ src: "horary", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: hor.verdict, due: dueFrom(hor.timing?.count, hor.timing?.unit), votes: { horary: hor.score > 1 ? 1 : hor.score < -1 ? -1 : 0 } });
   let bAsc = 100; try { bAsc = falak.ascendant(c.birth, c.lat, c.lon).longitude; } catch {}
   const pf = falak.annualProfection(c.birth, c.now, bAsc);
   const fd = falak.firdaria(c.birth, c.now);
@@ -2287,13 +2294,31 @@ function traitFbButtons(x, F) {
 function wireTraitFb(main, r) {
   const all = Object.values(r.groups).flatMap((g) => g.firm);
   // مستمعٌ واحدٌ للصفحة كلّها (لا يتكرّرُ الإرسالُ مهما أُعيدَ رسمُ الأزرار)
+  const one = [...all, ...Object.values(r.groups).flatMap((g) => g.single)];
+  const some = Object.values(r.groups).flatMap((g) => g.sometimes);
   main.addEventListener("click", (ev) => {
-    const b = ev.target.closest("[data-tok]"); if (!b) return;
-    const x = all.find((t) => t.id === b.dataset.tid); if (!x) return;
-    const fb = lsGet(HAL_FB(), {}); fb[x.id] = { ok: b.dataset.tok === "1", lines: x.lines, at: Date.now() }; lsSet(HAL_FB(), fb);
-    arifSend({ kind: "trait", ok: b.dataset.tok === "1", item: x.id, lines: x.lines, said: x.ar });
-    const wrap = b.closest(".arif-did"); if (wrap) wrap.outerHTML = traitFbButtons(x, r.sex === "f");
+    const b = ev.target.closest("[data-tok]"), s = ev.target.closest("[data-tside]");
+    if (b) {
+      // صفةٌ مؤكّدة أو بشاهدٍ واحد: «فيّ» يصدّقُ كتبَها، و«مش فيّ» يكذّبُها
+      const x = one.find((t) => t.id === b.dataset.tid); if (!x) return;
+      const ok = b.dataset.tok === "1", votes = Object.fromEntries(x.lines.map((l) => [l, ok ? 1 : -1]));
+      const fb = lsGet(HAL_FB(), {}); fb[x.id] = { ok, lines: x.lines, votes, at: Date.now() }; lsSet(HAL_FB(), fb);
+      arifSend({ kind: "trait", ok, item: x.id, lines: x.lines, meths: votes, said: x.ar });
+      const wrap = b.closest(".arif-did"); if (wrap) wrap.outerHTML = traitFbButtons(x, r.sex === "f");
+    } else if (s) {
+      // «أحيانًا هذا وأحيانًا ذاك»: ما اختاره يصدّقُ كتبَ جهتِه ويكذّبُ كتبَ الجهة الأخرى
+      const x = some.find((t) => t.ids.join("|") === s.dataset.tid); if (!x) return;
+      const pick = s.dataset.tside, other = x.ids.find((i) => i !== pick);
+      const votes = { ...Object.fromEntries(x.support[other].map((l) => [l, -1])), ...Object.fromEntries(x.support[pick].map((l) => [l, 1])) };
+      const fb = lsGet(HAL_FB(), {}); fb[x.ids.join("|")] = { ok: true, pick, lines: Object.keys(votes), votes, at: Date.now() }; lsSet(HAL_FB(), fb);
+      arifSend({ kind: "trait", ok: true, item: `${pick} (لا ${other})`, lines: x.support[pick], meths: votes, said: `أقربُ إليه: ${x.names[pick]}` });
+      const wrap = s.closest(".arif-did"); if (wrap) wrap.outerHTML = someFbButtons(x);
+    }
   });
+}
+function someFbButtons(x) {
+  const fb = lsGet(HAL_FB(), {})[x.ids.join("|")];
+  return ` <span class="arif-did" style="display:inline-flex;margin:0;flex-wrap:wrap"><span>أقربُ لي:</span>${x.ids.map((i) => `<button type="button" class="btn sm sec" data-tside="${esc(i)}" data-tid="${esc(x.ids.join("|"))}" aria-pressed="${fb?.pick === i}">${esc(x.names[i])}</button>`).join("")}${fb ? `<span class="saved">انحفظ ✓</span>` : ""}</span>`;
 }
 // الكفّ: «صح / غلط» على كلّ باب
 function palmFbButtons(s, i) {
@@ -2321,7 +2346,7 @@ function halHTML(r, fbOn = false) {
     title: g.title,
     body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
         ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b>${fbOn ? traitFbButtons(x, F) : ""} <span class="gloss src">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
-        ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss src">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
+        ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss src">— الأدلّةُ مختلفةٌ في هذا</span>${fbOn && x.names ? someFbButtons(x) : ""}</li>`).join("")}
       </ul>`,
     reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
   })).join("");
@@ -2349,7 +2374,7 @@ function halHTML(r, fbOn = false) {
     ${(r.body.length || (r.ailments && (r.ailments.hits.length || r.ailments.ascPart))) ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: (r.ailments ? `${r.ailments.hits.map((x) => `<div class="kv" style="margin:.3rem 0"><b class="src">قال بطليموس: </b>${esc(x.malefic)} ${esc(x.how === "فيه" ? "في" : x.how)} ${esc(x.place)} (${esc(x.sign)}) ⇒ قد يتعبُ <b>${esc(x.part)}</b>، ومن جنسِ ${esc(x.malefic)}: ${esc(x.nature)}. <span class="gloss">${x.injury ? "النحسُ مشرِّق: الغالبُ آفةٌ عارضةٌ لا مرضٌ مزمن" : "النحسُ مغرِّب: الغالبُ مرضٌ يطولُ أو يعاود"}<span class="src"> — ${esc(r.ailments.src)}</span></span></div>`).join("")}${r.ailments.hits.length ? `<div class="kv" style="margin:.3rem 0">${esc(r.ailments.relief)}.</div>` : `<div class="kv" style="margin:.3rem 0">لا يقعُ نحسٌ على الطالع ولا الغارب ولا السادس عند بطليموس.</div>`}<div class="kv" style="margin:.3rem 0">وطالعُك ${esc(r.ailments.ascPart.sign)} ويحكمُ من البدن <b>${esc(r.ailments.ascPart.part)}</b>. <span class="gloss src">— ${esc(r.ailments.ascPart.src)}</span></div>` : "") + r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b class="src">قال أبو معشر: </b>` : ""}${esc(b.text)}${b.src ? ` <span class="gloss src">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss src">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro src"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
       <div class="gloss" style="margin-bottom:.5rem">هذه لم يؤكّدْها دليلٌ ثانٍ مستقلّ، فلا تُقدَّمُ كأنّها مؤكّدة.</div>
-      <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
+      <ul class="kv" style="margin:0;padding-inline-start:1.1rem">${singles.map((x) => `<li style="margin:.3rem 0">${esc(x.ar)}${fbOn ? traitFbButtons(x, F) : ""} <span class="gloss">— ${esc(who(x.lines))}</span></li>`).join("")}</ul></div></details>` : ""}
     <div class="gloss src" style="margin-top:.8rem">المصادر: ${r.sources.map(esc).join(" · ")}. فعّلْ «وضعَ الكشف» لترى نصَّ كلِّ شهادةٍ ومرجعَها.</div>`;
 }
 
@@ -2407,11 +2432,37 @@ function arifWeights() {
   const byTopic = Object.fromEntries(Object.entries(LEARNED.byTopic || {}).flatMap(([t, ws]) => Object.entries(ws).map(([k, v]) => [`${t}|${k}`, v])));
   return { ...(LEARNED.weights || {}), ...byTopic, ...(LEARNED.marriageWeights || {}), ...own };
 }
+// ── متابعةُ الأسئلة: يُحفَظُ كلُّ سؤالٍ (العارف/الرمل/المسائل) مع حكمه ووقتِه، وبعد وقتِه يُسأَلُ «هل صار؟»
+const ASKS = () => arifFbKey() + "|asks";
+const SRC_AR = { arif: "العارف", raml: "الرمل", horary: "علم المسائل" };
+const UNIT_DAYS = [[/ساع/, 1 / 24], [/يوم|أيّام|ايام/, 1], [/أسبوع|أسابيع|اسبوع/, 7], [/شهر|شهور|أشهر/, 30], [/سن/, 365]];
+function dueFrom(n, unit) {
+  const per = (UNIT_DAYS.find(([re]) => re.test(unit || "")) || [, 30])[1];
+  const days = Math.max(7, Math.min(3 * 365, (+n || 1) * per));
+  return new Date(Date.now() + days * 86400000).toISOString().slice(0, 7);
+}
+function saveAsk(rec) {
+  const asks = lsGet(ASKS(), []);
+  if (asks.some((x) => x.q === rec.q && x.src === rec.src && !x.done)) return;
+  asks.push({ id: Date.now(), ...rec }); lsSet(ASKS(), asks.slice(-30));
+}
+function dueAsks(box, F) {
+  if (!box) return;
+  const nowYm = new Date().toISOString().slice(0, 7);
+  const asks = lsGet(ASKS(), []).filter((x) => !x.done && x.due < nowYm);
+  box.innerHTML = asks.length ? `<div class="arif-insight"><b>${F ? "سألتِ" : "سألتَ"} من قبل:</b>${asks.map((x) => `<div class="arif-did" data-id="${x.id}"><span>«${esc(x.q)}»${x.src && x.src !== "arif" ? ` (${SRC_AR[x.src]})` : ""} — وكان الجواب: ${esc(AR(x.big))} هل صار؟</span><button type="button" class="btn sm sec" data-aok="1">✓ صار</button><button type="button" class="btn sm sec" data-aok="0">✗ لم يصر</button></div>`).join("")}</div>` : "";
+  box.querySelectorAll("[data-aok]").forEach((b) => b.addEventListener("click", () => {
+    const id = +b.closest("[data-id]").dataset.id, all = lsGet(ASKS(), []), x = all.find((a) => a.id === id); if (!x) return;
+    x.done = true; x.ok = b.dataset.aok === "1"; lsSet(ASKS(), all);
+    arifSend({ kind: "ask", ok: x.ok, topic: x.topic, month: x.due, q: x.q, said: `${SRC_AR[x.src || "arif"]}: ${x.big}`, fams: x.votes, score: Object.values(x.votes || {}).reduce((a, v) => a + v, 0) });
+    dueAsks(box, F);
+  }));
+}
 // حالك: وزنُ كلّ خطٍّ (كتاب) من «فيّ / مش فيّ» — العامُّ من الجميع، وإجاباتُ الشخص (٣ فأكثر للخطّ) تغلبُه
 const HAL_FB = () => arifFbKey().replace(ARIF_FB0, "smk-hal-fb");
 function halLineWeights() {
   const tally = {};
-  for (const e of Object.values(lsGet(HAL_FB(), {}))) for (const l of e.lines || []) { const t = (tally[l] = tally[l] || { hit: 0, miss: 0 }); e.ok ? t.hit++ : t.miss++; }
+  for (const e of Object.values(lsGet(HAL_FB(), {}))) for (const [l, v] of Object.entries(e.votes || Object.fromEntries((e.lines || []).map((x) => [x, e.ok ? 1 : -1])))) { const t = (tally[l] = tally[l] || { hit: 0, miss: 0 }); v > 0 ? t.hit++ : t.miss++; }
   const w = {};
   for (const [l, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[l] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
   return { ...(LEARNED.lines || {}), ...w };
@@ -2529,8 +2580,7 @@ PANELS.arif = (main) => {
     let A; try { A = arif.ask(C, q, { weights: arifWeights(), marriageFb: lsGet(arifFbKey() + "|marriage", null) }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
     arifInterest(A.topic !== "all" ? A.topic : null);
     if (!A.marriage && A.best?.to) {
-      const asks = lsGet(arifFbKey() + "|asks", []), due = `${A.best.to.y}-${String(A.best.to.m + 1).padStart(2, "0")}`;
-      if (!asks.some((x) => x.q === q && !x.done)) { asks.push({ id: Date.now(), q: q.slice(0, 200), topic: A.topic, big: A.big, due, votes: Object.fromEntries(A.votes.map((v) => [v.fam, v.s])) }); lsSet(arifFbKey() + "|asks", asks.slice(-30)); }
+      saveAsk({ src: "arif", q: q.slice(0, 200), topic: A.topic, big: A.big, due: `${A.best.to.y}-${String(A.best.to.m + 1).padStart(2, "0")}`, votes: Object.fromEntries(A.votes.map((v) => [v.fam, v.s])) });
     }
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
@@ -2578,18 +2628,7 @@ PANELS.arif = (main) => {
     draw(); month();
   });
   // أسئلةٌ سابقةٌ حان وقتُها: «هل صار؟»
-  (function dueAsks() {
-    const box = $("#arifDue", main); if (!box) return;
-    const nowYm = new Date().toISOString().slice(0, 7);
-    const asks = lsGet(arifFbKey() + "|asks", []).filter((x) => !x.done && x.due < nowYm);
-    box.innerHTML = asks.length ? `<div class="arif-insight"><b>${F ? "سألتِ" : "سألتَ"} من قبل:</b>${asks.map((x) => `<div class="arif-did" data-id="${x.id}"><span>«${esc(x.q)}» — وكان الجواب: ${esc(AR(x.big))} هل صار؟</span><button type="button" class="btn sm sec" data-aok="1">✓ صار</button><button type="button" class="btn sm sec" data-aok="0">✗ لم يصر</button></div>`).join("")}</div>` : "";
-    box.querySelectorAll("[data-aok]").forEach((b) => b.addEventListener("click", () => {
-      const id = +b.closest("[data-id]").dataset.id, all = lsGet(arifFbKey() + "|asks", []), x = all.find((a) => a.id === id); if (!x) return;
-      x.done = true; x.ok = b.dataset.aok === "1"; lsSet(arifFbKey() + "|asks", all);
-      arifSend({ kind: "ask", ok: x.ok, topic: x.topic, month: x.due, q: x.q, said: x.big, fams: x.votes, score: Object.values(x.votes || {}).reduce((a, v) => a + v, 0) });
-      dueAsks();
-    }));
-  })();
+  dueAsks($("#arifDue", main), F);
   $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });
   draw(); month();
 };

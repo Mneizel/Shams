@@ -381,6 +381,17 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // النسخةُ المستقلّة تحوي كلَّ ما يستوردُه الموقع، ونسخةُ الحسابات محدَّثة
+  {
+    const fs = await import("node:fs");
+    const html = fs.readFileSync("web/شمس-المعارف.html", "utf8"), app = fs.readFileSync("web/app.js", "utf8");
+    const keys = [...app.matchAll(/\bfrom\s*["']([^"']+\.js)["']/g)].map((m) => m[1].split("/").pop().replace(/\.js$/, ""));
+    const missing = keys.filter((k) => !html.includes(`__M["${k}"]=`));
+    eq(missing, [], "كلُّ ما يستوردُه app.js موجودٌ في النسخة المستقلّة (أعِدِ البناء: node tools/build-standalone.js)");
+    const { engineHash } = await import("../tools/build-version.js");
+    const { ENGINE_VER } = await import("../data/engine-version.data.js");
+    eq(ENGINE_VER, engineHash(), "نسخةُ الحسابات محدَّثة (شغّلْ node tools/build-version.js بعد تعديل المحرّك)");
+  }
   // التعلّم: الأوزانُ المتعلَّمة تغيّرُ النتائجَ فعلًا (الموضوع، طرقُ الزواج، كتبُ حالك)
   {
     const arif = (await import("../engines/arif.js")).default;
