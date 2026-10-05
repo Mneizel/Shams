@@ -29,8 +29,12 @@ function bump(tally, k, credit, wt, person) {
  */
 export function arifTally(recs, opt = {}) {
   const p = opt.rate ?? okRate(recs), wtOf = opt.wtOf || (() => 1), tally = {};
+  // شهرٌ أجاب الشخصُ عن جملِه لحالها ⇒ لا يُحتسَبُ جوابُه على الشهر كلِّه أيضًا (الجملُ أدقّ، ولا يُعَدُّ الشهرُ مرّتين)
+  const mk = (e) => `${e.person || "me"}|${e.month}|${e.topic}`;
+  const bySentence = new Set(recs.filter((e) => e.item && e.month && (e.kind === "month" || !e.kind)).map(mk));
   for (const e of recs) {
     if (!counted(e)) continue;
+    if (!e.item && e.month && (e.kind === "month" || !e.kind) && bySentence.has(mk(e))) continue;
     for (const [k, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
       if (!s) continue;
       const agree = Math.sign(s) === Math.sign(e.score);

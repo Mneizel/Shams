@@ -14,7 +14,15 @@ import talNamed from "../engines/talisman-named.js";
 import prediction from "../engines/prediction.js";
 import taskhir from "../engines/taskhir.js";
 import raml from "../engines/raml.js";
-import corpus from "../engines/corpus.js";
+// نصُّ الكتاب (٧٫٧ م.ب) لا يُحمَّلُ مع الصفحة: يُجلَبُ أوّلَ مرّةٍ يُحتاجُ إليه (البحثُ أو صفحةُ النصّ).
+// في النسخة المستقلّة هو مدمجٌ أصلًا في __M فيُؤخَذُ منها.
+let corpus = null, _corpusP = null;
+function loadCorpus() {
+  if (corpus) return Promise.resolve(corpus);
+  if (!_corpusP) _corpusP = (typeof __M !== "undefined" && __M.corpus ? Promise.resolve(__M.corpus.default) : import("../engines/corpus.js").then((m) => m.default))
+    .then((c) => (corpus = c)).catch((e) => { _corpusP = null; throw e; });
+  return _corpusP;
+}
 import diagnosis from "../engines/diagnosis.js";
 import { SYMPTOMS } from "../data/diagnosis.data.js";
 import { ADJUSTMENT_RULES } from "../data/zairja-handasiya.data.js";
@@ -921,18 +929,18 @@ PANELS.qura = (main) => {
   main.innerHTML += subjectBar(c0) +
     `<div class="qline">السؤال (من البطاقة): <b>${c0.question ? "«" + esc(c0.question) + "»" : "لم تختر سؤالًا"}</b></div>
      <div class="form"><button class="btn" id="qcast">اضرب القرعة</button></div>
-     <div id="qout"></div>`;
+     <div id="quraOut"></div>`;
   $("#qcast", main).onclick = () => {
     const c = ctx();
-    if (!c.question) { $("#qout", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
+    if (!c.question) { $("#quraOut", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
     const r = qura.cast(c.name, c.mother, c.question, c.now); // رميةٌ جديدةٌ كلَّ يومِ استشارة، لا للأبد
-    $("#qout", main).innerHTML = `<div class="grid wide">${card({
+    $("#quraOut", main).innerHTML = `<div class="grid wide">${card({
       title: `قرعةُ جعفر الصادق`, k: `الباب ${AR(r.bab)}`,
       body: `<div class="kv"><b>الدعاء قبل الضرب:</b> ${esc(r.prayer)}</div>
         <div class="big" style="letter-spacing:.4rem;margin:.6rem 0">${r.throws.map((t) => `<span class="mono">${esc(t)}</span>`).join(" ")}</div>
         <div class="kv">خرجت الثلاثيّة «<b>${esc(r.key)}</b>» ⇒ <b>الباب ${AR(r.bab)}</b>.</div>
         ${r.verse ? `<div class="kv" style="margin-top:.5rem"><b>قال اللهُ تعالى:</b> ${esc(r.verse)}</div>` : ""}
-        <div class="big" style="font-size:1.04rem;margin-top:.4rem">${esc(r.fortune || `بابُك الباب ${AR(r.bab)} من أبواب القرعة؛ فتأمّلْ فألَك فيه.`)}</div>
+        <div class="big" style="font-size:1.04rem;margin-top:.4rem">${esc(r.fortune || (r.transcribed ? "" : `خرج الباب ${AR(r.bab)}، وصفحتُه (ص ٢٨ من الكتاب) ساقطةٌ من النسخة الموجودة، فلا نصَّ له عندنا. اضربِ القرعةَ غدًا أو بسؤالٍ آخر.`))}</div>
         <div class="kv" style="margin-top:.5rem"><b>بصراحة:</b> نصّ هذا البابِ عامٌّ بطبيعته — الكتابُ نفسُه يضع ٦٤ بابًا ثابتًا، كلٌّ منها حكمةٌ عامّةٌ تصلح تفسيرًا لأيّ سؤال («اترك الأمر»، «تمهّل»، «امضِ فيه»...)، لا جوابًا حرفيًّا مصمَّمًا لسؤالك بالذات. فسّرِ البابَ على ضوء سؤالك أنت (كما يفعل قارئُ أيّ كتابِ فألٍ)، ولا تتوقّع أن يذكر البابُ تفاصيل سؤالك.</div>`,
       basis: "عودٌ رُباعيٌّ (ا/ب/ج/د) يُرمى ٣ مرّات ⇒ ثلاثيّة ⇒ بابٌ من ٦٤ فيه آيةٌ وفأل. الرميُ هنا حتميٌّ من (اسمك + أمّك + سؤالك + تاريخ اليوم).",
       reveal: traceText(r.trace) + "\n\n" + r.note,
@@ -1424,7 +1432,7 @@ PANELS.raml = (main) => {
   $("#rg", main).onclick = () => {
     const c = ctx();
     if (!c.question) { $("#rout", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
-    const r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.when });
+    const r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.now }, { weight: learnedWeight(c.question, ["divination:raml", "divination"]) });
     // متابعة: «هل صار؟» بعد الوقت الذي قدّره الرمل (لا يُحفَظُ إن كان الطالعُ غيرَ صالحٍ للحكم)
     if (!r.voidChart) saveAsk({ src: "raml", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: r.verdict, due: dueFrom(r.timing?.magnitude, r.timing?.unit), votes: { divination: r.score > 0.5 ? 1 : r.score < -0.5 ? -1 : 0 } });
     const ch = r.chart;
@@ -1504,7 +1512,7 @@ PANELS.falak = (main) => {
   <p class="kv" style="margin-top:.5rem">تفصيلٌ فنّيٌّ إضافيٌّ (البيوت، الأنظار، سهام العرب، درجات البروج، الرأس والذنب، طبع الطالع، مواقع الكواكب، أحكام العالم) بلا توجيهٍ عمليٍّ مباشر — انتقل إلى «معلوماتٌ فقط» بالمرجع.</p>`;
 
   // ── حكم السؤال + توقّع السنة ─────────────────────────────────────
-  const hor = c.question ? falak.horary(c.question, c.now, c.lat, c.lon) : null;
+  const hor = c.question ? falak.horary(c.question, c.now, c.lat, c.lon, { weight: learnedWeight(c.question, ["horary"]) }) : null;
   // متابعة: «هل صار؟» بعد الوقت الذي قدّره علمُ المسائل (أو بعد شهرٍ إن لم يُقدَّر)
   dueAsks($("#horaryDue", main), c.sex === "f");
   if (hor && !/الصنعةُ|مادّةُ الرؤيا/.test(hor.verdict)) saveAsk({ src: "horary", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: hor.verdict, due: dueFrom(hor.timing?.count, hor.timing?.unit), votes: { horary: hor.score > 1 ? 1 : hor.score < -1 ? -1 : 0 } });
@@ -2487,6 +2495,12 @@ function dueAsks(box, F) {
     dueAsks(box, F);
   }));
 }
+/** وزنُ علمٍ واحدٍ للسؤال: الخاصُّ بموضوعه أوّلًا ثمّ العامّ (من arifWeights)؛ ١ إن لم يُتعلَّمْ شيء */
+function learnedWeight(question, keys) {
+  const W = arifWeights(), t = arif.topicOfQuestion(question);
+  for (const k of keys) { const v = W[`${t}|${k}`] ?? W[k]; if (v != null) return v; }
+  return 1;
+}
 // حالك: وزنُ كلّ خطٍّ (كتاب) من «فيّ / مش فيّ» — العامُّ من الجميع، وإجاباتُ الشخص (٣ فأكثر للخطّ) تغلبُه
 const HAL_FB = () => arifFbKey().replace(ARIF_FB0, "smk-hal-fb");
 function halLineWeights() {
@@ -2512,7 +2526,7 @@ PANELS.arif = (main) => {
   const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now, resLat: c.resLat, resLon: c.resLon, resCity: c.resCity };
   let R;
   const palmSaved = lsGet("smk-last-kaf", null);
-  try { R = arif.read(C, { weights: arifWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
+  try { R = arif.read(C, { weights: arifWeights(), lineWeights: halLineWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const MON = arif.MONTHS, F = c.sex === "f";
   let topic = "all", sel = R.months.find((m) => m.now)?.k ?? 0, askBest = null;
@@ -2712,7 +2726,7 @@ PANELS.full = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = qiraa.full({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
+  try { r = qiraa.full({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now, lineWeights: halLineWeights() }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const I = r.identity, N = r.natal, A = r.age, S = A.stage;
   let kafCard = "";
@@ -2760,6 +2774,11 @@ PANELS.full = (main) => {
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────
 PANELS.corpus = (main) => {
+  if (!corpus) {
+    main.innerHTML = `${head('corpus', 'نصّ الكتاب — بحث')}<p class="kv">يُحمَّلُ نصُّ الكتاب… (مرّةً واحدةً، نحو ٢ م.ب)</p>`;
+    loadCorpus().then(() => { if (CURRENT === "corpus") PANELS.corpus(main); }).catch(() => { main.insertAdjacentHTML("beforeend", `<div class="warn">تعذّر تحميلُ نصّ الكتاب. تحقّقْ من الاتّصال وأعِدِ المحاولة.</div>`); });
+    return;
+  }
   const st = corpus.stats();
   main.innerHTML = `${head('corpus', 'نصّ الكتاب — بحث')}
     <p class="kv">${AR(st.chunks)} مقطعًا من نسخة الكبرى (OCR — يجد الموضع؛ الحروف قد لا تكون مضبوطة ١٠٠٪).</p>
@@ -2864,7 +2883,7 @@ PANELS.infoOnly = (main) => {
   (() => {
     const c = ctx();
     if (!c.question) { $("#io6", main).innerHTML = `<div class="kv">اختر سؤالًا من «بطاقتي» ليظهر تفصيلُ طالعك هنا.</div>`; return; }
-    let r; try { r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.when }); } catch (e) { $("#io6", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+    let r; try { r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.now }); } catch (e) { $("#io6", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
     const ch = r.chart;
     const line = (label, arr) => `<tr><th>${label}</th>${arr.map((f) => `<td>${esc(f.ar)}<br>${figCell(f)}</td>`).join("")}</tr>`;
     $("#io6", main).innerHTML = `<div class="grid wide">
@@ -3135,7 +3154,8 @@ function searchRows(term) {
     kw.adiya.slice(0, 4).forEach((a) => rows.push({ type: "names", src: "دعاء", text: `${a.name} — ${a.purpose}`, go: "khawass" }));
     kw.surahs.slice(0, 5).forEach((s) => rows.push({ type: "khawass", src: "خواصّ", text: `${s.ref} — ${s.uses}`, go: "khawass" }));
   } catch {}
-  try { corpus.search(term, { limit: 8 }).hits.forEach((h) => rows.push({ type: "corpus", src: "نصّ الكتاب", text: h.snippet, go: "corpus" })); } catch {}
+  if (corpus) { try { corpus.search(term, { limit: 8 }).hits.forEach((h) => rows.push({ type: "corpus", src: "نصّ الكتاب", text: h.snippet, go: "corpus" })); } catch {} }
+  else loadCorpus().then(() => { if (qIn.value.trim() === term) renderSearch(); }).catch(() => {});   // أوّلُ بحث: يُعادُ العرضُ حين يصلُ النصّ
   return rows;
 }
 const markTerm = (text, term) => esc(text).split(esc(term)).join(`<mark>${esc(term)}</mark>`);

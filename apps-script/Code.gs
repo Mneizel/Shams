@@ -122,11 +122,25 @@ const AR_TOPIC = { all: "عامّ", work: "شغل", money: "فلوس", love: "ح
 /** ورقةُ «report»: كم إجابة، وأيُّ علمٍ وطريقةٍ وكتابٍ يصيبُ — مقارنةً بالصدفة — وتقييمُ التعلّم */
 function buildReport() {
   const sh = sheet_(), data = sh.getDataRange().getValues(), head = data[0];
-  const col = (n) => head.indexOf(n), rows = data.slice(1);
+  const col = (n) => head.indexOf(n);
+  // آخرُ إجابةٍ فقط لكلّ (شخص، نوع، عنصر): مَن غيّر «صار» إلى «لم يصر» لا يُعَدُّ مرّتين (كما في أداة GitHub)
+  const last = {};
+  data.slice(1).forEach(function (r) {
+    const kind = r[col("kind")];
+    const k = kind === "marriage" ? r[col("person")] + "|marriage"   // جوابُ الزواج واحدٌ للشخص (آخرُ تاريخٍ أعطاه)
+      : [r[col("person")], kind, r[col("month")], r[col("topic")], r[col("q")], r[col("item")]].join("|");
+    last[k] = r;
+  });
+  // شهرٌ أُجيب عن جملِه لحالها ⇒ لا يُعَدُّ جوابُ الشهر كلِّه أيضًا (كما في أداة GitHub)
+  const sent = {};
+  Object.keys(last).forEach(function (k) { const r = last[k]; if (r[col("kind")] === "month" && r[col("item")]) sent[[r[col("person")], r[col("month")], r[col("topic")]].join("|")] = 1; });
+  const rows = Object.keys(last).map(function (k) { return last[k]; }).filter(function (r) {
+    return !(r[col("kind")] === "month" && !r[col("item")] && sent[[r[col("person")], r[col("month")], r[col("topic")]].join("|")]);
+  });
   const J = (v) => { try { return v ? JSON.parse(String(v).replace(/^'/, "")) : {}; } catch (x) { return {}; } };
   const L = (v) => { const x = J(v); return Array.isArray(x) ? x : []; };
   const okOf = (v) => v === true || v === "TRUE" || v === "true";
-  const strong = (r) => { const sc = +r[col("score")]; return isFinite(sc) && Math.abs(sc) >= 0.45; };
+  const strong =(r) => { const sc = +r[col("score")]; return isFinite(sc) && Math.abs(sc) >= 0.45; };
   // نسبةُ «صار» العامّة (أساسُ المقارنة بالصدفة) ونسبةُ «فيّ» في حالك
   const ar = rows.filter(function (r) { return (r[col("kind")] === "month" || r[col("kind")] === "ask") && strong(r); });
   const P = ar.length ? ar.filter(function (r) { return okOf(r[col("ok")]); }).length / ar.length : 0.5;

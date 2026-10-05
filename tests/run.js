@@ -381,6 +381,47 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
+  {
+    const fs = await import("node:fs");
+    const shellIds = [...fs.readFileSync("web/index.html", "utf8").matchAll(/\sid="([\w-]+)"/g)].map((m) => m[1]);
+    const panelIds = new Set([...fs.readFileSync("web/app.js", "utf8").matchAll(/\sid="([\w-]+)"/g)].map((m) => m[1]));
+    eq(shellIds.filter((i) => panelIds.has(i)), [], "لا معرّفَ (id) في الصفحات يتكرّرُ مع معرّفات الهيكل (كان #qout مكرّرًا)");
+    eq((fs.readFileSync("web/app.js", "utf8").match(/^import corpus /m) || []).length, 0, "نصُّ الكتاب (٧٫٧ م.ب) لا يُحمَّلُ مع الصفحة");
+    const qura = (await import("../engines/qura.js")).default;
+    eq([qura.babNumber("جاج").bab, qura.babNumber("جاد").bab], [39, 40], "القرعة: ثلاثيّتا الصفحة الساقطة هما البابان ٣٩ و٤٠ (لا ٣٥ و٣٦)");
+    ok(qura.babNumber("ججد").bab === 35 && qura.babNumber("جاا").bab === 36, "البابان ٣٥ و٣٦ الحقيقيّان كما هما");
+    eq(["متى أرجع عالبيت", "متى يرجع ابني للبيت", "هل أشتري البيت", "هل أبيع الدار"].map((q) => falak.classifyAstroTopic(q)), ["غائب", "غائب", "عقار", "عقار"], "«بيت» بحسب الفعل: الرجوعُ غائب، والشراءُ والبيعُ عقار");
+    const W = new Date("2026-10-05T10:00:00Z");
+    const r0 = raml.reading({ name: "محمد", mother: "سميرة", question: "هل أتزوج", when: W }), r1 = raml.reading({ name: "محمد", mother: "سميرة", question: "هل أتزوج", when: W }, { weight: 1 });
+    ok(r0.score === r1.score && r0.verdict === r1.verdict && r0.weightApplied === null, "الرمل: بلا وزنٍ أو بوزن ١ ⇒ الحكمُ نفسُه");
+    const rW = raml.reading({ name: "محمد", mother: "سميرة", question: "هل أتزوج", when: W }, { weight: 0.5 });
+    ok(Math.abs(rW.score) <= Math.abs(r0.score) + 1e-9, "الرمل: وزنٌ أقلّ يقرّبُ الحكمَ من الوسط");
+    const h0 = falak.horary("هل أتزوج", W, 31.95, 35.93), h1 = falak.horary("هل أتزوج", W, 31.95, 35.93, {});
+    eq(h0.score, h1.score, "المسائل: بلا وزنٍ ⇒ الحكمُ نفسُه");
+    const arif = (await import("../engines/arif.js")).default;
+    const me = { name: "محمد", mother: "سميرة", sex: "m", birth: new Date("1991-11-09T02:35:00Z"), lat: 31.95, lon: 35.93, now: W };
+    const a0 = arif.ask(me, "هل أحصل على الوظيفة"), a1 = arif.ask(me, "هل أحصل على الوظيفة", { weights: {} });
+    eq(a0.big, a1.big, "اسأل العارف: بلا أوزانٍ ⇒ الجوابُ نفسُه");
+    ok(a0.votes.every((v) => !/\(null\)/.test(v.why)), "اسأل العارف: لا يظهرُ «(null)» في سبب القرعة");
+    const L = (await import("../engines/learn.js")).default;
+    const recs = [...Array(6)].map((_, i) => ({ kind: "month", person: "p" + i, ok: true, score: 0.9, topic: "all", month: "2026-01", fams: { k: 1 } }))
+      .concat([...Array(6)].map((_, i) => ({ kind: "month", person: "p" + i, ok: false, score: 0.9, topic: "all", month: "2026-01", item: "جملة", fams: { k: 1 } })));
+    eq(L.arifTally(recs, { rate: 0.5 }).k.n, 6, "الشهرُ الذي أُجيب عن جملِه لا يُعَدُّ مرّتين");
+    // البارع والرمل الطوخيّ مباشرة
+    const bari = (await import("../engines/bari.js")).default;
+    const pos = falak.planetPositions(W), asc = falak.ascendant(W, 31.95, 35.93).longitude;
+    const ch = { ascLon: asc, pos, asps: falak.aspectsBetween(W), comb: falak.combustState(W), ms: falak.moonState(W), hourRuler: "زحل", ascLord: "المريخ", qLord: "الزهرة", lotLon: 100, dig: () => 0 };
+    for (const t of ["رزق", "عمل", "زواج", "طلاق", "حمل", "مرض", "سفر", "غائب", "كتاب", "قضية", "سحر", "دراسة", "سرقة", "ضالة", "حبس", "بيع وشراء", "شركة", "عقار", "كنز", "رؤيا", "رجاء", "صديق", "صناعة"]) {
+      const j = bari.judge(t, ch);
+      ok(j.details.length >= 1 && Math.abs(j.adj) <= 1 && j.details.every((x) => x.text && !/undefined|NaN/.test(x.text)), `البارع: «${t}» يعطي تفاصيلَ سليمة`);
+    }
+    const rt = (await import("../engines/raml-tukhi.js")).default;
+    for (const q of ["زوجتي حامل", "هل أشفى من المرض", "هل أتزوج", "هل اربح القضية", "وظيفة", "مهنة", "صديقي", "عدوي", "ابني محبوس", "هل يرد القرض", "الغائب", "يحبني", "سؤال"]) {
+      const r = raml.reading({ name: "محمد", mother: "سميرة", question: q, when: W });
+      ok(r.tukhi && r.tukhi.details.every((x) => x.text && Number.isFinite(x.page)) && Math.abs(r.tukhi.score) <= 1, `الرمل الطوخيّ: «${q}» (${rt.topicOf(q)})`);
+    }
+  }
   // حساباتُ التعلّم (engines/learn.js): المقارنةُ بالصدفة، وصوتٌ لكلّ شخص، والشهرُ العاديّ لا يُحتسَب
   {
     const L = (await import("../engines/learn.js")).default;

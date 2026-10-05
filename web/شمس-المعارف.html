@@ -2302,7 +2302,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "c392242f7d";
+const ENGINE_VER = "81e9c6f944";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -19476,6 +19476,11 @@ function classifyAstroTopic(text) {
   for (const key of Object.keys(SIGNIFICATORS)) {
     if (key !== "عام" && q.includes(abjad.normalize(key))) return key;
   }
+  // «بيت/دار» وحدَها ليست عقارًا: مع فعلِ شراءٍ أو بيعٍ أو سكنٍ ⇒ عقار، ومع الرجوع إليها ⇒ غائب
+  if (/بيت|(^|\s)(ال|لل|عال|بال|ل|ع)?دار/.test(q)) {
+    if (/ارجع|يرجع|ترجع|نرجع|يرجعو|العوده|اعود|يعود|تعود/.test(q)) return "غائب";
+    if (/اشتري|اشتر|ابيع|بيع|استاجر|اجار|ايجار|اسكن|سكن|انتقل|ابني بيت|ابني دار|بناء|املك/.test(q)) return "عقار";
+  }
   const map = [["زواج", ["اتزوج", "زواج", "خطبه", "عريس", "عروس", "نتزوج", "زوجه", "زوجي"]],
     ["حب", ["حب", "يحبني", "تحبني", "أحب", "عشق"]],
     ["رزق", ["رزق", "فلوس", "مال", "دخل", "راتب", "فقر"]],
@@ -19491,7 +19496,7 @@ function classifyAstroTopic(text) {
     ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]],
     // مسائلُ البارع
     ["صناعة", ["مجال"]],
-    ["عقار", ["بيت", "دار", "شقة", "شقه", "ارض", "أرض", "عقار"]],
+    ["عقار", ["شقة", "شقه", "ارض", "أرض", "عقار"]],
     ["بيع وشراء", ["ابيع", "بيع", "اشتري", "أشتري", "شراء", "صفقة"]],
     ["شركة", ["شريك", "شراكة", "شركه"]],
     ["كتاب", ["رسالة", "رساله", "مكتوب", "ايميل", "كتاب"]],
@@ -19507,7 +19512,7 @@ function classifyAstroTopic(text) {
  * وحالَ الدليلين (كرامة/احتراق)، وحالَ القمر (خلوّ السير)، فيخرج «نعم/لا» +
  * تقديرَ وقتٍ + عواملَ + أثرًا كاملًا.
  */
-function horary(question, when, lat, lon) {
+function horary(question, when, lat, lon, opt = {}) {
   const topic = classifyAstroTopic(question);
   const sig = SIGNIFICATORS[topic] || SIGNIFICATORS["عام"];
   const asc = ascendant(when, lat, lon);
@@ -19621,6 +19626,8 @@ function horary(question, when, lat, lon) {
     for (const x of bariR.details) if (x.s) factors.push(`${x.text} [${x.src}]`);
   } catch {}
 
+  // وزنُ علم المسائل المتعلَّم من إجابات الناس (opt.weight؛ بلا وزنٍ ⇒ الحكمُ نفسُه)
+  if (opt.weight && opt.weight !== 1) { score *= opt.weight; factors.push(`وزنُ علم المسائل من إجابات الناس ×${opt.weight}`); }
   let verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
     : score >= 0 ? "نعم، بشرطِ سعيٍ وشيءٍ من التأخير"
     : score > -1.5 ? "الأمرُ متوقّفٌ لم يترجّحْ بعدُ لجانب"
@@ -21235,13 +21242,15 @@ function reading(opt = {}, cfg = {}) {
       note: `قراءةٌ ثلاثيّة — ماضٍ: ${threePart.past.mood}، حاضر: ${threePart.present.mood}، مستقبل: ${threePart.future.mood}` },
   ];
 
+  // وزنُ الرمل المتعلَّم من إجابات الناس (cfg.weight؛ بلا وزنٍ ⇒ الحكمُ نفسُه)
+  const wScore = cfg.weight && cfg.weight !== 1 ? Math.round(blended * cfg.weight * 100) / 100 : blended;
   // القاضي فيصلٌ: شكلٌ نحسٌ في باب الخمسةَ عشرَ يقطعُ الحكمَ مهما رجّح الشاهدان.
-  let verdict = verdictFromScore(blended);
+  let verdict = verdictFromScore(wScore);
   let judgeOverride = null;
-  if (natVal(judge) < 0 && blended > -0.5) {
+  if (natVal(judge) < 0 && wScore > -0.5) {
     judgeOverride = `القاضي «${judge.ar}» نحسٌ ⇒ الأمرُ محبوسٌ لا يتمُّ في وقتِه مهما رجّح الشاهدان؛ الأولى تركُه أو تأخيرُه.`;
     verdict = `الأمرُ محبوسٌ لا يتمُّ في وقتِه — القاضي «${judge.ar}» نحسٌ يقطعُ الحكم؛ فالأولى تركُه أو تأجيلُه.`;
-  } else if (natVal(judge) > 0 && blended < 0.5 && blended > -2) {
+  } else if (natVal(judge) > 0 && wScore < 0.5 && wScore > -2) {
     judgeOverride = `القاضي «${judge.ar}» سعدٌ ⇒ الأمرُ يتمُّ ولو بعد تعثّرٍ وتأخير.`;
     verdict = "الأمرُ يتمُّ بعد سعيٍ وتأخير — القاضي سعدٌ يرجّحُ التمام.";
   }
@@ -21287,7 +21296,8 @@ function reading(opt = {}, cfg = {}) {
     judge,
     witnesses: c.witnesses,
     reconciler: c.reconciler,
-    score: blended,
+    score: wScore,
+    weightApplied: cfg.weight && cfg.weight !== 1 ? cfg.weight : null,
     scoreStandard: sStd,
     scoreOmani: sOmani,
     verdict,
@@ -21376,8 +21386,11 @@ function mulberry32(a) {
 
 const B4 = { "ا": 0, "ب": 1, "ج": 2, "د": 3 };
 /** رقمُ الباب: من فهرس الكتاب إن وُجِد، وإلا بترتيبٍ رباعيٍّ قياسيّ. */
+// الثلاثيّتان الوحيدتان الغائبتان عن الفهرس هما بابا الصفحة ٢٨ الساقطة (٣٩ و٤٠)؛ ترتيبُهما بينهما غيرُ مؤكّد
+const MISSING_KEYS = { "جاج": 39, "جاد": 40 };
 function babNumber(key) {
   if (BOOK_INDEX[key] != null) return { bab: BOOK_INDEX[key], from: "فهرس الكتاب" };
+  if (MISSING_KEYS[key]) return { bab: MISSING_KEYS[key], from: "صفحةُ الكتاب ٢٨ ساقطةٌ من النسخة (البابان ٣٩ و٤٠، وترتيبُهما بينهما غيرُ مؤكّد)", missing: true };
   const [a, b, c] = [...key];
   return { bab: B4[a] * 16 + B4[b] * 4 + B4[c] + 1, from: "ترتيبٌ رباعيٌّ قياسيّ (الفهرس الأصليّ باهتُ المسح)" };
 }
@@ -22531,7 +22544,7 @@ function R_turn(months, topic) {
 function read(c, opt = {}) {
   const T = timeline(c, opt);
   const { months, ctx } = T;
-  const h = hal.reading(c);
+  const h = hal.reading(opt.lineWeights ? { ...c, lineWeights: opt.lineWeights } : c);   // أوزانُ كتب «حالك» المتعلَّمة
   const L = life.all(ctx.sky, c.sex === "f" ? "f" : "m");
   const A = body.ailments(ctx.sky);
   const W = Object.fromEntries(Object.keys(TOPICS).map((t) => [t, windows(months, t)]));
@@ -22615,21 +22628,24 @@ function ask(c, question, opt = {}) {
   try { qv = qura.cast(c.name, c.mother, question, now); } catch {}
   try { jv = jafr.extractAnswer(question, { name: c.name, mother: c.mother }); } catch {}
   const qs = [rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0];
-  if (qv) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
+  if (qv && qv.tone) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
   if (jv?.verdict) qs.push(jv.verdict.direction === "نعم" ? 1 : jv.verdict.direction === "لا" ? -1 : 0);
   const qAvg = qs.reduce((a, b) => a + b, 0) / qs.length;
   const tl = T.months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[topic], 0) / 12;
   const votes = [
-    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
+    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone || "صفحتُه ساقطةٌ من النسخة"})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
     { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${tl > 0.3 ? "يميلُ إلى الخير" : tl < -0.3 ? "يميلُ إلى التعب" : "وسط"}` },
   ];
   // علمُ المسائل: خريطةُ السماء الحقيقيّة لحظةَ السؤال (عائلةٌ مستقلّة عن الرمل والقرعة والجفر)
   let hz = null;
   try { hz = falak.horary(question, now, c.resLat ?? c.lat, c.resLon ?? c.lon); } catch {}
   if (hz) votes.push({ fam: "horary", s: hz.score > 1 ? 1 : hz.score < -1 ? -1 : 0, why: `علمُ المسائل: ${hz.verdict} (الطالعُ ${typeof hz.ascendant === "string" ? hz.ascendant : hz.ascendant?.sign || ""}، صاحبُه ${hz.ascLord || ""})` });
-  const sum = votes.reduce((a, v) => a + v.s, 0);
+  // كلُّ صوتٍ بوزنِ عائلتِه المتعلَّم (الخاصُّ بالموضوع أوّلًا)؛ بلا أوزانٍ ⇒ المجموعُ نفسُه كما كان
+  const Wq = opt.weights || {}, wOf = (f) => Wq[`${topic}|${f}`] ?? Wq[f] ?? 1;
+  for (const v of votes) v.w = wOf(v.fam);
+  const sum = Math.round(votes.reduce((a, v) => a + v.s * v.w, 0) * 100) / 100;
   const F_ = c.sex === "f";
-  let big = sum >= 2 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum === 1 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
+  let big = sum >= 1.5 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum >= 0.5 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum > -0.5 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum > -1.5 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
   const locked = /محبوس/.test(r.timing?.text || "");
   const tStr = !locked && r.timing?.magnitude && r.timing?.unit ? `، وأوّلُ ما يظهرُ منه بعد نحو ${r.timing.magnitude} ${r.timing.unit}` : locked ? "، لكنّه لا يظهرُ قريبًا" : "";
   // سؤالُ الزواج: يُجابُ أوّلًا بحسب ما تدلُّ عليه الخريطةُ من سنوات الزواج (قبلَها / فيها / بعدَها)
@@ -24308,8 +24324,12 @@ function bump(tally, k, credit, wt, person) {
  */
 function arifTally(recs, opt = {}) {
   const p = opt.rate ?? okRate(recs), wtOf = opt.wtOf || (() => 1), tally = {};
+  // شهرٌ أجاب الشخصُ عن جملِه لحالها ⇒ لا يُحتسَبُ جوابُه على الشهر كلِّه أيضًا (الجملُ أدقّ، ولا يُعَدُّ الشهرُ مرّتين)
+  const mk = (e) => `${e.person || "me"}|${e.month}|${e.topic}`;
+  const bySentence = new Set(recs.filter((e) => e.item && e.month && (e.kind === "month" || !e.kind)).map(mk));
   for (const e of recs) {
     if (!counted(e)) continue;
+    if (!e.item && e.month && (e.kind === "month" || !e.kind) && bySentence.has(mk(e))) continue;
     for (const [k, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
       if (!s) continue;
       const agree = Math.sign(s) === Math.sign(e.score);
@@ -26146,32 +26166,37 @@ const CITY_GROUPS = [
   ["الأردن وفلسطين", [
     ["عمّان", 31.9539, 35.9106, 3], ["إربد", 32.5556, 35.85, 3], ["الزرقاء", 32.0728, 36.0876, 3],
     ["العقبة", 29.532, 35.006, 3], ["القدس", 31.7683, 35.2137, 3], ["غزة", 31.5017, 34.4668, 3],
-    ["نابلس", 32.2211, 35.2544, 3], ["الخليل", 31.5326, 35.0998, 3], ["رام الله", 31.9038, 35.2034, 3]
+    ["نابلس", 32.2211, 35.2544, 3], ["الخليل", 31.5326, 35.0998, 3], ["رام الله", 31.9038, 35.2034, 3],
+    ["السلط", 32.0392, 35.7272, 3], ["مادبا", 31.7197, 35.7956, 3], ["الكرك", 31.1853, 35.7048, 3], ["معان", 30.1962, 35.734, 3], ["جرش", 32.2808, 35.8993, 3], ["المفرق", 32.3436, 36.2081, 3], ["جنين", 32.4637, 35.2961, 3], ["طولكرم", 32.3104, 35.0286, 3], ["بيت لحم", 31.7054, 35.2024, 3], ["خان يونس", 31.3462, 34.3062, 3], ["حيفا", 32.794, 34.9896, 3], ["الناصرة", 32.6996, 35.3035, 3], ["يافا", 32.0504, 34.7522, 3]
   ]],
   ["الخليج", [
     ["الرياض", 24.7136, 46.6753, 3], ["جدّة", 21.4858, 39.1925, 3], ["مكّة", 21.3891, 39.8579, 3],
     ["المدينة المنوّرة", 24.5247, 39.5692, 3], ["الدمّام", 26.3927, 49.9777, 3], ["الكويت", 29.3759, 47.9774, 3],
     ["الدوحة", 25.2854, 51.531, 3], ["أبو ظبي", 24.4539, 54.3773, 4], ["دبي", 25.2048, 55.2708, 4],
-    ["الشارقة", 25.3463, 55.4209, 4], ["المنامة", 26.2285, 50.586, 3], ["مسقط", 23.588, 58.3829, 4]
+    ["الشارقة", 25.3463, 55.4209, 4], ["المنامة", 26.2285, 50.586, 3], ["مسقط", 23.588, 58.3829, 4],
+    ["الطائف", 21.2703, 40.4158, 3], ["أبها", 18.2164, 42.5053, 3], ["تبوك", 28.3835, 36.5662, 3], ["بريدة", 26.326, 43.975, 3], ["الخبر", 26.2172, 50.1971, 3], ["العين", 24.2075, 55.7447, 4], ["عجمان", 25.4052, 55.5136, 4], ["صلالة", 17.0151, 54.0924, 4]
   ]],
   ["الشام والعراق", [
     ["دمشق", 33.5138, 36.2765, 3], ["حلب", 36.2021, 37.1343, 3], ["حمص", 34.7324, 36.7137, 3],
     ["بيروت", 33.8938, 35.5018, 2], ["طرابلس (لبنان)", 34.4367, 35.8497, 2], ["صيدا", 33.5606, 35.3758, 2],
     ["بغداد", 33.3152, 44.3661, 3], ["البصرة", 30.5085, 47.7836, 3], ["الموصل", 36.34, 43.13, 3],
-    ["أربيل", 36.19, 44.009, 3], ["النجف", 32.0, 44.335, 3], ["كربلاء", 32.6167, 44.0333, 3]
+    ["أربيل", 36.19, 44.009, 3], ["النجف", 32.0, 44.335, 3], ["كربلاء", 32.6167, 44.0333, 3],
+    ["اللاذقية", 35.5317, 35.7915, 3], ["حماة", 35.1318, 36.7578, 3], ["دير الزور", 35.3359, 40.1408, 3], ["زحلة", 33.8463, 35.902, 2], ["السليمانية", 35.5613, 45.4374, 3], ["كركوك", 35.4681, 44.3922, 3]
   ]],
   ["مصر والسودان", [
     ["القاهرة", 30.0444, 31.2357, 2], ["الإسكندرية", 31.2001, 29.9187, 2], ["الجيزة", 30.0131, 31.2089, 2],
     ["أسيوط", 27.1809, 31.1837, 2], ["الأقصر", 25.6872, 32.6396, 2], ["أسوان", 24.0889, 32.8998, 2],
     ["بورسعيد", 31.2653, 32.3019, 2], ["المنصورة", 31.0409, 31.3785, 2],
-    ["الخرطوم", 15.5007, 32.5599, 2], ["أم درمان", 15.6445, 32.4777, 2], ["بورتسودان", 19.6167, 37.2167, 2]
+    ["الخرطوم", 15.5007, 32.5599, 2], ["أم درمان", 15.6445, 32.4777, 2], ["بورتسودان", 19.6167, 37.2167, 2],
+    ["طنطا", 30.7865, 31.0004, 2], ["الزقازيق", 30.5877, 31.502, 2], ["السويس", 29.9668, 32.5498, 2], ["الإسماعيلية", 30.5965, 32.2715, 2], ["المنيا", 28.0871, 30.7618, 2], ["سوهاج", 26.5591, 31.6957, 2]
   ]],
   ["المغرب العربيّ", [
     ["الرباط", 34.0209, -6.8416, 1], ["الدار البيضاء", 33.5731, -7.5898, 1], ["مرّاكش", 31.6295, -7.9811, 1],
     ["فاس", 34.0181, -5.0078, 1], ["طنجة", 35.7595, -5.834, 1], ["أكادير", 30.4278, -9.5981, 1],
     ["الجزائر", 36.7538, 3.0588, 1], ["وهران", 35.6971, -0.6308, 1], ["قسنطينة", 36.365, 6.6147, 1],
     ["تونس", 36.8065, 10.1815, 1], ["صفاقس", 34.7406, 10.7603, 1], ["طرابلس (ليبيا)", 32.8872, 13.1913, 2],
-    ["بنغازي", 32.1167, 20.0667, 2], ["نواكشوط", 18.0735, -15.9582, 0]
+    ["بنغازي", 32.1167, 20.0667, 2], ["نواكشوط", 18.0735, -15.9582, 0],
+    ["مكناس", 33.8935, -5.5473, 1], ["وجدة", 34.6814, -1.9086, 1], ["عنّابة", 36.9, 7.7667, 1], ["سطيف", 36.19, 5.41, 1], ["سوسة", 35.8256, 10.636, 1], ["مصراتة", 32.3754, 15.0925, 2]
   ]],
   ["اليمن والقرن الإفريقيّ", [
     ["صنعاء", 15.3694, 44.191, 3], ["عدن", 12.7855, 45.0187, 3], ["تعز", 13.5795, 44.0209, 3],
@@ -26180,14 +26205,16 @@ const CITY_GROUPS = [
   ]],
   ["تركيا وإيران", [
     ["إسطنبول", 41.0082, 28.9784, 3], ["أنقرة", 39.9334, 32.8597, 3], ["إزمير", 38.4237, 27.1428, 3],
-    ["طهران", 35.6892, 51.389, 3.5], ["مشهد", 36.2605, 59.6168, 3.5], ["أصفهان", 32.6539, 51.666, 3.5]
+    ["طهران", 35.6892, 51.389, 3.5], ["مشهد", 36.2605, 59.6168, 3.5], ["أصفهان", 32.6539, 51.666, 3.5],
+    ["بورصة", 40.1826, 29.0665, 3], ["قونية", 37.8746, 32.4932, 3], ["غازي عنتاب", 37.0662, 37.3833, 3], ["تبريز", 38.08, 46.2919, 3.5]
   ]],
   ["مدن عالميّة", [
     ["لندن", 51.5074, -0.1278, 0], ["باريس", 48.8566, 2.3522, 1], ["برلين", 52.52, 13.405, 1],
     ["روما", 41.9028, 12.4964, 1], ["مدريد", 40.4168, -3.7038, 1], ["ستوكهولم", 59.3293, 18.0686, 1],
     ["موسكو", 55.7558, 37.6173, 3], ["نيويورك", 40.7128, -74.006, -5], ["تورونتو", 43.6532, -79.3832, -5],
     ["شيكاغو", 41.8781, -87.6298, -6], ["لوس أنجلوس", 34.0522, -118.2437, -8],
-    ["كوالالمبور", 3.139, 101.6869, 8], ["جاكرتا", -6.2088, 106.8456, 7], ["سيدني", -33.8688, 151.2093, 10]
+    ["كوالالمبور", 3.139, 101.6869, 8], ["جاكرتا", -6.2088, 106.8456, 7], ["سيدني", -33.8688, 151.2093, 10],
+    ["مانشستر", 53.4808, -2.2426, 0], ["أمستردام", 52.3676, 4.9041, 1], ["بروكسل", 50.8503, 4.3517, 1], ["هامبورغ", 53.5511, 9.9937, 1], ["ميونخ", 48.1351, 11.582, 1], ["فيينا", 48.2082, 16.3738, 1], ["ميلانو", 45.4642, 9.19, 1], ["أثينا", 37.9838, 23.7275, 2], ["كوبنهاغن", 55.6761, 12.5683, 1], ["أوسلو", 59.9139, 10.7522, 1], ["مالمو", 55.605, 13.0038, 1], ["غوتنبرغ", 57.7089, 11.9746, 1], ["ريكيافيك", 64.1466, -21.9426, 0], ["ديترويت", 42.3314, -83.0458, -5], ["هيوستن", 29.7604, -95.3698, -6], ["مونتريال", 45.5017, -73.5673, -5], ["ساو باولو", -23.5505, -46.6333, -3], ["ملبورن", -37.8136, 144.9631, 10], ["باكو", 40.4093, 49.8671, 4], ["كابول", 34.5553, 69.2075, 4.5], ["إسلام آباد", 33.6844, 73.0479, 5], ["كراتشي", 24.8607, 67.0011, 5], ["دلهي", 28.6139, 77.209, 5.5], ["دكّا", 23.8103, 90.4125, 6], ["بكين", 39.9042, 116.4074, 8], ["طوكيو", 35.6762, 139.6503, 9], ["لاغوس", 6.5244, 3.3792, 1], ["نيروبي", -1.2921, 36.8219, 3], ["جوهانسبرغ", -26.2041, 28.0473, 2]
   ]]
 ];
 
@@ -26277,7 +26304,79 @@ const CITY_ZONES = {
   "لوس أنجلوس": "America/Los_Angeles",
   "كوالالمبور": "Asia/Kuala_Lumpur",
   "جاكرتا": "Asia/Jakarta",
-  "سيدني": "Australia/Sydney"
+  "سيدني": "Australia/Sydney",
+  "السلط": "Asia/Amman",
+  "مادبا": "Asia/Amman",
+  "الكرك": "Asia/Amman",
+  "معان": "Asia/Amman",
+  "جرش": "Asia/Amman",
+  "المفرق": "Asia/Amman",
+  "جنين": "Asia/Hebron",
+  "طولكرم": "Asia/Hebron",
+  "بيت لحم": "Asia/Hebron",
+  "خان يونس": "Asia/Gaza",
+  "حيفا": "Asia/Jerusalem",
+  "الناصرة": "Asia/Jerusalem",
+  "يافا": "Asia/Jerusalem",
+  "الطائف": "Asia/Riyadh",
+  "أبها": "Asia/Riyadh",
+  "تبوك": "Asia/Riyadh",
+  "بريدة": "Asia/Riyadh",
+  "الخبر": "Asia/Riyadh",
+  "العين": "Asia/Dubai",
+  "عجمان": "Asia/Dubai",
+  "صلالة": "Asia/Muscat",
+  "اللاذقية": "Asia/Damascus",
+  "حماة": "Asia/Damascus",
+  "دير الزور": "Asia/Damascus",
+  "زحلة": "Asia/Beirut",
+  "السليمانية": "Asia/Baghdad",
+  "كركوك": "Asia/Baghdad",
+  "طنطا": "Africa/Cairo",
+  "الزقازيق": "Africa/Cairo",
+  "السويس": "Africa/Cairo",
+  "الإسماعيلية": "Africa/Cairo",
+  "المنيا": "Africa/Cairo",
+  "سوهاج": "Africa/Cairo",
+  "مكناس": "Africa/Casablanca",
+  "وجدة": "Africa/Casablanca",
+  "عنّابة": "Africa/Algiers",
+  "سطيف": "Africa/Algiers",
+  "سوسة": "Africa/Tunis",
+  "مصراتة": "Africa/Tripoli",
+  "بورصة": "Europe/Istanbul",
+  "قونية": "Europe/Istanbul",
+  "غازي عنتاب": "Europe/Istanbul",
+  "تبريز": "Asia/Tehran",
+  "مانشستر": "Europe/London",
+  "أمستردام": "Europe/Amsterdam",
+  "بروكسل": "Europe/Brussels",
+  "هامبورغ": "Europe/Berlin",
+  "ميونخ": "Europe/Berlin",
+  "فيينا": "Europe/Vienna",
+  "ميلانو": "Europe/Rome",
+  "أثينا": "Europe/Athens",
+  "كوبنهاغن": "Europe/Copenhagen",
+  "أوسلو": "Europe/Oslo",
+  "مالمو": "Europe/Stockholm",
+  "غوتنبرغ": "Europe/Stockholm",
+  "ريكيافيك": "Atlantic/Reykjavik",
+  "ديترويت": "America/Detroit",
+  "هيوستن": "America/Chicago",
+  "مونتريال": "America/Toronto",
+  "ساو باولو": "America/Sao_Paulo",
+  "ملبورن": "Australia/Melbourne",
+  "باكو": "Asia/Baku",
+  "كابول": "Asia/Kabul",
+  "إسلام آباد": "Asia/Karachi",
+  "كراتشي": "Asia/Karachi",
+  "دلهي": "Asia/Kolkata",
+  "دكّا": "Asia/Dhaka",
+  "بكين": "Asia/Shanghai",
+  "طوكيو": "Asia/Tokyo",
+  "لاغوس": "Africa/Lagos",
+  "نيروبي": "Africa/Nairobi",
+  "جوهانسبرغ": "Africa/Johannesburg"
 };
 
 const CITY_INDEX = Object.fromEntries(
@@ -26637,7 +26736,15 @@ const talNamed=__M["talisman-named"].default;
 const prediction=__M["prediction"].default;
 const taskhir=__M["taskhir"].default;
 const raml=__M["raml"].default;
-const corpus=__M["corpus"].default;
+// نصُّ الكتاب (٧٫٧ م.ب) لا يُحمَّلُ مع الصفحة: يُجلَبُ أوّلَ مرّةٍ يُحتاجُ إليه (البحثُ أو صفحةُ النصّ).
+// في النسخة المستقلّة هو مدمجٌ أصلًا في __M فيُؤخَذُ منها.
+let corpus = null, _corpusP = null;
+function loadCorpus() {
+  if (corpus) return Promise.resolve(corpus);
+  if (!_corpusP) _corpusP = (typeof __M !== "undefined" && __M.corpus ? Promise.resolve(__M.corpus.default) : import("../engines/corpus.js").then((m) => m.default))
+    .then((c) => (corpus = c)).catch((e) => { _corpusP = null; throw e; });
+  return _corpusP;
+}
 const diagnosis=__M["diagnosis"].default;
 const { SYMPTOMS }=__M["diagnosis.data"];
 const { ADJUSTMENT_RULES }=__M["zairja-handasiya.data"];
@@ -27544,18 +27651,18 @@ PANELS.qura = (main) => {
   main.innerHTML += subjectBar(c0) +
     `<div class="qline">السؤال (من البطاقة): <b>${c0.question ? "«" + esc(c0.question) + "»" : "لم تختر سؤالًا"}</b></div>
      <div class="form"><button class="btn" id="qcast">اضرب القرعة</button></div>
-     <div id="qout"></div>`;
+     <div id="quraOut"></div>`;
   $("#qcast", main).onclick = () => {
     const c = ctx();
-    if (!c.question) { $("#qout", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
+    if (!c.question) { $("#quraOut", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
     const r = qura.cast(c.name, c.mother, c.question, c.now); // رميةٌ جديدةٌ كلَّ يومِ استشارة، لا للأبد
-    $("#qout", main).innerHTML = `<div class="grid wide">${card({
+    $("#quraOut", main).innerHTML = `<div class="grid wide">${card({
       title: `قرعةُ جعفر الصادق`, k: `الباب ${AR(r.bab)}`,
       body: `<div class="kv"><b>الدعاء قبل الضرب:</b> ${esc(r.prayer)}</div>
         <div class="big" style="letter-spacing:.4rem;margin:.6rem 0">${r.throws.map((t) => `<span class="mono">${esc(t)}</span>`).join(" ")}</div>
         <div class="kv">خرجت الثلاثيّة «<b>${esc(r.key)}</b>» ⇒ <b>الباب ${AR(r.bab)}</b>.</div>
         ${r.verse ? `<div class="kv" style="margin-top:.5rem"><b>قال اللهُ تعالى:</b> ${esc(r.verse)}</div>` : ""}
-        <div class="big" style="font-size:1.04rem;margin-top:.4rem">${esc(r.fortune || `بابُك الباب ${AR(r.bab)} من أبواب القرعة؛ فتأمّلْ فألَك فيه.`)}</div>
+        <div class="big" style="font-size:1.04rem;margin-top:.4rem">${esc(r.fortune || (r.transcribed ? "" : `خرج الباب ${AR(r.bab)}، وصفحتُه (ص ٢٨ من الكتاب) ساقطةٌ من النسخة الموجودة، فلا نصَّ له عندنا. اضربِ القرعةَ غدًا أو بسؤالٍ آخر.`))}</div>
         <div class="kv" style="margin-top:.5rem"><b>بصراحة:</b> نصّ هذا البابِ عامٌّ بطبيعته — الكتابُ نفسُه يضع ٦٤ بابًا ثابتًا، كلٌّ منها حكمةٌ عامّةٌ تصلح تفسيرًا لأيّ سؤال («اترك الأمر»، «تمهّل»، «امضِ فيه»...)، لا جوابًا حرفيًّا مصمَّمًا لسؤالك بالذات. فسّرِ البابَ على ضوء سؤالك أنت (كما يفعل قارئُ أيّ كتابِ فألٍ)، ولا تتوقّع أن يذكر البابُ تفاصيل سؤالك.</div>`,
       basis: "عودٌ رُباعيٌّ (ا/ب/ج/د) يُرمى ٣ مرّات ⇒ ثلاثيّة ⇒ بابٌ من ٦٤ فيه آيةٌ وفأل. الرميُ هنا حتميٌّ من (اسمك + أمّك + سؤالك + تاريخ اليوم).",
       reveal: traceText(r.trace) + "\n\n" + r.note,
@@ -28047,7 +28154,7 @@ PANELS.raml = (main) => {
   $("#rg", main).onclick = () => {
     const c = ctx();
     if (!c.question) { $("#rout", main).innerHTML = `<div class="warn">اختر سؤالًا من «بطاقتي» أوّلًا.</div>`; return; }
-    const r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.when });
+    const r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.now }, { weight: learnedWeight(c.question, ["divination:raml", "divination"]) });
     // متابعة: «هل صار؟» بعد الوقت الذي قدّره الرمل (لا يُحفَظُ إن كان الطالعُ غيرَ صالحٍ للحكم)
     if (!r.voidChart) saveAsk({ src: "raml", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: r.verdict, due: dueFrom(r.timing?.magnitude, r.timing?.unit), votes: { divination: r.score > 0.5 ? 1 : r.score < -0.5 ? -1 : 0 } });
     const ch = r.chart;
@@ -28127,7 +28234,7 @@ PANELS.falak = (main) => {
   <p class="kv" style="margin-top:.5rem">تفصيلٌ فنّيٌّ إضافيٌّ (البيوت، الأنظار، سهام العرب، درجات البروج، الرأس والذنب، طبع الطالع، مواقع الكواكب، أحكام العالم) بلا توجيهٍ عمليٍّ مباشر — انتقل إلى «معلوماتٌ فقط» بالمرجع.</p>`;
 
   // ── حكم السؤال + توقّع السنة ─────────────────────────────────────
-  const hor = c.question ? falak.horary(c.question, c.now, c.lat, c.lon) : null;
+  const hor = c.question ? falak.horary(c.question, c.now, c.lat, c.lon, { weight: learnedWeight(c.question, ["horary"]) }) : null;
   // متابعة: «هل صار؟» بعد الوقت الذي قدّره علمُ المسائل (أو بعد شهرٍ إن لم يُقدَّر)
   dueAsks($("#horaryDue", main), c.sex === "f");
   if (hor && !/الصنعةُ|مادّةُ الرؤيا/.test(hor.verdict)) saveAsk({ src: "horary", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: hor.verdict, due: dueFrom(hor.timing?.count, hor.timing?.unit), votes: { horary: hor.score > 1 ? 1 : hor.score < -1 ? -1 : 0 } });
@@ -29110,6 +29217,12 @@ function dueAsks(box, F) {
     dueAsks(box, F);
   }));
 }
+/** وزنُ علمٍ واحدٍ للسؤال: الخاصُّ بموضوعه أوّلًا ثمّ العامّ (من arifWeights)؛ ١ إن لم يُتعلَّمْ شيء */
+function learnedWeight(question, keys) {
+  const W = arifWeights(), t = arif.topicOfQuestion(question);
+  for (const k of keys) { const v = W[`${t}|${k}`] ?? W[k]; if (v != null) return v; }
+  return 1;
+}
 // حالك: وزنُ كلّ خطٍّ (كتاب) من «فيّ / مش فيّ» — العامُّ من الجميع، وإجاباتُ الشخص (٣ فأكثر للخطّ) تغلبُه
 const HAL_FB = () => arifFbKey().replace(ARIF_FB0, "smk-hal-fb");
 function halLineWeights() {
@@ -29135,7 +29248,7 @@ PANELS.arif = (main) => {
   const C = { name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now, resLat: c.resLat, resLon: c.resLon, resCity: c.resCity };
   let R;
   const palmSaved = lsGet("smk-last-kaf", null);
-  try { R = arif.read(C, { weights: arifWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
+  try { R = arif.read(C, { weights: arifWeights(), lineWeights: halLineWeights(), palm: palmSaved && palmSaved.lines ? palmSaved : null }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const MON = arif.MONTHS, F = c.sex === "f";
   let topic = "all", sel = R.months.find((m) => m.now)?.k ?? 0, askBest = null;
@@ -29335,7 +29448,7 @@ PANELS.full = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = qiraa.full({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now }); }
+  try { r = qiraa.full({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, now: c.now, lineWeights: halLineWeights() }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   const I = r.identity, N = r.natal, A = r.age, S = A.stage;
   let kafCard = "";
@@ -29383,6 +29496,11 @@ PANELS.full = (main) => {
 
 // 15) نصّ الكتاب ───────────────────────────────────────────────────
 PANELS.corpus = (main) => {
+  if (!corpus) {
+    main.innerHTML = `${head('corpus', 'نصّ الكتاب — بحث')}<p class="kv">يُحمَّلُ نصُّ الكتاب… (مرّةً واحدةً، نحو ٢ م.ب)</p>`;
+    loadCorpus().then(() => { if (CURRENT === "corpus") PANELS.corpus(main); }).catch(() => { main.insertAdjacentHTML("beforeend", `<div class="warn">تعذّر تحميلُ نصّ الكتاب. تحقّقْ من الاتّصال وأعِدِ المحاولة.</div>`); });
+    return;
+  }
   const st = corpus.stats();
   main.innerHTML = `${head('corpus', 'نصّ الكتاب — بحث')}
     <p class="kv">${AR(st.chunks)} مقطعًا من نسخة الكبرى (OCR — يجد الموضع؛ الحروف قد لا تكون مضبوطة ١٠٠٪).</p>
@@ -29487,7 +29605,7 @@ PANELS.infoOnly = (main) => {
   (() => {
     const c = ctx();
     if (!c.question) { $("#io6", main).innerHTML = `<div class="kv">اختر سؤالًا من «بطاقتي» ليظهر تفصيلُ طالعك هنا.</div>`; return; }
-    let r; try { r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.when }); } catch (e) { $("#io6", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+    let r; try { r = raml.reading({ name: c.name, mother: c.mother, question: c.question, when: c.now }); } catch (e) { $("#io6", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
     const ch = r.chart;
     const line = (label, arr) => `<tr><th>${label}</th>${arr.map((f) => `<td>${esc(f.ar)}<br>${figCell(f)}</td>`).join("")}</tr>`;
     $("#io6", main).innerHTML = `<div class="grid wide">
@@ -29758,7 +29876,8 @@ function searchRows(term) {
     kw.adiya.slice(0, 4).forEach((a) => rows.push({ type: "names", src: "دعاء", text: `${a.name} — ${a.purpose}`, go: "khawass" }));
     kw.surahs.slice(0, 5).forEach((s) => rows.push({ type: "khawass", src: "خواصّ", text: `${s.ref} — ${s.uses}`, go: "khawass" }));
   } catch {}
-  try { corpus.search(term, { limit: 8 }).hits.forEach((h) => rows.push({ type: "corpus", src: "نصّ الكتاب", text: h.snippet, go: "corpus" })); } catch {}
+  if (corpus) { try { corpus.search(term, { limit: 8 }).hits.forEach((h) => rows.push({ type: "corpus", src: "نصّ الكتاب", text: h.snippet, go: "corpus" })); } catch {} }
+  else loadCorpus().then(() => { if (qIn.value.trim() === term) renderSearch(); }).catch(() => {});   // أوّلُ بحث: يُعادُ العرضُ حين يصلُ النصّ
   return rows;
 }
 const markTerm = (text, term) => esc(text).split(esc(term)).join(`<mark>${esc(term)}</mark>`);

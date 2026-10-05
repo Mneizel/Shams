@@ -34,8 +34,11 @@ function mulberry32(a) {
 
 const B4 = { "ا": 0, "ب": 1, "ج": 2, "د": 3 };
 /** رقمُ الباب: من فهرس الكتاب إن وُجِد، وإلا بترتيبٍ رباعيٍّ قياسيّ. */
+// الثلاثيّتان الوحيدتان الغائبتان عن الفهرس هما بابا الصفحة ٢٨ الساقطة (٣٩ و٤٠)؛ ترتيبُهما بينهما غيرُ مؤكّد
+const MISSING_KEYS = { "جاج": 39, "جاد": 40 };
 export function babNumber(key) {
   if (BOOK_INDEX[key] != null) return { bab: BOOK_INDEX[key], from: "فهرس الكتاب" };
+  if (MISSING_KEYS[key]) return { bab: MISSING_KEYS[key], from: "صفحةُ الكتاب ٢٨ ساقطةٌ من النسخة (البابان ٣٩ و٤٠، وترتيبُهما بينهما غيرُ مؤكّد)", missing: true };
   const [a, b, c] = [...key];
   return { bab: B4[a] * 16 + B4[b] * 4 + B4[c] + 1, from: "ترتيبٌ رباعيٌّ قياسيّ (الفهرس الأصليّ باهتُ المسح)" };
 }

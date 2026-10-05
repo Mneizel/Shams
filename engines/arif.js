@@ -575,7 +575,7 @@ function R_turn(months, topic) {
 export function read(c, opt = {}) {
   const T = timeline(c, opt);
   const { months, ctx } = T;
-  const h = hal.reading(c);
+  const h = hal.reading(opt.lineWeights ? { ...c, lineWeights: opt.lineWeights } : c);   // أوزانُ كتب «حالك» المتعلَّمة
   const L = life.all(ctx.sky, c.sex === "f" ? "f" : "m");
   const A = body.ailments(ctx.sky);
   const W = Object.fromEntries(Object.keys(TOPICS).map((t) => [t, windows(months, t)]));
@@ -659,21 +659,24 @@ export function ask(c, question, opt = {}) {
   try { qv = qura.cast(c.name, c.mother, question, now); } catch {}
   try { jv = jafr.extractAnswer(question, { name: c.name, mother: c.mother }); } catch {}
   const qs = [rs > 0.5 ? 1 : rs < -0.5 ? -1 : 0];
-  if (qv) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
+  if (qv && qv.tone) qs.push(qv.tone === "سعد" ? 1 : qv.tone === "نحس" ? -1 : 0);
   if (jv?.verdict) qs.push(jv.verdict.direction === "نعم" ? 1 : jv.verdict.direction === "لا" ? -1 : 0);
   const qAvg = qs.reduce((a, b) => a + b, 0) / qs.length;
   const tl = T.months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[topic], 0) / 12;
   const votes = [
-    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
+    { fam: "question", s: qAvg >= 0.34 ? 1 : qAvg <= -0.34 ? -1 : 0, why: `لحظةُ السؤال — الرمل: ${r.verdict}${qv ? ` · القرعة: الباب ${qv.bab} (${qv.tone || "صفحتُه ساقطةٌ من النسخة"})` : ""}${jv?.verdict ? ` · الجفر: ${jv.verdict.text}` : ""}` },
     { fam: "periods+sky", s: tl > 0.3 ? 1 : tl < -0.3 ? -1 : 0, why: `الخطُّ الزمنيّ للموضوع في السنة القادمة: ${tl > 0.3 ? "يميلُ إلى الخير" : tl < -0.3 ? "يميلُ إلى التعب" : "وسط"}` },
   ];
   // علمُ المسائل: خريطةُ السماء الحقيقيّة لحظةَ السؤال (عائلةٌ مستقلّة عن الرمل والقرعة والجفر)
   let hz = null;
   try { hz = falak.horary(question, now, c.resLat ?? c.lat, c.resLon ?? c.lon); } catch {}
   if (hz) votes.push({ fam: "horary", s: hz.score > 1 ? 1 : hz.score < -1 ? -1 : 0, why: `علمُ المسائل: ${hz.verdict} (الطالعُ ${typeof hz.ascendant === "string" ? hz.ascendant : hz.ascendant?.sign || ""}، صاحبُه ${hz.ascLord || ""})` });
-  const sum = votes.reduce((a, v) => a + v.s, 0);
+  // كلُّ صوتٍ بوزنِ عائلتِه المتعلَّم (الخاصُّ بالموضوع أوّلًا)؛ بلا أوزانٍ ⇒ المجموعُ نفسُه كما كان
+  const Wq = opt.weights || {}, wOf = (f) => Wq[`${topic}|${f}`] ?? Wq[f] ?? 1;
+  for (const v of votes) v.w = wOf(v.fam);
+  const sum = Math.round(votes.reduce((a, v) => a + v.s * v.w, 0) * 100) / 100;
   const F_ = c.sex === "f";
-  let big = sum >= 2 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum === 1 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum === 0 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum === -1 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
+  let big = sum >= 1.5 ? (F_ ? "يتمّ، والوقتُ في صالحِكِ." : "يتمّ، والوقتُ في صالحك.") : sum >= 0.5 ? (F_ ? "يتمّ، لكن لا تستعجلي." : "يتمّ، لكن لا تستعجل.") : sum > -0.5 ? "ممكن، لكنّه يحتاجُ وقتًا وصبرًا." : sum > -1.5 ? "فيه تعثّر، والأولى تأجيلُه." : "الأولى تركُه الآن.";
   const locked = /محبوس/.test(r.timing?.text || "");
   const tStr = !locked && r.timing?.magnitude && r.timing?.unit ? `، وأوّلُ ما يظهرُ منه بعد نحو ${r.timing.magnitude} ${r.timing.unit}` : locked ? "، لكنّه لا يظهرُ قريبًا" : "";
   // سؤالُ الزواج: يُجابُ أوّلًا بحسب ما تدلُّ عليه الخريطةُ من سنوات الزواج (قبلَها / فيها / بعدَها)

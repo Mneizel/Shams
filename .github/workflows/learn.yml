@@ -19,21 +19,21 @@ concurrency:
 jobs:
   learn:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - name: الموقع
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: مستودعُ الإجابات (قراءةٌ فقط)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ github.repository_owner }}/shams-feedback
           token: ${{ secrets.FEEDBACK_READ_TOKEN }}
           path: feedback-src
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
 
       - name: حسابُ الأوزان المتعلَّمة
         run: |

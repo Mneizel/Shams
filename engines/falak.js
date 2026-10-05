@@ -809,6 +809,11 @@ export function classifyAstroTopic(text) {
   for (const key of Object.keys(SIGNIFICATORS)) {
     if (key !== "عام" && q.includes(abjad.normalize(key))) return key;
   }
+  // «بيت/دار» وحدَها ليست عقارًا: مع فعلِ شراءٍ أو بيعٍ أو سكنٍ ⇒ عقار، ومع الرجوع إليها ⇒ غائب
+  if (/بيت|(^|\s)(ال|لل|عال|بال|ل|ع)?دار/.test(q)) {
+    if (/ارجع|يرجع|ترجع|نرجع|يرجعو|العوده|اعود|يعود|تعود/.test(q)) return "غائب";
+    if (/اشتري|اشتر|ابيع|بيع|استاجر|اجار|ايجار|اسكن|سكن|انتقل|ابني بيت|ابني دار|بناء|املك/.test(q)) return "عقار";
+  }
   const map = [["زواج", ["اتزوج", "زواج", "خطبه", "عريس", "عروس", "نتزوج", "زوجه", "زوجي"]],
     ["حب", ["حب", "يحبني", "تحبني", "أحب", "عشق"]],
     ["رزق", ["رزق", "فلوس", "مال", "دخل", "راتب", "فقر"]],
@@ -824,7 +829,7 @@ export function classifyAstroTopic(text) {
     ["غائب", ["غائب", "المسافر", "يرجع", "أخباره", "مفقود"]],
     // مسائلُ البارع
     ["صناعة", ["مجال"]],
-    ["عقار", ["بيت", "دار", "شقة", "شقه", "ارض", "أرض", "عقار"]],
+    ["عقار", ["شقة", "شقه", "ارض", "أرض", "عقار"]],
     ["بيع وشراء", ["ابيع", "بيع", "اشتري", "أشتري", "شراء", "صفقة"]],
     ["شركة", ["شريك", "شراكة", "شركه"]],
     ["كتاب", ["رسالة", "رساله", "مكتوب", "ايميل", "كتاب"]],
@@ -840,7 +845,7 @@ export function classifyAstroTopic(text) {
  * وحالَ الدليلين (كرامة/احتراق)، وحالَ القمر (خلوّ السير)، فيخرج «نعم/لا» +
  * تقديرَ وقتٍ + عواملَ + أثرًا كاملًا.
  */
-export function horary(question, when, lat, lon) {
+export function horary(question, when, lat, lon, opt = {}) {
   const topic = classifyAstroTopic(question);
   const sig = SIGNIFICATORS[topic] || SIGNIFICATORS["عام"];
   const asc = ascendant(when, lat, lon);
@@ -954,6 +959,8 @@ export function horary(question, when, lat, lon) {
     for (const x of bariR.details) if (x.s) factors.push(`${x.text} [${x.src}]`);
   } catch {}
 
+  // وزنُ علم المسائل المتعلَّم من إجابات الناس (opt.weight؛ بلا وزنٍ ⇒ الحكمُ نفسُه)
+  if (opt.weight && opt.weight !== 1) { score *= opt.weight; factors.push(`وزنُ علم المسائل من إجابات الناس ×${opt.weight}`); }
   let verdict = score >= 1.5 ? "نعم — يتمّ الأمرُ بإذن الله"
     : score >= 0 ? "نعم، بشرطِ سعيٍ وشيءٍ من التأخير"
     : score > -1.5 ? "الأمرُ متوقّفٌ لم يترجّحْ بعدُ لجانب"

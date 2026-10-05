@@ -372,13 +372,15 @@ export function reading(opt = {}, cfg = {}) {
       note: `قراءةٌ ثلاثيّة — ماضٍ: ${threePart.past.mood}، حاضر: ${threePart.present.mood}، مستقبل: ${threePart.future.mood}` },
   ];
 
+  // وزنُ الرمل المتعلَّم من إجابات الناس (cfg.weight؛ بلا وزنٍ ⇒ الحكمُ نفسُه)
+  const wScore = cfg.weight && cfg.weight !== 1 ? Math.round(blended * cfg.weight * 100) / 100 : blended;
   // القاضي فيصلٌ: شكلٌ نحسٌ في باب الخمسةَ عشرَ يقطعُ الحكمَ مهما رجّح الشاهدان.
-  let verdict = verdictFromScore(blended);
+  let verdict = verdictFromScore(wScore);
   let judgeOverride = null;
-  if (natVal(judge) < 0 && blended > -0.5) {
+  if (natVal(judge) < 0 && wScore > -0.5) {
     judgeOverride = `القاضي «${judge.ar}» نحسٌ ⇒ الأمرُ محبوسٌ لا يتمُّ في وقتِه مهما رجّح الشاهدان؛ الأولى تركُه أو تأخيرُه.`;
     verdict = `الأمرُ محبوسٌ لا يتمُّ في وقتِه — القاضي «${judge.ar}» نحسٌ يقطعُ الحكم؛ فالأولى تركُه أو تأجيلُه.`;
-  } else if (natVal(judge) > 0 && blended < 0.5 && blended > -2) {
+  } else if (natVal(judge) > 0 && wScore < 0.5 && wScore > -2) {
     judgeOverride = `القاضي «${judge.ar}» سعدٌ ⇒ الأمرُ يتمُّ ولو بعد تعثّرٍ وتأخير.`;
     verdict = "الأمرُ يتمُّ بعد سعيٍ وتأخير — القاضي سعدٌ يرجّحُ التمام.";
   }
@@ -424,7 +426,8 @@ export function reading(opt = {}, cfg = {}) {
     judge,
     witnesses: c.witnesses,
     reconciler: c.reconciler,
-    score: blended,
+    score: wScore,
+    weightApplied: cfg.weight && cfg.weight !== 1 ? cfg.weight : null,
     scoreStandard: sStd,
     scoreOmani: sOmani,
     verdict,

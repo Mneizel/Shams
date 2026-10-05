@@ -22,7 +22,7 @@ const files = [];
 
 // آخرُ إجابةٍ لكلّ (شخص، نوع، عنصر) هي المعتمدة
 const latest = new Map(), people = new Set();
-const keyOf = (r) => r.kind === "month" || r.kind === "ask" ? `${r.month}|${r.topic}|${r.q || ""}|${r.item || ""}` : r.kind === "marriage" ? `${r.first}` : `${r.item}`;
+const keyOf = (r) => r.kind === "month" || r.kind === "ask" ? `${r.month}|${r.topic}|${r.q || ""}|${r.item || ""}` : r.kind === "marriage" ? "" : `${r.item}`;
 for (const f of files) {
   let arr; try { arr = JSON.parse(fs.readFileSync(f, "utf8")); } catch { continue; }
   for (const r of Array.isArray(arr) ? arr : [arr]) {
