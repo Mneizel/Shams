@@ -2302,7 +2302,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "0b9d106636";
+const ENGINE_VER = "c392242f7d";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -5341,7 +5341,7 @@ __M["qura.data"]=(function(){"use strict";const __exports={};
 // من {ا،ب،ج،د} (٦٤ احتمالًا). لكلِّ ثلاثيّةٍ «بابٌ» مرقَّمٌ ١..٦٤ فيه آيةٌ وفألٌ.
 //
 // المصدرُ كاملًا: نُقِلت الأبوابُ الأربعةُ والستّون من نصِّ الكتاب حرفيًّا (نقلٌ نصّيٌّ
-// من المستخدم، ص ٩–٤٠). البابان ٣٩ و٤٠ لم يردا في النقل فتُركا بلا فأل.
+// من المستخدم، ص ٩–٤٠). البابان ٣٩ و٤٠ على ص ٢٨ الساقطة من المسح فتُركا بلا فأل.
 //
 // المغزى في المحرّك: «القرعة» ليست غيبًا. الرميُ هنا حتميٌّ من بذرةٍ (اسمُك +
 // اسمُ أمّك + سؤالُك + تاريخُ يومِ الاستشارة) — كرميةٍ فعليّةٍ جديدةٍ كلَّ جلسة:
@@ -5428,7 +5428,7 @@ const BOOK_INDEX = Object.fromEntries(
   Object.entries(ANSWERS).map(([k, v]) => [k, v.bab])
 );
 
-const MISSING_BABS = [39, 40]; // لم يردا في النقلِ النصّيّ
+const MISSING_BABS = [39, 40]; // صفحةُ الكتاب ٢٨ ساقطةٌ من نسخة الـPDF نفسِها (تقفز من ٢٧ إلى ٢٩) — تُحتاج نسخةٌ ورقيّةٌ أخرى
 
 const QURA_NOTE =
   "«قرعةُ جعفر الصادق»: رميُ عودٍ رُباعيٍّ (ا/ب/ج/د) ثلاثَ مرّاتٍ ⇒ ثلاثيّةٌ ⇒ بابٌ " +
@@ -20685,6 +20685,33 @@ function all(sky, sex = "m") {
 __exports.default = { work, wealth, marriage, all };
 
 ;__exports["work"]=work;__exports["wealth"]=wealth;__exports["marriage"]=marriage;__exports["all"]=all;return __exports;})();
+__M["blend"]=(function(){"use strict";const __exports={};
+// engines/blend.js
+// ─────────────────────────────────────────────────────────────────────────────
+// المزجُ الموزونُ بين المصادر — دالّتان مشتركتان تستعملهما المحرّكات التي تجمع
+// أكثرَ من كتاب (الجفر، الرمل، ...). كلُّ مصدرٍ { weight } يُضاف بوزنه.
+//   weightedMean: متوسّطُ قيمةٍ عدديّة (ميل/درجة) موزونًا.
+//   weightedTally: مجموعُ الأوزان لكلّ جوابٍ متقطّع (حرف/شكل) والأثقلُ منها.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** متوسّطٌ موزون: items[] و value(item) ⇒ رقم؛ الوزنُ item.weight. */
+function weightedMean(items, value = (x) => x.value) {
+  let num = 0, den = 0;
+  for (const it of items) { num += value(it) * it.weight; den += it.weight; }
+  return den ? num / den : 0;
+}
+
+/** مجموعُ الأوزان لكلّ مفتاح، والمفتاحُ الأثقل (التعادلُ يُفصَل بـ tieBreak). */
+function weightedTally(items, key = (x) => x.key, tieBreak = () => 0) {
+  const tally = {};
+  for (const it of items) { const k = key(it); tally[k] = (tally[k] || 0) + it.weight; }
+  const top = Object.entries(tally).sort((a, b) => b[1] - a[1] || tieBreak(a[0], b[0]))[0];
+  return { tally, top: top ? top[0] : null, topWeight: top ? top[1] : 0 };
+}
+
+__exports.default = { weightedMean, weightedTally };
+
+;__exports["weightedMean"]=weightedMean;__exports["weightedTally"]=weightedTally;return __exports;})();
 __M["raml-tukhi"]=(function(){"use strict";const __exports={};
 // engines/raml-tukhi.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20856,6 +20883,7 @@ __M["raml"]=(function(){"use strict";const __exports={};
 const { FIGURE_NATURE: ISK_NATURE, ISKANDARI_SRC }=__M["raml-iskandari.data"];
 const { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC }=__M["raml-nafhat.data"];
 const abjad=__M["abjad"].default;
+const { weightedMean }=__M["blend"];
 const tukhiRaml=__M["raml-tukhi"].default;
 const {
   FIGURES, HOUSES, TOPIC_HOUSE,
@@ -21194,7 +21222,7 @@ function reading(opt = {}, cfg = {}) {
   const sStd = scoreUnder("standard", hf, houseNo, judge, wR, wL);
   const sOmani = scoreUnder("omani", hf, houseNo, judge, wR, wL);
   const wStd = SOURCES_META.mizan.weight, wOm = SOURCES_META["falak-mashhun"].weight;
-  const blended = Math.round(((sStd * wStd + sOmani * wOm) / (wStd + wOm)) * 100) / 100;
+  const blended = Math.round(weightedMean([{ value: sStd, weight: wStd }, { value: sOmani, weight: wOm }]) * 100) / 100;
 
   const bySource = [
     { source: SOURCES_META.mizan.title, weight: wStd, houseSystem: "standard",
@@ -21422,6 +21450,7 @@ __M["jafr"]=(function(){"use strict";const __exports={};
 // ─────────────────────────────────────────────────────────────────────────────
 
 const abjad=__M["abjad"].default;
+const { weightedMean, weightedTally }=__M["blend"];
 const { ABJAD_ORDER, NURANI, LETTER_PLANET, LETTER_NATURE, LETTER_NAMES, LETTER_PLANET_ORDER }=__M["abjad.data"];
 const {
   ABWAB, ABWAB_SENTIMENT, ABWAB_PLANET, ABWAB_ELEMENT, YESNO_MUSTUR,
@@ -21826,13 +21855,9 @@ function extractAnswer(question, opt = {}) {
     return { recipe: r.id, weight: r.w, total, letter: lt, bab: ABWAB[lt] || null, sentiment: ABWAB_SENTIMENT[lt] ?? 0 };
   });
   // الجوابُ التوافقيّ = الحرفُ الأكثرُ وزنًا مجموعًا
-  const tally = {};
-  for (const m of byMethod) tally[m.letter] = (tally[m.letter] || 0) + m.weight;
-  const consensusLetter = Object.entries(tally).sort((a, b) => b[1] - a[1] ||
-    orderOf(a[0]) - orderOf(b[0]))[0][0];
+  const consensusLetter = weightedTally(byMethod, (m) => m.letter, (a, b) => orderOf(a) - orderOf(b)).top;
   const consensusBab = ABWAB[consensusLetter] || null;
-  const blendSent = byMethod.reduce((a, m) => a + m.sentiment * m.weight, 0) /
-    byMethod.reduce((a, m) => a + m.weight, 0);
+  const blendSent = weightedMean(byMethod, (m) => m.sentiment);
   trace.push(
     `مناهجُ بديلة ⇒ ${byMethod.map((m) => `${m.letter}(${m.recipe})`).join("، ")}`,
     `الجوابُ التوافقيّ (الأثقلُ وزنًا) = «${consensusLetter}»${consensusLetter !== answerLetter ? " — يخالفُ المنهجَ الأصليّ" : " — يوافقُ المنهجَ الأصليّ"}`,
@@ -26891,8 +26916,7 @@ const NAV = [
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
   ["العمل والعلاج", [["talismans", "✒️ الطلاسم"], ["spirits", "👁 الأرواح والملوك"], ["taskhir", "🔥 التسخير والتصريف"], ["khawass", "📿 الخواصّ"]]],
-  ["كشف الدجل", [["debunk", "🃏 ألعاب العرافة وحِيَلها"]]],
-  ["المرجع", [["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
+  ["المرجع وكشف الدجل", [["debunk", "🃏 ألعاب العرافة وحِيَلها"], ["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
 ];
 
 // ── هيكل الواجهة: أيقونات، وصفٌ موجز، صفحاتُ الهيكل (الرئيسية/الأدوات/بطاقتي) ──

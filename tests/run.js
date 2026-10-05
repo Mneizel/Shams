@@ -1542,6 +1542,19 @@ import { extractFeatures as kafFeat, templatePx, assessFit, palmQuad, detectHand
   ok(all.every((n) => CITY_INDEX[n].zone && tzOffsetAt(CITY_INDEX[n].zone, 2000, 1, 1) !== null), "لكلّ مدينةٍ منطقةٌ صالحة");
 }
 
+// ── المزج الموزون المشترك (engines/blend.js) ─────────────────────────────
+import blend from "../engines/blend.js";
+{
+  eq(blend.weightedMean([{ value: 1, weight: 1 }, { value: -1, weight: 3 }]), -0.5, "متوسّطٌ موزون (1×1 + -1×3)/4 = -0.5");
+  eq(blend.weightedMean([]), 0, "متوسّطٌ موزون لقائمةٍ فارغة = 0");
+  const t = blend.weightedTally([{ key: "ا", weight: 1 }, { key: "ب", weight: 0.9 }, { key: "ب", weight: 0.8 }]);
+  eq(t.top, "ب", "الأثقلُ وزنًا مجموعًا = ب (1.7 > 1)");
+  eq(Math.round(t.topWeight * 10) / 10, 1.7, "وزنُ الأثقل = 1.7");
+  const tie = blend.weightedTally([{ key: "ب", weight: 1 }, { key: "ا", weight: 1 }], (x) => x.key, (a, b) => a.localeCompare(b, "ar"));
+  eq(tie.top, "ا", "التعادلُ يُفصَل بدالّة الفصل");
+  eq(blend.weightedTally([]).top, null, "لا مصادر ⇒ لا جواب");
+}
+
 // ── النتيجة ───────────────────────────────────────────────────────────────
 console.log(fails.join("\n\n"));
 console.log(`\n${pass} ناجح، ${fail} فاشل`);

@@ -20,6 +20,7 @@
 import { FIGURE_NATURE as ISK_NATURE, ISKANDARI_SRC } from "../data/raml-iskandari.data.js";
 import { NAFHAT_HOUSES, NAFHAT_NAMES, NAFHAT_SRC } from "../data/raml-nafhat.data.js";
 import abjad from "./abjad.js";
+import { weightedMean } from "./blend.js";
 import tukhiRaml from "./raml-tukhi.js";
 import {
   FIGURES, HOUSES, TOPIC_HOUSE,
@@ -358,7 +359,7 @@ export function reading(opt = {}, cfg = {}) {
   const sStd = scoreUnder("standard", hf, houseNo, judge, wR, wL);
   const sOmani = scoreUnder("omani", hf, houseNo, judge, wR, wL);
   const wStd = SOURCES_META.mizan.weight, wOm = SOURCES_META["falak-mashhun"].weight;
-  const blended = Math.round(((sStd * wStd + sOmani * wOm) / (wStd + wOm)) * 100) / 100;
+  const blended = Math.round(weightedMean([{ value: sStd, weight: wStd }, { value: sOmani, weight: wOm }]) * 100) / 100;
 
   const bySource = [
     { source: SOURCES_META.mizan.title, weight: wStd, houseSystem: "standard",

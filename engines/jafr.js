@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import abjad from "./abjad.js";
+import { weightedMean, weightedTally } from "./blend.js";
 import { ABJAD_ORDER, NURANI, LETTER_PLANET, LETTER_NATURE, LETTER_NAMES, LETTER_PLANET_ORDER } from "../data/abjad.data.js";
 import {
   ABWAB, ABWAB_SENTIMENT, ABWAB_PLANET, ABWAB_ELEMENT, YESNO_MUSTUR,
@@ -418,13 +419,9 @@ export function extractAnswer(question, opt = {}) {
     return { recipe: r.id, weight: r.w, total, letter: lt, bab: ABWAB[lt] || null, sentiment: ABWAB_SENTIMENT[lt] ?? 0 };
   });
   // الجوابُ التوافقيّ = الحرفُ الأكثرُ وزنًا مجموعًا
-  const tally = {};
-  for (const m of byMethod) tally[m.letter] = (tally[m.letter] || 0) + m.weight;
-  const consensusLetter = Object.entries(tally).sort((a, b) => b[1] - a[1] ||
-    orderOf(a[0]) - orderOf(b[0]))[0][0];
+  const consensusLetter = weightedTally(byMethod, (m) => m.letter, (a, b) => orderOf(a) - orderOf(b)).top;
   const consensusBab = ABWAB[consensusLetter] || null;
-  const blendSent = byMethod.reduce((a, m) => a + m.sentiment * m.weight, 0) /
-    byMethod.reduce((a, m) => a + m.weight, 0);
+  const blendSent = weightedMean(byMethod, (m) => m.sentiment);
   trace.push(
     `مناهجُ بديلة ⇒ ${byMethod.map((m) => `${m.letter}(${m.recipe})`).join("، ")}`,
     `الجوابُ التوافقيّ (الأثقلُ وزنًا) = «${consensusLetter}»${consensusLetter !== answerLetter ? " — يخالفُ المنهجَ الأصليّ" : " — يوافقُ المنهجَ الأصليّ"}`,
