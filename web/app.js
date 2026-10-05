@@ -3,6 +3,7 @@
 import abjad from "../engines/abjad.js";
 import { FEEDBACK_URL } from "./feedback-config.js";
 import { LEARNED } from "../data/feedback-learned.data.js";
+import learn from "../engines/learn.js";
 import awfaq from "../engines/awfaq.js";
 import falak from "../engines/falak.js";
 import ak from "../engines/asma-khuddam.js";
@@ -2398,6 +2399,7 @@ PANELS.hal = (main) => {
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
   main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r, true));
   wireTraitFb(main, r);
+  pullRemote(() => { if (CURRENT === "hal") route("hal"); });
 };
 
 
@@ -2410,35 +2412,52 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 // «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
 // إرسالُ الإجابة إلى Google Apps Script (إن ضُبط عنوانُه) مع معطيات الشخص كاملةً (ليُعادَ حسابُ قراءته عند التشخيص)،
 // وبصمةُ SHA-256 تجمعُ إجاباتِ الشخص الواحد
+async function personHash() {
+  const raw = new TextEncoder().encode(arifFbKey());
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+/** إجاباتُ الشخص نفسِه من أجهزةٍ أخرى (بالبصمة فقط، بلا اسم): تُجلَبُ مرّةً في الجلسة، وتُعيدُ رسمَ الصفحة إن جاء جديد */
+async function pullRemote(onNew) {
+  if (!FEEDBACK_URL || !globalThis.crypto?.subtle) return;
+  const flag = "smk-remote-" + arifFbKey();
+  try { if (sessionStorage.getItem(flag)) return; sessionStorage.setItem(flag, "1"); } catch { return; }
+  try {
+    const res = await fetch(FEEDBACK_URL + "?p=" + (await personHash()));
+    const j = await res.json(); if (!j || !j.ok || !Array.isArray(j.recs)) return;
+    const before = JSON.stringify(lsGet(REMOTE(), []));
+    lsSet(REMOTE(), j.recs);
+    // تاريخُ الزواج الحقيقيّ المسجَّلُ من جهازٍ آخر
+    const mk = arifFbKey() + "|marriage", mr = j.recs.filter((r) => r.kind === "marriage").at(-1);
+    if (mr && !lsGet(mk, null)) {
+      const d = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(mr.item || "");
+      lsSet(mk, d ? { ok: false, actual: { y: +d[1], m: d[2] ? +d[2] : null, d: d[3] ? +d[3] : null }, at: Date.now() } : { ok: !!mr.ok, at: Date.now() });
+    }
+    if (JSON.stringify(j.recs) !== before && typeof onNew === "function") onNew();
+  } catch {}
+}
 async function arifSend(rec) {
   if (!FEEDBACK_URL || !globalThis.crypto?.subtle) return;
   try {
     const c = ctx();
-    const raw = new TextEncoder().encode(arifFbKey());
-    const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    const h = await personHash();
     const age = c.date ? new Date().getFullYear() - +c.date.slice(0, 4) : undefined;
     // نصٌّ عاديّ بلا ترويساتٍ خاصّة: Google Apps Script لا يقبلُ طلبَ الفحص المسبق (CORS preflight)
     await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age, name: (c.name || "").trim().slice(0, 40), mother: (c.mother || "").trim().slice(0, 40), date: c.date || "", time: c.time || "", city: c.city || "", resCity: c.resCity || "", sex: c.sex === "f" ? "f" : "m", ver: arif.ENGINE_VER }) });
   } catch {}
 }
 // «صار» يُصدِّقُ ما وافق حكمُه حكمَ الشهر، و«لم يصر» يُكذِّبُه؛ والشهرُ «العاديّ» (|حكمُه| < ٠٫٤٥) لا يُحتسَب: لم يقلِ العارفُ فيه شيئًا حاسمًا
-function tallyWeights(recs, min) {
-  const tally = {};
-  const add = (k, hit) => { const t = (tally[k] = tally[k] || { hit: 0, miss: 0 }); hit ? t.hit++ : t.miss++; };
-  for (const e of recs) {
-    if (!Number.isFinite(e.score) || Math.abs(e.score) < 0.45) continue;
-    for (const [k, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
-      if (!s) continue;
-      const hit = e.ok === (Math.sign(s) === Math.sign(e.score));
-      add(k, hit); if (e.topic) add(`${e.topic}|${k}`, hit);
-    }
-  }
-  const w = {};
-  for (const [k, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= min) w[k] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
-  return w;
+// الحساباتُ في engines/learn.js (نفسُها في أداة GitHub): الإصابةُ تُقارَنُ بالصدفة (نسبة «صار»)، والأشهرُ العاديّة لا تُحتسَب
+const REMOTE = () => arifFbKey() + "|remote";   // إجاباتُ الشخص نفسِه من أجهزةٍ أخرى (تُجلَبُ من Google)
+function myArifRecs() {
+  const local = Object.values(lsGet(arifFbKey(), {})).map((e) => ({ ...e, kind: "month", person: "me" }));
+  const seen = new Set(local.map((e) => `${e.month || ""}|${e.topic}|${e.item || ""}`));
+  const remote = lsGet(REMOTE(), []).filter((e) => (e.kind === "month" || e.kind === "ask") && !seen.has(`${e.month}|${e.topic}|${e.item || ""}`)).map((e) => ({ ...e, person: "me" }));
+  return [...local, ...remote];
 }
 function arifWeights() {
-  const own = tallyWeights(Object.values(lsGet(arifFbKey(), {})), 3);
+  const mine = myArifRecs();
+  const rate = mine.length >= 10 ? learn.okRate(mine, 10) : (LEARNED.okRate ?? 0.5);
+  const own = learn.toWeights(learn.arifTally(mine, { rate }), { min: 3, minPeople: 1 });
   // ما تعلّمه المحرّكُ من إجابات كلّ الناس أساسًا (عامّ ← خاصٌّ بالموضوع ← طرقُ الزواج)، وإجاباتُ الشخص نفسِه تغلبُه
   const byTopic = Object.fromEntries(Object.entries(LEARNED.byTopic || {}).flatMap(([t, ws]) => Object.entries(ws).map(([k, v]) => [`${t}|${k}`, v])));
   return { ...(LEARNED.weights || {}), ...byTopic, ...(LEARNED.marriageWeights || {}), ...own };
@@ -2472,11 +2491,10 @@ function dueAsks(box, F) {
 // حالك: وزنُ كلّ خطٍّ (كتاب) من «فيّ / مش فيّ» — العامُّ من الجميع، وإجاباتُ الشخص (٣ فأكثر للخطّ) تغلبُه
 const HAL_FB = () => arifFbKey().replace(ARIF_FB0, "smk-hal-fb");
 function halLineWeights() {
-  const tally = {};
-  for (const e of Object.values(lsGet(HAL_FB(), {}))) for (const [l, v] of Object.entries(e.votes || Object.fromEntries((e.lines || []).map((x) => [x, e.ok ? 1 : -1])))) { const t = (tally[l] = tally[l] || { hit: 0, miss: 0 }); v > 0 ? t.hit++ : t.miss++; }
-  const w = {};
-  for (const [l, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[l] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
-  return { ...(LEARNED.lines || {}), ...w };
+  const local = Object.entries(lsGet(HAL_FB(), {})).map(([id, e]) => ({ kind: "trait", person: "me", ok: e.ok, item: e.pick ? `${e.pick} (لا …)` : id, lines: e.lines, meths: e.votes }));
+  const seen = new Set(local.map((e) => e.item));
+  const remote = lsGet(REMOTE(), []).filter((e) => e.kind === "trait" && !seen.has(e.item)).map((e) => ({ ...e, person: "me" }));
+  return { ...(LEARNED.lines || {}), ...learn.toWeights(learn.lineTally([...local, ...remote]), { min: 3, minPeople: 1 }) };
 }
 // الاهتمام: ما فُتح في آخر ٣٠ يومًا (ترتيبٌ فقط — لا يُخفى شيء)
 function arifInterest(topic) {
@@ -2532,6 +2550,7 @@ PANELS.arif = (main) => {
       </div>
     </div>
     <div id="arifDue"></div>
+    <div id="arifQuiz"></div>
     <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء. وإجاباتُك «صار / لم يصر» على الأشهر الماضية تُعلّمُ العارفَ أيَّ العلومِ تصيبُ معك${FEEDBACK_URL ? "، وتُرسَلُ (مع الاسم) لتحسين العارف للجميع" : ""}.</span>
       <button class="btn sm sec" id="arifReset" type="button">أرجِعِ الترتيبَ الأصليّ وامسحْ ما تعلّمه</button></div>`);
 
@@ -2558,6 +2577,11 @@ PANELS.arif = (main) => {
     }).join("");
     box.querySelectorAll(".arif-bar").forEach((b) => b.addEventListener("click", () => { sel = +b.dataset.k; draw(); month(); }));
   }
+  // الجملُ الحاسمةُ التي قيلت في الشهر (لكلّ واحدةٍ طريقتُها وحكمُها)
+  function monthItems(d, t) {
+    const seen = new Set();
+    return d.voices.filter((v) => v.plain && Math.abs(v.s) >= 0.45 && (t === "all" || v.topics.includes(t) || v.topics.includes("all")) && !seen.has(v.plain) && seen.add(v.plain));
+  }
   function month() {
     const d = R.months.find((m) => m.k === sel); if (!d) return;
     const fb = lsGet(arifFbKey(), {})[d.label + "|" + topic];
@@ -2568,15 +2592,29 @@ PANELS.arif = (main) => {
       ${d.yearNote ? `<div class="gloss" style="margin-top:.3rem">${d.past ? "وكانت السنةُ عمومًا" : "وهذه السنةُ عمومًا"}: ${esc(d.yearNote)}.</div>` : ""}
       ${d.past ? `<div class="arif-did"><span>هل صار معك هذا؟</span><button type="button" class="btn sm sec" data-ok="1" aria-pressed="${fb?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-ok="0" aria-pressed="${fb?.ok === false}">✗ لم يصر</button>${fb ? `<span class="saved">انحفظ ✓</span>` : ""}</div>`
         : `<div class="arif-insight" style="margin-top:.5rem">النصيحة: ${esc(AR(d.advice[topic]))}</div>`}
+      ${d.past ? (() => {
+        const items = monthItems(d, topic); if (items.length < 2) return "";
+        const st = lsGet(arifFbKey(), {});
+        return `<details class="intro" style="margin-top:.5rem"><summary>أدقّ: هل صار كلُّ جملةٍ لحالها؟</summary><div class="body">${items.map((v, i) => { const f = st[`${d.label}|${topic}|${v.plain}`]; return `<div class="arif-did" data-item="${i}"><span>${esc(AR(v.plain))}</span><button type="button" class="btn sm sec" data-iok="1" aria-pressed="${f?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-iok="0" aria-pressed="${f?.ok === false}">✗ لم يصر</button>${f ? `<span class="saved">✓</span>` : ""}</div>`; }).join("")}</div></details>`;
+      })() : ""}
       <ul class="kv src" style="margin:.6rem 0 0;padding-inline-start:1.1rem">${d.voices.map((v) => `<li>${esc(arif.FAMILIES[v.fam] || v.fam)}: ${esc(AR(v.why))} ⇒ ${v.s > 0 ? "خير" : v.s < 0 ? "تعب" : "—"}</li>`).join("")}</ul>
     </div>`;
     md.querySelectorAll("[data-ok]").forEach((b) => b.addEventListener("click", () => {
       const all = lsGet(arifFbKey(), {}), fams = {};
       const meths = {};
       for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) { fams[v.fam] = (fams[v.fam] || 0) + v.s; const mk = `${v.fam}:${v.meth || v.fam}`; meths[mk] = (meths[mk] || 0) + v.s; }
-      all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams, meths };
+      all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, fams, meths };
       lsSet(arifFbKey(), all); month();
       arifSend({ kind: "month", ok: b.dataset.ok === "1", topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, score: d.scores[topic], fams, meths, said: `${d.level[topic]}: ${d.text[topic]}`.slice(0, 300) });
+    }));
+    // جملةٌ واحدة: تُصدِّقُ أو تُكذِّبُ الطريقةَ التي قالتها وحدَها (حكمُها = إشارةُ صوتِها)
+    md.querySelectorAll("[data-iok]").forEach((b) => b.addEventListener("click", () => {
+      const v = monthItems(d, topic)[+b.closest("[data-item]").dataset.item]; if (!v) return;
+      const ok = b.dataset.iok === "1", mo = `${d.y}-${String(d.m + 1).padStart(2, "0")}`;
+      const rec = { ok, score: v.s, topic, month: mo, item: v.plain, fams: { [v.fam]: v.s }, meths: { [`${v.fam}:${v.meth || v.fam}`]: v.s } };
+      const all = lsGet(arifFbKey(), {}); all[`${d.label}|${topic}|${v.plain}`] = rec; lsSet(arifFbKey(), all);
+      arifSend({ kind: "month", ...rec, item: v.plain.slice(0, 80), said: v.plain.slice(0, 300) });
+      const open = b.closest("details")?.open; month(); if (open) { const dd = md.querySelector("details"); if (dd) dd.open = true; }
     }));
   }
   main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
@@ -2640,6 +2678,31 @@ PANELS.arif = (main) => {
   });
   // أسئلةٌ سابقةٌ حان وقتُها: «هل صار؟»
   dueAsks($("#arifDue", main), F);
+  pullRemote(() => { if (CURRENT === "arif") route("arif"); });
+  // اختبارٌ سريع: ثلاثةُ أشهرٍ ماضيةٍ يختارُها العارفُ (أحسنُ حكمٍ وأسوؤه وثالثٌ حاسم) ⇒ إجاباتٌ متوازنة لا يختارُها التذكّر
+  (function quiz() {
+    const box = $("#arifQuiz", main); if (!box) return;
+    const fb = lsGet(arifFbKey(), {}), strong = R.months.filter((m) => m.past && Math.abs(m.scores.all) >= 0.45);
+    let picks = lsGet(arifFbKey() + "|quiz", null);
+    if (!picks || !picks.every((l) => strong.some((m) => m.label === l))) {
+      const s = strong.slice().sort((a, b) => b.scores.all - a.scores.all);
+      const best = s[0], worst = s.at(-1), mid = s.filter((m) => m !== best && m !== worst).sort((a, b) => Math.abs(b.scores.all) - Math.abs(a.scores.all))[0];
+      picks = [best, worst, mid].filter(Boolean).filter((m, i, a) => a.indexOf(m) === i).map((m) => m.label);
+      lsSet(arifFbKey() + "|quiz", picks);
+    }
+    const todo = picks.map((l) => strong.find((m) => m.label === l)).filter((m) => m && !fb[m.label + "|all"]);
+    if (!todo.length) { box.innerHTML = ""; return; }
+    box.innerHTML = `<div class="arif-insight"><b>اختبارٌ سريع:</b> ${F ? "ساعدينا" : "ساعدنا"} نعرفْ أين يصيبُ العارفُ معك — ${AR(todo.length)} ${todo.length === 1 ? "شهر" : "أشهر"} اختارها هو:${todo.map((m) => `<div class="arif-did" data-ql="${esc(m.label)}"><span><b>${esc(MON[m.m])} ${AR(m.y)}</b> (${esc(m.level.all)}): ${esc(AR(m.text.all))}</span><button type="button" class="btn sm sec" data-qok="1">✓ صار</button><button type="button" class="btn sm sec" data-qok="0">✗ لم يصر</button></div>`).join("")}</div>`;
+    box.querySelectorAll("[data-qok]").forEach((b) => b.addEventListener("click", () => {
+      const m = R.months.find((x) => x.label === b.closest("[data-ql]").dataset.ql); if (!m) return;
+      const fams = {}, meths = {};
+      for (const v of m.voices) { fams[v.fam] = (fams[v.fam] || 0) + v.s; const mk = `${v.fam}:${v.meth || v.fam}`; meths[mk] = (meths[mk] || 0) + v.s; }
+      const mo = `${m.y}-${String(m.m + 1).padStart(2, "0")}`, ok = b.dataset.qok === "1";
+      const all = lsGet(arifFbKey(), {}); all[m.label + "|all"] = { ok, score: m.scores.all, topic: "all", month: mo, fams, meths, quiz: true }; lsSet(arifFbKey(), all);
+      arifSend({ kind: "month", ok, topic: "all", month: mo, score: m.scores.all, fams, meths, quiz: true, said: `${m.level.all}: ${m.text.all}`.slice(0, 300) });
+      quiz(); if (sel === m.k) month();
+    }));
+  })();
   $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });
   draw(); month();
 };

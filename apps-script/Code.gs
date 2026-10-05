@@ -9,7 +9,7 @@
 const KINDS = ["month", "marriage", "ask", "trait", "palm"];
 const DAILY_MAX = 80;   // أقصى عددِ إجاباتٍ للشخص الواحد في اليوم (حمايةٌ من الإجابات الوهميّة المتكرّرة)
 const TOPICS = ["all", "work", "money", "love", "health", "study"];
-const COLS = ["at", "name", "mother", "date", "time", "city", "resCity", "kind", "ok", "topic", "month", "item", "said", "q", "score", "fams", "meths", "lines", "state", "first", "age", "sex", "ver", "person", "sent"];
+const COLS = ["at", "name", "mother", "date", "time", "city", "resCity", "kind", "ok", "topic", "month", "item", "said", "q", "score", "fams", "meths", "lines", "state", "first", "quiz", "age", "sex", "ver", "person", "sent"];
 const TEXT = ["at", "name", "mother", "date", "time", "city", "resCity", "month", "item", "said", "q", "fams", "meths", "lines", "state", "ver", "person", "sent"];
 
 function sheet_() {
@@ -51,6 +51,8 @@ function clean_(b) {
     r.fams = nums(b.fams, /^[a-z+]{2,20}$/);
     r.meths = nums(b.meths, /^[a-z+]{2,20}:[a-z+]{2,20}$/);
     if (b.kind === "ask") r.q = txt(b.q, 200);
+    r.item = txt(b.item, 80);            // جملةٌ واحدةٌ من الشهر (إن أُجيب عنها وحدَها)
+    r.quiz = b.quiz === true ? true : "";  // من «الاختبار السريع» (أشهرٌ اختارها العارف)
   } else {
     if (typeof b.state !== "string" || b.state.length > 30) return null;
     r.state = b.state; r.first = (b.first === null || isNaN(b.first)) ? "" : Math.trunc(b.first);
@@ -117,60 +119,101 @@ const AR_MARR = { prof7: "الانتهاء إلى السابع", profvenus: "ا�
 const AR_LINE = {"chart":"مزاجُ الخريطة","name":"مزاجُ حروفِ الاسم","manners":"دليلُ الأخلاق","sign":"برجُ دليلِ الأخلاق","wit":"عطاردُ والقمر","ptol_signs":"بروجُ عطاردَ والقمر","ptol_ruler":"حاكمُ النفس","ptol_moon":"حالُ القمر","am_asc":"طالعُ المولد (أبو معشر)","name_sign":"برجُ الاسم (كشف المكتوم)","asc_degree":"درجةُ الطالع (كتاب الدرج)","birth_number":"رقمُ يوم الميلاد (Cheiro)","th_social":"الطالعُ وصاحبُه (الثمرة)","th_merc":"عطاردُ في بُرجَي زحلَ أو المريخ (الثمرة)","dalil":"مرتبةُ الطالع (دليل الحيران)"};
 const AR_TOPIC = { all: "عامّ", work: "شغل", money: "فلوس", love: "حبّ وزواج", health: "صحّة", study: "دراسة" };
 
-/** ورقةُ «report»: كم إجابة، وأيُّ علمٍ وطريقةٍ وكتابٍ يصيبُ بأيّ نسبة، وأكثرُ ما يُخطئ */
+/** ورقةُ «report»: كم إجابة، وأيُّ علمٍ وطريقةٍ وكتابٍ يصيبُ — مقارنةً بالصدفة — وتقييمُ التعلّم */
 function buildReport() {
   const sh = sheet_(), data = sh.getDataRange().getValues(), head = data[0];
   const col = (n) => head.indexOf(n), rows = data.slice(1);
   const J = (v) => { try { return v ? JSON.parse(String(v).replace(/^'/, "")) : {}; } catch (x) { return {}; } };
   const L = (v) => { const x = J(v); return Array.isArray(x) ? x : []; };
   const okOf = (v) => v === true || v === "TRUE" || v === "true";
-  const t = {}, add = (grp, key, hit) => { const g = (t[grp] = t[grp] || {}); const x = (g[key] = g[key] || [0, 0]); hit ? x[0]++ : x[1]++; };
-  const people = {}, kinds = {};
+  const strong = (r) => { const sc = +r[col("score")]; return isFinite(sc) && Math.abs(sc) >= 0.45; };
+  // نسبةُ «صار» العامّة (أساسُ المقارنة بالصدفة) ونسبةُ «فيّ» في حالك
+  const ar = rows.filter(function (r) { return (r[col("kind")] === "month" || r[col("kind")] === "ask") && strong(r); });
+  const P = ar.length ? ar.filter(function (r) { return okOf(r[col("ok")]); }).length / ar.length : 0.5;
+  const tr = rows.filter(function (r) { return r[col("kind")] === "trait" && String(r[col("item")]).indexOf("(لا ") < 0; });
+  const Y = tr.length ? tr.filter(function (r) { return okOf(r[col("ok")]); }).length / tr.length : 0.5;
+  const t = {}, add = (grp, key, hit, exp) => { const g = (t[grp] = t[grp] || {}); const x = (g[key] = g[key] || [0, 0, 0]); hit ? x[0]++ : x[1]++; x[2] += exp; };
+  const people = {};
+  const quiz = [0, 0];
   rows.forEach(function (r) {
-    const kind = r[col("kind")], ok = okOf(r[col("ok")]); people[r[col("person")]] = 1; kinds[kind] = (kinds[kind] || 0) + 1;
+    const kind = r[col("kind")], ok = okOf(r[col("ok")]); people[r[col("person")]] = 1;
     if (kind === "month" || kind === "ask") {
+      if (!strong(r)) return;   // «عاديّ»: لا يُحتسَب
       const sc = +r[col("score")];
-      if (!isFinite(sc) || Math.abs(sc) < 0.45) return;   // «عاديّ»: لا يُحتسَب
-      add("topic", r[col("topic")], ok);
+      add("topic", r[col("topic")], ok, P);
+      if (okOf(r[col("quiz")])) { if (ok) quiz[0]++; else quiz[1]++; }
       const f = J(r[col("fams")]), m = J(r[col("meths")]);
-      Object.keys(f).forEach(function (k) { if (f[k]) add("fam", k, ok === (Math.sign(f[k]) === Math.sign(sc))); });
-      Object.keys(m).forEach(function (k) { if (m[k]) add("meth", k, ok === (Math.sign(m[k]) === Math.sign(sc))); });
+      Object.keys(f).forEach(function (k) { if (f[k]) { const ag = Math.sign(f[k]) === Math.sign(sc); add("fam", k, ok === ag, ag ? P : 1 - P); } });
+      Object.keys(m).forEach(function (k) { if (m[k]) { const ag = Math.sign(m[k]) === Math.sign(sc); add("meth", k, ok === ag, ag ? P : 1 - P); } });
     } else if (kind === "marriage") {
-      add("marr_state", r[col("state")], ok);
+      add("marr_state", r[col("state")], ok, 0.5);
       const mm = J(r[col("meths")]);
-      if (Object.keys(mm).length) Object.keys(mm).forEach(function (k) { add("marr", k, mm[k] > 0); });
-      else L(r[col("lines")]).forEach(function (k) { add("marr", k, ok); });
+      if (Object.keys(mm).length) Object.keys(mm).forEach(function (k) { add("marr", k, mm[k] > 0, 0.5); });
+      else L(r[col("lines")]).forEach(function (k) { add("marr", k, ok, 0.5); });
     } else if (kind === "trait") {
-      add("trait", String(r[col("said")] || r[col("item")]), ok);
+      const choice = String(r[col("item")]).indexOf("(لا ") >= 0;
+      add("trait", String(r[col("said")] || r[col("item")]), ok, choice ? 0.5 : Y);
       const tv = J(r[col("meths")]);
-      if (Object.keys(tv).length) Object.keys(tv).forEach(function (k) { add("line", k, tv[k] > 0); });
-      else L(r[col("lines")]).forEach(function (k) { add("line", k, ok); });
-    } else if (kind === "palm") add("palm", r[col("item")], ok);
+      if (Object.keys(tv).length) Object.keys(tv).forEach(function (k) { add("line", k, tv[k] > 0, choice ? 0.5 : Y); });
+      else L(r[col("lines")]).forEach(function (k) { add("line", k, ok, Y); });
+    } else if (kind === "palm") add("palm", r[col("item")], ok, 0.5);
   });
+  // تقييمُ التعلّم من GitHub (الإصابةُ قبل الأوزان وبعدها)
+  let ev = null;
+  try {
+    const owner = PropertiesService.getScriptProperties().getProperty("GH_OWNER");
+    const txt = UrlFetchApp.fetch("https://raw.githubusercontent.com/" + owner + "/Shams/main/data/feedback-learned.data.js", { muteHttpExceptions: true }).getContentText();
+    const mm = txt.match(/export const LEARNED = ([\s\S]*);\s*$/); ev = mm ? (JSON.parse(mm[1]).eval || null) : null;
+  } catch (x) {}
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let rep = ss.getSheetByName("report"); if (!rep) rep = ss.insertSheet("report", 1); rep.clear();
-  const out = [["تقريرُ التعلّم", "", "", "", ""], ["آخرُ تحديث", new Date().toISOString().slice(0, 16).replace("T", " "), "", "", ""],
-    ["عددُ الإجابات", rows.length, "عددُ الأشخاص", Object.keys(people).length, ""], ["", "", "", "", ""]];
+  const pc = (x) => Math.round(100 * x) + "%";
+  const out = [["تقريرُ التعلّم", "", "", "", "", "", ""], ["آخرُ تحديث", new Date().toISOString().slice(0, 16).replace("T", " "), "", "", "", "", ""],
+    ["عددُ الإجابات", rows.length, "عددُ الأشخاص", Object.keys(people).length, "", "", ""],
+    ["نسبةُ «صار» العامّة", pc(P), "(الصدفةُ التي تُقاسُ عليها كلُّ طريقة)", "", "", "", ""],
+    ["إصابةُ العارف في «الاختبار السريع»", quiz[0] + quiz[1] ? pc(quiz[0] / (quiz[0] + quiz[1])) : "—", "(أشهرٌ اختارها العارفُ لا الذاكرة — الأصدقُ)", quiz[0] + quiz[1], "", "", ""],
+    ["تقييمُ التعلّم (GitHub)", ev ? ("قبل الأوزان " + ev.before + "% ← بعدها " + ev.after + "%") : "— لا تقييمَ بعد —", ev ? (ev.rejected ? "لم تُعتمَدِ الأوزانُ الجديدة (لم تُحسِّن)" : "اعتُمدت") : "", ev ? ev.answers : "", "", "", ""],
+    ["", "", "", "", "", "", ""]];
   const section = (title, grp, label) => {
-    out.push([title, "صحّ", "غلط", "نسبةُ الإصابة", "عددُ الإجابات"]);
+    out.push([title, "صحّ", "غلط", "نسبةُ الإصابة", "المتوقَّعُ بالصدفة", "فوقَ الصدفة", "عددُ الإجابات"]);
     const g = t[grp] || {};
-    const ks = Object.keys(g).sort(function (a, b) { return (g[a][0] / (g[a][0] + g[a][1])) - (g[b][0] / (g[b][0] + g[b][1])); });
-    if (!ks.length) out.push(["— لا إجاباتَ بعد —", "", "", "", ""]);
-    ks.forEach(function (k) { const x = g[k], n = x[0] + x[1]; out.push([label(k), x[0], x[1], n ? Math.round(100 * x[0] / n) + "%" : "", n]); });
-    out.push(["", "", "", "", ""]);
+    const lift = (x) => (x[0] - x[2]) / (x[0] + x[1]);
+    const ks = Object.keys(g).sort(function (a, b) { return lift(g[a]) - lift(g[b]); });
+    if (!ks.length) out.push(["— لا إجاباتَ بعد —", "", "", "", "", "", ""]);
+    ks.forEach(function (k) { const x = g[k], n = x[0] + x[1]; const l = Math.round(100 * lift(x)); out.push([label(k), x[0], x[1], pc(x[0] / n), pc(x[2] / n), (l > 0 ? "+" : "") + l + "%", n]); });
+    out.push(["", "", "", "", "", "", ""]);
   };
-  section("العائلات (العارف)", "fam", function (k) { return AR_FAM[k] || k; });
-  section("الطرق داخل العائلات (الأضعفُ أوّلًا)", "meth", function (k) { const p = k.split(":"); return (AR_FAM[p[0]] || p[0]) + " ← " + (AR_METH[p[1]] || p[1]); });
+  section("العائلات (العارف) — الأضعفُ أوّلًا", "fam", function (k) { return AR_FAM[k] || k; });
+  section("الطرق داخل العائلات", "meth", function (k) { const p = k.split(":"); return (AR_FAM[p[0]] || p[0]) + " ← " + (AR_METH[p[1]] || p[1]); });
   section("المواضيع", "topic", function (k) { return AR_TOPIC[k] || k; });
   section("الزواج: الحكم", "marr_state", function (k) { return k; });
   section("الزواج: الطرق", "marr", function (k) { return AR_MARR[k] || k; });
   section("حالك: الكتب/الخطوط", "line", function (k) { return AR_LINE[k] || k; });
   section("حالك: الصفات", "trait", function (k) { return k; });
   section("الكفّ: الأبواب", "palm", function (k) { return k; });
-  out.push(["ملاحظة", "الأشهرُ «العاديّة» لا تُحتسَب. المحرّكُ لا يغيّرُ وزنَ شيءٍ قبل ٢٠ إجابةً عليه من الجميع.", "", "", ""]);
-  rep.getRange(1, 1, out.length, 5).setValues(out);
+  out.push(["ملاحظة", "«فوقَ الصدفة» هو المهمّ: طريقةٌ نسبتُها ٧٥٪ والصدفةُ ٧٥٪ لا تصيبُ شيئًا. الأشهرُ العاديّةُ لا تُحتسَب، ولا يتغيّرُ وزنٌ قبل ٢٠ إجابةً من ٥ أشخاص.", "", "", "", "", ""]);
+  rep.getRange(1, 1, out.length, 7).setValues(out);
   rep.getRange(1, 1).setFontWeight("bold").setFontSize(14);
   rep.setColumnWidth(1, 320);
+}
+
+/** يعيدُ إجاباتِ شخصٍ واحدٍ ببصمته (بلا اسمٍ ولا معطياتِ ميلاد) ليتعلّمَ الموقعُ منها على أيّ جهاز */
+function doGet(e) {
+  const out = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+  const pid = String((e && e.parameter && e.parameter.p) || "");
+  if (!/^[0-9a-f]{16}$/.test(pid)) return out({ ok: false, error: "bad person" });
+  const sh = sheet_(), data = sh.getDataRange().getValues(), head = data[0], col = (n) => head.indexOf(n);
+  const J = (v) => { try { return v ? JSON.parse(String(v).replace(/^'/, "")) : null; } catch (x) { return null; } };
+  const KEEP = ["kind", "topic", "month", "item", "score", "fams", "meths", "lines", "state", "first", "quiz", "at"];
+  const recs = data.slice(1).filter(function (r) { return String(r[col("person")]).replace(/^'/, "") === pid; }).slice(-300).map(function (r) {
+    const o = {};
+    KEEP.forEach(function (k) { const v = r[col(k)]; if (v === "" || v === undefined || v === null) return; o[k] = ["fams", "meths", "lines"].indexOf(k) >= 0 ? J(v) : (v instanceof Date ? v.toISOString() : String(v).replace(/^'/, "")); });
+    o.ok = r[col("ok")] === true || r[col("ok")] === "TRUE" || r[col("ok")] === "true";
+    if (o.score !== undefined) o.score = +o.score;
+    if (o.quiz !== undefined) o.quiz = o.quiz === "true" || o.quiz === "TRUE";
+    return o;
+  });
+  return out({ ok: true, recs: recs });
 }
 
 /** شغّلْها مرّةً واحدةً يدويًّا: تنشئُ المشغّلَ اليوميّ (الساعة ٣ فجرًا) */

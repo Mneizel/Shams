@@ -381,6 +381,27 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // حساباتُ التعلّم (engines/learn.js): المقارنةُ بالصدفة، وصوتٌ لكلّ شخص، والشهرُ العاديّ لا يُحتسَب
+  {
+    const L = (await import("../engines/learn.js")).default;
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const recs = [];
+    for (let p = 0; p < 12; p++) for (let i = 0; i < 10; i++) {
+      const truth = rnd() < 0.5 ? 1 : -1;              // ما سيحدثُ فعلًا (خيرٌ أو تعب)
+      const score = rnd() < 0.5 ? 0.9 : -0.9;           // حكمُ الشهر
+      // «صار» ٨٠٪ عشوائيًّا (جملٌ عامّة) — إلّا إن وافق الحكمُ الحقيقةَ فـ«صار» أكثر
+      const ok = rnd() < (Math.sign(score) === truth ? 0.9 : 0.7);
+      recs.push({ kind: "month", person: "p" + p, ok, score, topic: "all", fams: { opt: 1, good: truth } });
+    }
+    recs.push({ kind: "month", person: "p0", ok: true, score: 0.1, topic: "all", fams: { opt: 1 } });   // عاديّ
+    const w = L.toWeights(L.arifTally(recs));
+    ok(Math.abs((w.opt ?? 1) - 1) < 0.12, `المتفائلُ دائمًا لا يكسبُ من «صار» العشوائيّة (وزنُه ${w.opt})`);
+    ok((w.good ?? 1) >= 1.05 && (w.good ?? 1) > (w.opt ?? 1) + 0.05, `الطريقةُ التي تصيبُ فعلًا يعلو وزنُها (${w.good} مقابل ${w.opt})`);
+    eq(L.counted({ score: 0.1 }), false, "الشهرُ العاديّ لا يُحتسَب");
+    const spam = [...Array(30)].map(() => ({ kind: "month", person: "x", ok: false, score: 0.9, topic: "all", fams: { k: 1 } }))
+      .concat([...Array(6)].map((_, i) => ({ kind: "month", person: "q" + i, ok: true, score: 0.9, topic: "all", fams: { k: 1 } })));
+    ok(L.toWeights(L.arifTally(spam, { rate: 0.5 })).k > 1, "شخصٌ واحدٌ كثيرُ الإجابات لا يغلبُ ستّةً (صوتٌ لكلّ شخص)");
+  }
   // النسخةُ المستقلّة تحوي كلَّ ما يستوردُه الموقع، ونسخةُ الحسابات محدَّثة
   {
     const fs = await import("node:fs");
