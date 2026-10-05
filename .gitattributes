@@ -1,0 +1,10 @@
+# كلُّ الملفّات النصّيّة بنهاية سطرٍ LF (لا تحويلَ إلى CRLF على Windows)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.ico binary
+*.woff binary
+*.woff2 binary
