@@ -2351,12 +2351,12 @@ async function arifSend(rec) {
     const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
     const age = c.date ? new Date().getFullYear() - +c.date.slice(0, 4) : undefined;
     // نصٌّ عاديّ بلا ترويساتٍ خاصّة: Google Apps Script لا يقبلُ طلبَ الفحص المسبق (CORS preflight)
-    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age }) });
+    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age, name: (c.name || "").trim().slice(0, 40), sex: c.sex === "f" ? "f" : "m", ver: arif.ENGINE_VER }) });
   } catch {}
 }
 function arifWeights() {
   const fb = lsGet(arifFbKey(), {}), tally = {};
-  for (const e of Object.values(fb)) for (const [fam, s] of Object.entries(e.fams || {})) {
+  for (const e of Object.values(fb)) for (const [fam, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
     if (!s) continue;
     const t = (tally[fam] = tally[fam] || { hit: 0, miss: 0 });
     // «صار» يُصدِّقُ العائلةَ التي وافق حكمُها حكمَ الشهر، و«لم يصر» يُكذِّبُها
@@ -2421,7 +2421,8 @@ PANELS.arif = (main) => {
         <div id="arifAns"></div>
       </div>
     </div>
-    <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء. وإجاباتُك «صار / لم يصر» على الأشهر الماضية تُعلّمُ العارفَ أيَّ العلومِ تصيبُ معك.</span>
+    <div id="arifDue"></div>
+    <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء. وإجاباتُك «صار / لم يصر» على الأشهر الماضية تُعلّمُ العارفَ أيَّ العلومِ تصيبُ معك${FEEDBACK_URL ? "، وتُرسَلُ (مع الاسم) لتحسين العارف للجميع" : ""}.</span>
       <button class="btn sm sec" id="arifReset" type="button">أرجِعِ الترتيبَ الأصليّ وامسحْ ما تعلّمه</button></div>`);
 
   const box = $("#arifYears", main), md = $("#arifMonth", main);
@@ -2461,10 +2462,11 @@ PANELS.arif = (main) => {
     </div>`;
     md.querySelectorAll("[data-ok]").forEach((b) => b.addEventListener("click", () => {
       const all = lsGet(arifFbKey(), {}), fams = {};
-      for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) fams[v.fam] = (fams[v.fam] || 0) + v.s;
-      all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams };
+      const meths = {};
+      for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) { fams[v.fam] = (fams[v.fam] || 0) + v.s; const mk = `${v.fam}:${v.meth || v.fam}`; meths[mk] = (meths[mk] || 0) + v.s; }
+      all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams, meths };
       lsSet(arifFbKey(), all); month();
-      arifSend({ kind: "month", ok: b.dataset.ok === "1", topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, score: d.scores[topic], fams });
+      arifSend({ kind: "month", ok: b.dataset.ok === "1", topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, score: d.scores[topic], fams, meths, said: `${d.level[topic]}: ${d.text[topic]}`.slice(0, 300) });
     }));
   }
   main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
@@ -2478,6 +2480,10 @@ PANELS.arif = (main) => {
     const q = $("#arifQ", main).value.trim(); if (!q) return;
     let A; try { A = arif.ask(C, q, { weights: arifWeights(), marriageFb: lsGet(arifFbKey() + "|marriage", null) }); } catch (err) { $("#arifAns", main).innerHTML = `<div class="warn">${esc(err.message)}</div>`; return; }
     arifInterest(A.topic !== "all" ? A.topic : null);
+    if (!A.marriage && A.best?.to) {
+      const asks = lsGet(arifFbKey() + "|asks", []), due = `${A.best.to.y}-${String(A.best.to.m + 1).padStart(2, "0")}`;
+      if (!asks.some((x) => x.q === q && !x.done)) { asks.push({ id: Date.now(), q: q.slice(0, 200), topic: A.topic, big: A.big, due, votes: Object.fromEntries(A.votes.map((v) => [v.fam, v.s])) }); lsSet(arifFbKey() + "|asks", asks.slice(-30)); }
+    }
     topic = A.topic; askBest = A.best;
     main.querySelectorAll(".arif-tab").forEach((x) => x.setAttribute("aria-selected", x.dataset.t === topic ? "true" : "false"));
     $("#arifAns", main).innerHTML = `<div class="arif-big">${esc(AR(A.big))}</div><div class="kv">${esc(AR(A.text))} <span class="gloss">(مظلَّلٌ على الرسم)</span></div>${A.marriage && !A.marriage.corrected && ["married", "married_second_ahead", "second_now"].includes(A.marriage.state) ? `<div class="arif-did"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-mok="1">✓ صح</button><button type="button" class="btn sm sec" data-mok="0">✗ مش صح</button></div>` : ""}
@@ -2486,11 +2492,24 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
       lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
-      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null });
+      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null, said: A.text.slice(0, 300) });
       $("#arifAsk", main).requestSubmit();
     }));
     draw(); month();
   });
+  // أسئلةٌ سابقةٌ حان وقتُها: «هل صار؟»
+  (function dueAsks() {
+    const box = $("#arifDue", main); if (!box) return;
+    const nowYm = new Date().toISOString().slice(0, 7);
+    const asks = lsGet(arifFbKey() + "|asks", []).filter((x) => !x.done && x.due < nowYm);
+    box.innerHTML = asks.length ? `<div class="arif-insight"><b>${F ? "سألتِ" : "سألتَ"} من قبل:</b>${asks.map((x) => `<div class="arif-did" data-id="${x.id}"><span>«${esc(x.q)}» — وكان الجواب: ${esc(AR(x.big))} هل صار؟</span><button type="button" class="btn sm sec" data-aok="1">✓ صار</button><button type="button" class="btn sm sec" data-aok="0">✗ لم يصر</button></div>`).join("")}</div>` : "";
+    box.querySelectorAll("[data-aok]").forEach((b) => b.addEventListener("click", () => {
+      const id = +b.closest("[data-id]").dataset.id, all = lsGet(arifFbKey() + "|asks", []), x = all.find((a) => a.id === id); if (!x) return;
+      x.done = true; x.ok = b.dataset.aok === "1"; lsSet(arifFbKey() + "|asks", all);
+      arifSend({ kind: "ask", ok: x.ok, topic: x.topic, month: x.due, q: x.q, said: x.big, fams: x.votes });
+      dueAsks();
+    }));
+  })();
   $("#arifReset", main).addEventListener("click", () => { try { localStorage.removeItem(ARIF_INT); localStorage.removeItem(arifFbKey()); } catch {} route("arif"); });
   draw(); month();
 };

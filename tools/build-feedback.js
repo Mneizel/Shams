@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.resolve(process.argv[2] || path.join(ROOT, "..", "..", "shams-feedback"));
 const DIR = path.join(SRC, "feedback");
+// نسخةُ حسابات العارف الحاليّة (من engines/arif.js)
+const CUR = (fs.readFileSync(path.join(ROOT, "engines", "arif.js"), "utf8").match(/ENGINE_VER = "([^"]+)"/) || [])[1] || null;
 if (!fs.existsSync(DIR)) { console.error(`لا يوجد مجلّد إجابات في ${DIR}`); process.exit(1); }
 
 const files = [];
@@ -20,8 +22,8 @@ for (const f of files) {
   for (const r of Array.isArray(arr) ? arr : [arr]) {
   if (!r || !r.person) continue;
   people.add(r.person);
-  if (r.kind === "month") {
-    const k = `${r.person}|${r.month}|${r.topic}`;
+  if (r.kind === "month" || r.kind === "ask") {
+    const k = `${r.person}|${r.kind}|${r.month}|${r.topic}|${r.q || ""}`;
     if (!latest.has(k) || latest.get(k).at < r.at) latest.set(k, r);
   } else if (r.kind === "marriage") {
     const m = (marriage[r.state] = marriage[r.state] || { right: 0, wrong: 0 });
@@ -33,11 +35,13 @@ for (const f of files) {
 // نفسُ منطق الموقع: «صار» يصدّقُ العائلةَ التي وافق حكمُها حكمَ الشهر، و«لم يصر» يكذّبُها
 function weightsOf(recs) {
   const tally = {};
-  for (const e of recs) for (const [fam, s] of Object.entries(e.fams || {})) {
+  // العائلةُ (sky) والطريقةُ داخلها (sky:house) — الإجاباتُ بحسابات النسخة الحاليّة تُعَدُّ كاملة، والأقدمُ بنصف وزن
+  for (const e of recs) for (const [fam, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
     if (!s) continue;
     const t = (tally[fam] = tally[fam] || { hit: 0, miss: 0 });
     const agreed = Math.sign(s) === Math.sign(e.score || 0) || !e.score;
-    if (e.ok === agreed) t.hit++; else t.miss++;
+    const wt = !CUR || e.ver === CUR ? 1 : 0.5;
+    if (e.ok === agreed) t.hit += wt; else t.miss += wt;
   }
   const w = {};
   // للكلّ يُشترَطُ ٢٠ إجابةً على الأقلّ للعائلة قبل أن يتغيّر وزنُها
@@ -45,11 +49,12 @@ function weightsOf(recs) {
   return { w, tally };
 }
 const recs = [...latest.values()];
+const kinds = recs.reduce((a, r) => ((a[r.kind] = (a[r.kind] || 0) + 1), a), {});
 const all = weightsOf(recs);
 const byTopic = {};
 for (const t of ["all", "work", "money", "love", "health", "study"]) byTopic[t] = weightsOf(recs.filter((r) => r.topic === t)).w;
 
-const LEARNED = { generated: new Date().toISOString(), answers: recs.length, people: people.size, weights: all.w, tally: all.tally, byTopic, marriage };
+const LEARNED = { generated: new Date().toISOString(), engine: CUR, kinds, answers: recs.length, people: people.size, weights: all.w, tally: all.tally, byTopic, marriage };
 const out = `// data/feedback-learned.data.js — يُولَّدُ آليًّا من إجابات الناس (node tools/build-feedback.js). لا تعدّلْه يدويًّا.
 // أوزانُ عائلات العارف المتعلَّمة من كلّ الإجابات (٠٫٥–١٫٥)، تُستعمَلُ لمن ليست له إجاباتٌ كافية.
 export const LEARNED = ${JSON.stringify(LEARNED, null, 1)};

@@ -402,6 +402,8 @@ function monthVoices(ctx, y, m) {
 }
 
 /** درجةُ الشهر لموضوع: متوسّطُ كلِّ عائلة ثمّ المجموع (والأوزانُ من «صح/غلط» إن وُجدت) */
+/** نسخةُ حسابات العارف: تُرسَلُ مع كلّ إجابة ليُفرَّقَ بين ما قيل بحساباتٍ قديمةٍ وجديدة */
+export const ENGINE_VER = "2026-10-05";
 function scoreFor(V, topic = "all", weights = {}) {
   const fam = {};
   for (const v of V) {
@@ -411,7 +413,8 @@ function scoreFor(V, topic = "all", weights = {}) {
   }
   const avg = (a) => a.reduce((p, c) => p + c, 0) / a.length;
   let total = 0;
-  for (const [f, meths] of Object.entries(fam)) total += avg(Object.values(meths).map(avg)) * (weights[f] ?? 1);
+  // وزنُ العائلة × وزنُ كلِّ طريقةٍ فيها (يُتعلَّمان من إجابات «صار/لم يصر»)
+  for (const [f, meths] of Object.entries(fam)) total += avg(Object.entries(meths).map(([m, a]) => avg(a) * (weights[`${f}:${m}`] ?? 1))) * (weights[f] ?? 1);
   return Math.round(total * 100) / 100;
 }
 const level = (s) => s >= 1.2 ? "ممتاز" : s >= 0.45 ? "جيّد" : s <= -1.2 ? "صعب" : s <= -0.45 ? "ثقيل" : "عاديّ";
@@ -659,4 +662,4 @@ export function ask(c, question, opt = {}) {
   return { topic, topicAr: TOPICS[topic], big, text, bestDay, marriage, horary: hz ? { verdict: hz.verdict, timing: hz.timing?.text, topic: hz.topic, details: (hz.bari?.details || []).filter((x) => !/^مراحلُ الأمر/.test(x.text)), phases: hz.bari?.phases || null } : null, best: W.best, worst: W.worst, votes, raml: { verdict: r.verdict, figure: r.house?.figure?.ar, house: r.house?.name }, qura: qv ? { bab: qv.bab, tone: qv.tone } : null, jafr: jv?.verdict || null };
 }
 
-export default { marriageYears, marriageStatus, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
+export default { ENGINE_VER, marriageYears, marriageStatus, timeline, read, ask, eclipses, revolutions, abjadDate, tasyir, midheaven, qasim, CHEIRO_DAYS, MONTHS, TOPICS, FAMILIES };
