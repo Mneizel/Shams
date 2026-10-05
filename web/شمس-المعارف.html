@@ -2857,6 +2857,12 @@ const MANSIONS = [
 const MANSION_ARC = 360 / 28;
 
 ;__exports["CHALDEAN"]=CHALDEAN;__exports["DAY_RULERS"]=DAY_RULERS;__exports["DAY_NAMES"]=DAY_NAMES;__exports["PLANETS"]=PLANETS;__exports["SIGNS"]=SIGNS;__exports["MANSIONS"]=MANSIONS;__exports["MANSION_ARC"]=MANSION_ARC;return __exports;})();
+__M["feedback-learned.data"]=(function(){"use strict";const __exports={};
+// data/feedback-learned.data.js — يُولَّدُ آليًّا من إجابات الناس (node tools/build-feedback.js). لا تعدّلْه يدويًّا.
+// أوزانُ عائلات العارف المتعلَّمة من كلّ الإجابات (٠٫٥–١٫٥)، تُستعمَلُ لمن ليست له إجاباتٌ كافية.
+const LEARNED = { generated: null, answers: 0, people: 0, weights: {}, byTopic: {}, marriage: {} };
+
+;__exports["LEARNED"]=LEARNED;return __exports;})();
 __M["hal-abumashar.data"]=(function(){"use strict";const __exports={};
 // data/hal-abumashar.data.js — أبو معشر الفلكي، «مواليد الرجال والنساء»: «القولُ على طبعِ الطالع».
 // نُقِلت الأوصافُ من صفحاتِ الكتاب (طبعةٌ مصوّرة، ملفّ text/sources/mizaj/hekma/aboma3shr)، باب «طوالع الرجال».
@@ -26438,6 +26444,8 @@ const QUESTIONS_WITH_TARGET = [
 // web/app.js — واجهة شمس المعارف · المحرّك
 // تستورد كلّ المحرّكات وتبني لوحةً لكلّ واحدة. تشغيلها: node tools/serve.js
 const abjad=__M["abjad"].default;
+const { FEEDBACK_URL }=__M["feedback-config"];
+const { LEARNED }=__M["feedback-learned.data"];
 const awfaq=__M["awfaq"].default;
 const falak=__M["falak"].default;
 const ak=__M["asma-khuddam"].default;
@@ -28777,6 +28785,18 @@ const arifFbKey = () => { const c = ctx(); return `${ARIF_FB0}:${abjad.normalize
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 // «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
+// إرسالُ الإجابة إلى Google Apps Script (إن ضُبط عنوانُه): بلا أسماء — بصمةُ الشخص SHA-256 من الاسم واسم الأمّ والميلاد
+async function arifSend(rec) {
+  if (!FEEDBACK_URL || !globalThis.crypto?.subtle) return;
+  try {
+    const c = ctx();
+    const raw = new TextEncoder().encode(arifFbKey());
+    const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    const age = c.date ? new Date().getFullYear() - +c.date.slice(0, 4) : undefined;
+    // نصٌّ عاديّ بلا ترويساتٍ خاصّة: Google Apps Script لا يقبلُ طلبَ الفحص المسبق (CORS preflight)
+    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age }) });
+  } catch {}
+}
 function arifWeights() {
   const fb = lsGet(arifFbKey(), {}), tally = {};
   for (const e of Object.values(fb)) for (const [fam, s] of Object.entries(e.fams || {})) {
@@ -28788,7 +28808,8 @@ function arifWeights() {
   }
   const w = {};
   for (const [f, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[f] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
-  return w;
+  // ما تعلّمه المحرّكُ من إجابات كلّ الناس يُستعمَلُ أساسًا، وإجاباتُ الشخص نفسِه تغلبُه
+  return { ...(LEARNED.weights || {}), ...w };
 }
 // الاهتمام: ما فُتح في آخر ٣٠ يومًا (ترتيبٌ فقط — لا يُخفى شيء)
 function arifInterest(topic) {
@@ -28886,6 +28907,7 @@ PANELS.arif = (main) => {
       for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) fams[v.fam] = (fams[v.fam] || 0) + v.s;
       all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams };
       lsSet(arifFbKey(), all); month();
+      arifSend({ kind: "month", ok: b.dataset.ok === "1", topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, score: d.scores[topic], fams });
     }));
   }
   main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
@@ -28907,6 +28929,7 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
       lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
+      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null });
       $("#arifAsk", main).requestSubmit();
     }));
     draw(); month();

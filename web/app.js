@@ -1,6 +1,8 @@
 // web/app.js — واجهة شمس المعارف · المحرّك
 // تستورد كلّ المحرّكات وتبني لوحةً لكلّ واحدة. تشغيلها: node tools/serve.js
 import abjad from "../engines/abjad.js";
+import { FEEDBACK_URL } from "./feedback-config.js";
+import { LEARNED } from "../data/feedback-learned.data.js";
 import awfaq from "../engines/awfaq.js";
 import falak from "../engines/falak.js";
 import ak from "../engines/asma-khuddam.js";
@@ -2340,6 +2342,18 @@ const arifFbKey = () => { const c = ctx(); return `${ARIF_FB0}:${abjad.normalize
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 // «صح/لم يصر» على الأشهر الماضية ⇒ وزنُ كلِّ عائلة (٠٫٥–١٫٥)، يُحسَبُ بعد ٣ إجاباتٍ على الأقلّ
+// إرسالُ الإجابة إلى Google Apps Script (إن ضُبط عنوانُه): بلا أسماء — بصمةُ الشخص SHA-256 من الاسم واسم الأمّ والميلاد
+async function arifSend(rec) {
+  if (!FEEDBACK_URL || !globalThis.crypto?.subtle) return;
+  try {
+    const c = ctx();
+    const raw = new TextEncoder().encode(arifFbKey());
+    const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    const age = c.date ? new Date().getFullYear() - +c.date.slice(0, 4) : undefined;
+    // نصٌّ عاديّ بلا ترويساتٍ خاصّة: Google Apps Script لا يقبلُ طلبَ الفحص المسبق (CORS preflight)
+    await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age }) });
+  } catch {}
+}
 function arifWeights() {
   const fb = lsGet(arifFbKey(), {}), tally = {};
   for (const e of Object.values(fb)) for (const [fam, s] of Object.entries(e.fams || {})) {
@@ -2351,7 +2365,8 @@ function arifWeights() {
   }
   const w = {};
   for (const [f, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[f] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
-  return w;
+  // ما تعلّمه المحرّكُ من إجابات كلّ الناس يُستعمَلُ أساسًا، وإجاباتُ الشخص نفسِه تغلبُه
+  return { ...(LEARNED.weights || {}), ...w };
 }
 // الاهتمام: ما فُتح في آخر ٣٠ يومًا (ترتيبٌ فقط — لا يُخفى شيء)
 function arifInterest(topic) {
@@ -2449,6 +2464,7 @@ PANELS.arif = (main) => {
       for (const v of d.voices) if (topic === "all" || v.topics.includes(topic) || v.topics.includes("all")) fams[v.fam] = (fams[v.fam] || 0) + v.s;
       all[d.label + "|" + topic] = { ok: b.dataset.ok === "1", score: d.scores[topic], topic, fams };
       lsSet(arifFbKey(), all); month();
+      arifSend({ kind: "month", ok: b.dataset.ok === "1", topic, month: `${d.y}-${String(d.m + 1).padStart(2, "0")}`, score: d.scores[topic], fams });
     }));
   }
   main.querySelectorAll(".arif-tab").forEach((t) => t.addEventListener("click", () => {
@@ -2470,6 +2486,7 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
       lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
+      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null });
       $("#arifAsk", main).requestSubmit();
     }));
     draw(); month();
