@@ -221,29 +221,30 @@ export function marriageYears(c, sky, opt = {}) {
   if (M.items.some((x) => /لا يتزوّجُ أصلًا/.test(x))) return { never: true, windows: [], multi: false, src: "بطليموس م٤ ف٥" };
   const byNight = (() => { const h = ((signIdx(sky.planets["الشمس"].longitude) - signIdx(ascL) + 12) % 12) + 1; return h < 7; })();
   const venusSign = signIdx(venus), descSign = signIdx(desc), lotSign = lotM == null ? -1 : signIdx(lotM);
-  const years = [];
+  const years = [], MW = (k) => opt.weights?.[`marriage:${k}`] ?? 1;
   for (let age = 16; age <= 60; age++) {
     const at = new Date(birth.getTime() + (age + 0.5) * 365.2422 * 86400000);
-    let s = 0; const why = [];
+    let s = 0; const why = [], meths = [];
+    const hit = (k, v, txt) => { s += v * MW(k); why.push(txt); meths.push(k); };
     const prof = (signIdx(ascL) + age) % 12;
-    if (prof === descSign) { s += 1; why.push("الانتهاءُ في البيت السابع"); }
-    else if (prof === venusSign || prof === lotSign) { s += 0.7; why.push(prof === venusSign ? "الانتهاءُ في برج الزهرة" : "الانتهاءُ في برج سهم الزواج"); }
+    if (prof === descSign) hit("prof7", 1, "الانتهاءُ في البيت السابع");
+    else if (prof === venusSign || prof === lotSign) hit("profvenus", 0.7, prof === venusSign ? "الانتهاءُ في برج الزهرة" : "الانتهاءُ في برج سهم الزواج");
     const F = falak.firdaria(birth, at, { byNight });
-    if (F.majorLord === "الزهرة" || F.minorLord === "الزهرة") { s += F.minorLord === "الزهرة" ? 1 : 0.5; why.push("فترةُ الزهرة"); }
-    if (female && F.minorLord === "المريخ") { s += 0.3; why.push("فترةُ المريخ (دليلُ الزوج)"); }
+    if (F.majorLord === "الزهرة" || F.minorLord === "الزهرة") hit("firdaria", F.minorLord === "الزهرة" ? 1 : 0.5, "فترةُ الزهرة");
+    if (female && F.minorLord === "المريخ") hit("firdariamars", 0.3, "فترةُ المريخ (دليلُ الزوج)");
     const dLum = (lumL + age) % 360, dMc = (midheaven((sky.ascendant.localSiderealTime ?? 0) + age)) % 360;
     const aL = aspectOf(dLum, venus, 1.2), aM = aspectOf(dMc, venus, 1.2);
-    if (aL && aL !== "square" && aL !== "opp") { s += 1; why.push(`تسييرُ ${lum} إلى الزهرة`); }
-    if (aM && aM !== "square" && aM !== "opp") { s += 0.7; why.push("تسييرُ وسط السماء إلى الزهرة"); }
+    if (aL && aL !== "square" && aL !== "opp") hit("dirlum", 1, `تسييرُ ${lum} إلى الزهرة`);
+    if (aM && aM !== "square" && aM !== "opp") hit("dirmc", 0.7, "تسييرُ وسط السماء إلى الزهرة");
     let jHit = false;
     for (const q of [0.1, 0.35, 0.6, 0.85]) {
       const J = falak.planetPositions(new Date(birth.getTime() + (age + q) * 365.2422 * 86400000))["المشتري"].longitude;
       if (aspectOf(J, venus, 4) === "conj" || (lotM != null && aspectOf(J, lotM, 4) === "conj") || aspectOf(J, desc, 4) === "conj") jHit = true;
     }
-    if (jHit) { s += 0.8; why.push("المشتري يمرُّ على الزهرة أو سهم الزواج أو السابع"); }
+    if (jHit) hit("jupiter", 0.8, "المشتري يمرُّ على الزهرة أو سهم الزواج أو السابع");
     // بطليموس: مبكّرٌ أو متأخّر
     if (M.east ? age <= 28 : age >= 26 && age <= 40) s += 0.4;
-    years.push({ age, year: birth.getUTCFullYear() + age, s: Math.round(s * 10) / 10, why });
+    years.push({ age, year: birth.getUTCFullYear() + age, s: Math.round(s * 10) / 10, why, meths });
   }
   // النوافذ: سنواتٌ متتاليةٌ فوق الحدّ، تُرتَّبُ بقوّتها
   const TH = 1.8, wins = [];
@@ -251,7 +252,7 @@ export function marriageYears(c, sky, opt = {}) {
     if (years[i].s < TH) continue;
     let j = i; while (j + 1 < years.length && years[j + 1].s >= TH - 0.4) j++;
     const seg = years.slice(i, j + 1), peak = seg.reduce((a, b) => (b.s > a.s ? b : a));
-    wins.push({ from: seg[0].year, to: seg.at(-1).year, ageFrom: seg[0].age, ageTo: seg.at(-1).age, peak: peak.year, strength: peak.s, why: peak.why });
+    wins.push({ from: seg[0].year, to: seg.at(-1).year, ageFrom: seg[0].age, ageTo: seg.at(-1).age, peak: peak.year, strength: peak.s, why: peak.why, meths: [...new Set(seg.flatMap((x) => x.meths))] });
     i = j;
   }
   // الأولى: أقوى نافذةٍ داخلَ مدى بطليموس (المبكّر ١٨–٢٨، المتأخّر ٢٦–٤٠)، وإلّا أقواها بعد العشرين
@@ -263,8 +264,8 @@ export function marriageYears(c, sky, opt = {}) {
 }
 
 /** حالُ الزواج الآن بحسب العمر: قبل نافذة الزواج الأولى أم بعدها */
-export function marriageStatus(c, sky, now = new Date(), fb = null) {
-  const MY = marriageYears(c, sky);
+export function marriageStatus(c, sky, now = new Date(), fb = null, weights = null) {
+  const MY = marriageYears(c, sky, { weights });
   const y = now.getUTCFullYear();
   // تصحيحُ صاحب البطاقة: «مش صح» على «متزوّج» ⇒ تُؤخَذُ النافذةُ القادمةُ بدل الماضية
   if (fb && fb.ok === false && MY.first && y > MY.first.to) {
@@ -414,7 +415,9 @@ function scoreFor(V, topic = "all", weights = {}) {
   const avg = (a) => a.reduce((p, c) => p + c, 0) / a.length;
   let total = 0;
   // وزنُ العائلة × وزنُ كلِّ طريقةٍ فيها (يُتعلَّمان من إجابات «صار/لم يصر»)
-  for (const [f, meths] of Object.entries(fam)) total += avg(Object.entries(meths).map(([m, a]) => avg(a) * (weights[`${f}:${m}`] ?? 1))) * (weights[f] ?? 1);
+  // وزنُ الموضوع نفسِه (love|sky) يغلبُ الوزنَ العامّ (sky)
+  const W = (k) => weights[`${topic}|${k}`] ?? weights[k] ?? 1;
+  for (const [f, meths] of Object.entries(fam)) total += avg(Object.entries(meths).map(([m, a]) => avg(a) * W(`${f}:${m}`))) * W(f);
   return Math.round(total * 100) / 100;
 }
 const level = (s) => s >= 1.2 ? "ممتاز" : s >= 0.45 ? "جيّد" : s <= -1.2 ? "صعب" : s <= -0.45 ? "ثقيل" : "عاديّ";
@@ -554,7 +557,7 @@ export function read(c, opt = {}) {
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
   const areas = [
-    { key: "love", title: "الزواج والعائلة", text: `${marriageLine(c, ctx, k_)}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
+    { key: "love", title: "الزواج والعائلة", text: `${marriageLine(c, ctx, k_, opt.weights)}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
     { key: "work", title: "الشغل", text: `${k_("يناسبُك", "يناسبُكِ")}: ${L.work.text.split("؛")[0]}. يقوى بين ${W.work.best.label}${W.work.worst.v < -0.45 ? `، ويثقلُ بين ${W.work.worst.label}` : ""}.`, src: "صاحبُ العمل (بطليموس م٤ ف٤) + المرورُ على الشمس والعاشر + الأزمنة" },
     { key: "study", title: "العلم والسفر", text: `أنسبُ وقتٍ لدراسةٍ أو دورةٍ أو سفرٍ نافع بين ${W.study.best.label}.`, src: "المرورُ على البيت التاسع + الأزمنة" },
     { key: "money", title: "المال", text: L.wealth ? `${L.wealth.text}${L.wealth.strong ? "" : "، لكن متأخّرًا"}. أحسنُ وقتٍ للمال بين ${W.money.best.label}${W.money.worst.v < -0.45 ? `، ولا ${k_("تُقرضْ ولا تدخلْ", "تُقرضي ولا تدخلي")} في دَينٍ بين ${W.money.worst.label}` : ""}.` : `أحسنُ وقتٍ للمال بين ${W.money.best.label}.`, src: "سهمُ السعادة وصاحبُه (بطليموس م٤ ف٢) + المرورُ عليه" },
@@ -592,9 +595,9 @@ export function read(c, opt = {}) {
   return { summary, pills, areas, insights, luckyDays, months, windows: W, turning: turningPoints(c, ctx, months), ctx: { namePlanet: ctx.namePlanet, bn: ctx.bn } };
 }
 
-function marriageLine(c, ctx, k_) {
+function marriageLine(c, ctx, k_, weights) {
   try {
-    const st = marriageStatus(c, ctx.sky, c.now ? new Date(c.now) : new Date()), w = st.MY.first;
+    const st = marriageStatus(c, ctx.sky, c.now ? new Date(c.now) : new Date(), null, weights), w = st.MY.first;
     if (!w) return "";
     const span = w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`;
     return st.state === "before" ? `سنواتُ الزواج في خريطتِ${k_("ك", "كِ")} ${span}. ` : st.state === "now" ? `${k_("أنت", "أنتِ")} في سنوات الزواج (${span}). ` : `الحسابُ يدلُّ على زواجٍ ${span}${st.MY.second ? `، وزواجٍ ثانٍ ${st.MY.second.from === st.MY.second.to ? `سنة ${st.MY.second.from}` : `بين ${st.MY.second.from} و${st.MY.second.to}`}` : ""}. `;
@@ -634,7 +637,7 @@ export function ask(c, question, opt = {}) {
   // سؤالُ الزواج: يُجابُ أوّلًا بحسب ما تدلُّ عليه الخريطةُ من سنوات الزواج (قبلَها / فيها / بعدَها)
   let marriage = null;
   if (key === "زواج") {
-    const st = marriageStatus(c, T.ctx.sky, now, opt.marriageFb), MY = st.MY, fw = MY.first, k_ = (m, f) => (F_ ? f : m);
+    const st = marriageStatus(c, T.ctx.sky, now, opt.marriageFb, opt.weights), MY = st.MY, fw = MY.first, k_ = (m, f) => (F_ ? f : m);
     const span = (w) => (w.from === w.to ? `سنة ${w.from}` : `بين ${w.from} و${w.to}`);
     const love = `أحسنُ فترةٍ للعلاقة بين ${W.best.label}${W.worst.v < -0.45 ? `، وأصعبُها بين ${W.worst.label}` : ""}`;
     const msg = {
@@ -646,7 +649,7 @@ export function ask(c, question, opt = {}) {
       married_second_ahead: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، والخريطةُ تُظهرُ زواجًا ثانيًا ${span(MY.second)}. وعن العلاقة الآن: ${love}.`,
       second_now: () => `الحسابُ يدلُّ على زواجٍ أوّل ${span(fw)}، و${k_("أنت", "أنتِ")} الآن في سنوات زواجٍ ثانٍ (${span(MY.second)}).`,
     }[st.state]();
-    marriage = { corrected: !!st.corrected, state: st.state, text: msg, first: fw, second: MY.second, multi: MY.multi, why: fw?.why || [], src: MY.src };
+    marriage = { meths: fw?.meths || [], corrected: !!st.corrected, state: st.state, text: msg, first: fw, second: MY.second, multi: MY.multi, why: fw?.why || [], src: MY.src };
   }
   const text = marriage ? marriage.text : `${sum >= 0 ? "الأمرُ يمشي" : "الأمرُ متعثّرٌ الآن"}${tStr}. أنسبُ وقتٍ له بين ${W.best.label}${W.worst.v < -0.45 ? `، ${sum >= 0 ? (F_ ? "وتجنّبي" : "وتجنّبْ") : "وأسوأُه"} ما بين ${W.worst.label}` : ""}.`;
   let bestDay = null;

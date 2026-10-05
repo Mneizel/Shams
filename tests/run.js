@@ -381,6 +381,24 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // التعلّم: الأوزانُ المتعلَّمة تغيّرُ النتائجَ فعلًا (الموضوع، طرقُ الزواج، كتبُ حالك)
+  {
+    const arif = (await import("../engines/arif.js")).default;
+    const hal = (await import("../engines/hal.js")).default;
+    const base = { name: "محمد", mother: "سميرة", sex: "m", birth: new Date("1991-11-09T02:35:00Z"), lat: 31.95, lon: 35.93, now: new Date("2026-10-05T10:00:00Z") };
+    const r0 = arif.read(base), rL = arif.read(base, { weights: { "love|sky": 1.5, "love|periods": 0.5 } });
+    ok(r0.months.some((m, i) => m.scores.love !== rL.months[i].scores.love) && r0.months.every((m, i) => m.scores.work === rL.months[i].scores.work), "وزنُ الموضوع (love|…) يغيّرُ أشهرَ الحبّ وحدَها");
+    const sky = falak.snapshot(base.birth, base.lat, base.lon);
+    const m0 = arif.marriageYears(base, sky), mW = arif.marriageYears(base, sky, { weights: { "marriage:jupiter": 0.5, "marriage:firdaria": 0.5 } });
+    ok(m0.years.some((y, i) => y.s !== mW.years[i].s) && m0.years.every((y) => Array.isArray(y.meths)), "أوزانُ طرق الزواج تغيّرُ قوّةَ السنوات، ولكلّ سنةٍ طرقُها");
+    const h0 = hal.reading(base);
+    const firm0 = Object.values(h0.groups).flatMap((g) => g.firm.map((x) => x.id)).sort().join();
+    const hSame = hal.reading({ ...base, lineWeights: {} });
+    eq(Object.values(hSame.groups).flatMap((g) => g.firm.map((x) => x.id)).sort().join(), firm0, "حالك بلا أوزانٍ متعلَّمة ⇒ النتيجةُ نفسُها");
+    const allLines = [...new Set(Object.values(h0.groups).flatMap((g) => g.firm.flatMap((x) => x.lines)))];
+    const hLow = hal.reading({ ...base, lineWeights: Object.fromEntries(allLines.map((l) => [l, 0.5])) });
+    ok(Object.values(hLow.groups).flatMap((g) => g.firm).length < Object.values(h0.groups).flatMap((g) => g.firm).length, "كتبٌ أضعفُ دقّةً ⇒ صفاتٌ مؤكّدةٌ أقلّ");
+  }
   // سنواتُ الزواج من الخريطة: الجوابُ يتبعُ العمر (قبل سنوات الزواج / بعدها)
   {
     const arif = (await import("../engines/arif.js")).default;

@@ -305,7 +305,13 @@ export function reading(c) {
 
   // الحكمُ على كلِّ صفة
   const lines = (t) => new Set((ev[t] || []).map((e) => e.line));
-  const fams = (t) => new Set([...lines(t)].map((l) => FAMILY[l] || l));
+  // عددُ العائلات الشاهدة، موزونًا بما تعلّمه المحرّكُ عن دقّة كلّ خطّ (c.lineWeights؛ الافتراضُ ١)
+  const LW = c.lineWeights || {};
+  const fams = (t) => {
+    const best = {};
+    for (const l of lines(t)) { const f = FAMILY[l] || l; best[f] = Math.max(best[f] ?? 0, LW[l] ?? 1); }
+    return { size: Object.values(best).reduce((a, b) => a + b, 0) };
+  };
   const primary = (t) => new Set([...lines(t)].filter((l) => !SECONDARY.has(l)).map((l) => FAMILY[l] || l)).size;
   const booksOf = (evs) => [...new Set(evs.map((e) => e.src.split("،")[0]))];
   const AR_ = (id) => (female && WM.TRAITS_F[id]) || TRAITS[id].ar;

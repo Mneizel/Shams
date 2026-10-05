@@ -2064,10 +2064,11 @@ PANELS.kaf = (main) => {
     try { localStorage.setItem("smk-last-kaf", JSON.stringify({ hand: r.hand, handType: f.handType, sectionsCount: r.sections.length, firstTitle: r.sections[0]?.title || "", savedAt: Date.now(), lines: Object.fromEntries(Object.entries(f.lines || {}).map(([k, v]) => [k, { present: !!v.present, states: v.states || [] }])), thumb: f.thumb || {}, mounts: f.mounts || {} })); } catch {}
     $("#k-out", main).innerHTML = `<div class="grid wide">
       ${card({ title: `قراءةُ الكفِّ ${esc(r.hand)}`, k: `${AR(r.sections.length)} بابًا`,
-        body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
+        body: r.sections.map((s, i) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}${palmFbButtons(s, i)}</div>`).join(""),
         reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
       ${r.honesty.length ? card({ title: "ما لم أتبيّنْه", body: `<ul class="kv">${r.honesty.map((h) => `<li>${esc(h)}</li>`).join("")}</ul><div class="gloss">القراءةُ لا تحكمُ على ما لم تُميِّزْه العينُ (أو الآلة) بثقة.</div>` }) : ""}
     </div>`;
+    wirePalmFb($("#k-out", main), r);
     wireCards(main);
   };
 
@@ -2173,7 +2174,7 @@ PANELS.kaf = (main) => {
                 <div class="gloss" style="margin-top:.4rem">إن رأيتَ خطًّا ملوّنًا على تجعّدٍ غيرِ الخطِّ المقصود، أزِلْ علامةَ «صحيح» عنه فيُستبعَدُ من القراءة.</div>` }) : ""}
               ${noLines ? "" : diagHtml(f._linesDiag)}
               ${card({ title: `قراءةُ الكفِّ ${esc(r.hand || "")}`, k: `${AR(r.sections.length)} بابًا`,
-                body: r.sections.map((s) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}</div>`).join(""),
+                body: r.sections.map((s, i) => `<div class="kv" style="margin:.5rem 0"><b>${esc(s.title)}</b><br>${s.body}${s.src ? `<br><span class="src">${esc(s.src)}</span>` : ""}${palmFbButtons(s, i)}</div>`).join(""),
                 reveal: "المصادر: " + r.sources.map((x) => x.title).join(" · ") + "\n\n" + r.note })}
               ${card({ title: "ما لا تقيسُه الكاميرا — أكمِلْه إن شئت", body: `<ul class="kv">
                   ${!f.handType ? "<li>نوعُ اليد — يُعرَفُ في الكتبِ بشكلِ أطرافِ الأصابع (مربّعة/مخروطيّة/مدبّبة/مفلطحة) وعُقَدِ المفاصل.</li>" : ""}
@@ -2184,6 +2185,7 @@ PANELS.kaf = (main) => {
             main.querySelectorAll(".k-ok").forEach((cb) => (cb.onchange = () => { cb.checked ? rejected.delete(cb.dataset.k) : rejected.add(cb.dataset.k); render(); }));
             main.querySelectorAll(".k-confirm").forEach((cb) => (cb.onchange = () => { cb.checked ? confirmed.add(cb.dataset.k) : confirmed.delete(cb.dataset.k); render(); }));
             const om = $("#k-open-manual", main); if (om) om.onclick = () => { const km = $("#k-manual", main); if (km) { km.open = true; km.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+            wirePalmFb(main, r);
             wireCards(main);
           };
           render();
@@ -2277,7 +2279,34 @@ PANELS.kaf = (main) => {
 
 // قراءة الحال ─────────────────────────────────────────────────────────
 // يُعيدُ HTML قراءةِ الحال (يُستعمَلُ في «قراءة حالك» و«قراءتك الكاملة»)
-function halHTML(r) {
+// «فيّ / مش فيّ» على كلّ صفةٍ مؤكّدة: يُحفَظُ على الجهاز ويُرسَلُ ليتعلّمَ المحرّكُ أيَّ الكتب يصيبُ في الصفات
+function traitFbButtons(x, F) {
+  const fb = lsGet(HAL_FB(), {})[x.id];
+  return ` <span class="arif-did" style="display:inline-flex;margin:0"><button type="button" class="btn sm sec" data-tok="1" data-tid="${esc(x.id)}" aria-pressed="${fb?.ok === true}">${F ? "فيّ" : "فيّ"}</button><button type="button" class="btn sm sec" data-tok="0" data-tid="${esc(x.id)}" aria-pressed="${fb?.ok === false}">مش فيّ</button>${fb ? `<span class="saved">انحفظ ✓</span>` : ""}</span>`;
+}
+function wireTraitFb(main, r) {
+  const all = Object.values(r.groups).flatMap((g) => g.firm);
+  // مستمعٌ واحدٌ للصفحة كلّها (لا يتكرّرُ الإرسالُ مهما أُعيدَ رسمُ الأزرار)
+  main.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-tok]"); if (!b) return;
+    const x = all.find((t) => t.id === b.dataset.tid); if (!x) return;
+    const fb = lsGet(HAL_FB(), {}); fb[x.id] = { ok: b.dataset.tok === "1", lines: x.lines, at: Date.now() }; lsSet(HAL_FB(), fb);
+    arifSend({ kind: "trait", ok: b.dataset.tok === "1", item: x.id, lines: x.lines, said: x.ar });
+    const wrap = b.closest(".arif-did"); if (wrap) wrap.outerHTML = traitFbButtons(x, r.sex === "f");
+  });
+}
+// الكفّ: «صح / غلط» على كلّ باب
+function palmFbButtons(s, i) {
+  return `<div class="arif-did" data-pidx="${i}"><span>هل هذا صحيح عنك؟</span><button type="button" class="btn sm sec" data-pok="1">✓ صح</button><button type="button" class="btn sm sec" data-pok="0">✗ غلط</button></div>`;
+}
+function wirePalmFb(root, r) {
+  root.querySelectorAll("[data-pok]").forEach((b) => b.addEventListener("click", () => {
+    const box = b.closest("[data-pidx]"), sec = r.sections[+box.dataset.pidx]; if (!sec) return;
+    arifSend({ kind: "palm", ok: b.dataset.pok === "1", item: sec.title, said: String(sec.body || "").replace(/<[^>]+>/g, " ").slice(0, 300) });
+    box.innerHTML = `<span class="saved">انحفظ ✓ (${b.dataset.pok === "1" ? "صح" : "غلط"})</span>`;
+  }, { once: true }));
+}
+function halHTML(r, fbOn = false) {
   const F = r.sex === "f", k_ = (m, f) => (F ? f : m);
   const LN = r.lineNames;
   const who = (ls) => ls.map((l) => LN[l] || l).join(" + ");
@@ -2291,7 +2320,7 @@ function halHTML(r) {
   const groupCards = Object.values(r.groups).filter((g) => g.firm.length || g.sometimes.length).map((g) => card({
     title: g.title,
     body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">
-        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b> <span class="gloss src">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
+        ${g.firm.map((x) => `<li style="margin:.35rem 0"><b>${esc(x.ar)}.</b>${fbOn ? traitFbButtons(x, F) : ""} <span class="gloss src">— يشهدُ له: ${esc(who(x.lines))}${x.dissent ? ` (وخالفه ${esc(who([...new Set(x.dissent.map((e) => e.line))]))}، وهو مصدرٌ ثانويّ)` : ""}${x.books && x.books.length > 1 ? ` · وتتّفقُ عليه ${AR(x.books.length)} كتب: ${esc(x.books.join("، "))}` : ""}</span></li>`).join("")}
         ${g.sometimes.map((x) => `<li style="margin:.35rem 0">${esc(x.ar)}. <span class="gloss src">— الأدلّةُ مختلفةٌ في هذا</span></li>`).join("")}
       </ul>`,
     reveal: [...g.firm.map((x) => `«${x.ar}»\n${evid(x.evidence)}${x.dissent ? `\nخلافٌ من مصدرٍ ثانويّ:\n${evid(x.dissent)}` : ""}`), ...g.sometimes.map((x) => `«${x.ar}»\n${evid(x.evidence)}`)].join("\n\n"),
@@ -2329,9 +2358,10 @@ PANELS.hal = (main) => {
   if (!gate(main)) return;
   const c = ctx();
   let r;
-  try { r = hal.reading({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon }); }
+  try { r = hal.reading({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, birthDay: c.date ? +c.date.split("-")[2] : null, lat: c.lat, lon: c.lon, lineWeights: halLineWeights() }); }
   catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message || e)}</div>`); return; }
-  main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r));
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + halHTML(r, true));
+  wireTraitFb(main, r);
 };
 
 
@@ -2355,19 +2385,36 @@ async function arifSend(rec) {
     await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ ...rec, person: h, age, name: (c.name || "").trim().slice(0, 40), mother: (c.mother || "").trim().slice(0, 40), date: c.date || "", time: c.time || "", city: c.city || "", resCity: c.resCity || "", sex: c.sex === "f" ? "f" : "m", ver: arif.ENGINE_VER }) });
   } catch {}
 }
-function arifWeights() {
-  const fb = lsGet(arifFbKey(), {}), tally = {};
-  for (const e of Object.values(fb)) for (const [fam, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
-    if (!s) continue;
-    const t = (tally[fam] = tally[fam] || { hit: 0, miss: 0 });
-    // «صار» يُصدِّقُ العائلةَ التي وافق حكمُها حكمَ الشهر، و«لم يصر» يُكذِّبُها
-    const agreed = Math.sign(s) === Math.sign(e.score || 0) || !e.score;
-    if (e.ok === agreed) t.hit++; else t.miss++;
+// «صار» يُصدِّقُ ما وافق حكمُه حكمَ الشهر، و«لم يصر» يُكذِّبُه؛ والشهرُ «العاديّ» (|حكمُه| < ٠٫٤٥) لا يُحتسَب: لم يقلِ العارفُ فيه شيئًا حاسمًا
+function tallyWeights(recs, min) {
+  const tally = {};
+  const add = (k, hit) => { const t = (tally[k] = tally[k] || { hit: 0, miss: 0 }); hit ? t.hit++ : t.miss++; };
+  for (const e of recs) {
+    if (!Number.isFinite(e.score) || Math.abs(e.score) < 0.45) continue;
+    for (const [k, s] of Object.entries({ ...(e.fams || {}), ...(e.meths || {}) })) {
+      if (!s) continue;
+      const hit = e.ok === (Math.sign(s) === Math.sign(e.score));
+      add(k, hit); if (e.topic) add(`${e.topic}|${k}`, hit);
+    }
   }
   const w = {};
-  for (const [f, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[f] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
-  // ما تعلّمه المحرّكُ من إجابات كلّ الناس يُستعمَلُ أساسًا، وإجاباتُ الشخص نفسِه تغلبُه
-  return { ...(LEARNED.weights || {}), ...w };
+  for (const [k, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= min) w[k] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
+  return w;
+}
+function arifWeights() {
+  const own = tallyWeights(Object.values(lsGet(arifFbKey(), {})), 3);
+  // ما تعلّمه المحرّكُ من إجابات كلّ الناس أساسًا (عامّ ← خاصٌّ بالموضوع ← طرقُ الزواج)، وإجاباتُ الشخص نفسِه تغلبُه
+  const byTopic = Object.fromEntries(Object.entries(LEARNED.byTopic || {}).flatMap(([t, ws]) => Object.entries(ws).map(([k, v]) => [`${t}|${k}`, v])));
+  return { ...(LEARNED.weights || {}), ...byTopic, ...(LEARNED.marriageWeights || {}), ...own };
+}
+// حالك: وزنُ كلّ خطٍّ (كتاب) من «فيّ / مش فيّ» — العامُّ من الجميع، وإجاباتُ الشخص (٣ فأكثر للخطّ) تغلبُه
+const HAL_FB = () => arifFbKey().replace(ARIF_FB0, "smk-hal-fb");
+function halLineWeights() {
+  const tally = {};
+  for (const e of Object.values(lsGet(HAL_FB(), {}))) for (const l of e.lines || []) { const t = (tally[l] = tally[l] || { hit: 0, miss: 0 }); e.ok ? t.hit++ : t.miss++; }
+  const w = {};
+  for (const [l, t] of Object.entries(tally)) { const n = t.hit + t.miss; if (n >= 3) w[l] = Math.max(0.5, Math.min(1.5, 1 + 0.5 * (t.hit - t.miss) / n)); }
+  return { ...(LEARNED.lines || {}), ...w };
 }
 // الاهتمام: ما فُتح في آخر ٣٠ يومًا (ترتيبٌ فقط — لا يُخفى شيء)
 function arifInterest(topic) {
@@ -2493,7 +2540,7 @@ PANELS.arif = (main) => {
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
       lsSet(arifFbKey() + "|marriage", { ok: b.dataset.mok === "1", at: Date.now() });
-      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null, said: A.text.slice(0, 300) });
+      arifSend({ kind: "marriage", ok: b.dataset.mok === "1", state: A.marriage.state, first: A.marriage.first?.from ?? null, said: A.text.slice(0, 300), lines: A.marriage.meths || [] });
       $("#arifAsk", main).requestSubmit();
     }));
     draw(); month();
@@ -2507,7 +2554,7 @@ PANELS.arif = (main) => {
     box.querySelectorAll("[data-aok]").forEach((b) => b.addEventListener("click", () => {
       const id = +b.closest("[data-id]").dataset.id, all = lsGet(arifFbKey() + "|asks", []), x = all.find((a) => a.id === id); if (!x) return;
       x.done = true; x.ok = b.dataset.aok === "1"; lsSet(arifFbKey() + "|asks", all);
-      arifSend({ kind: "ask", ok: x.ok, topic: x.topic, month: x.due, q: x.q, said: x.big, fams: x.votes });
+      arifSend({ kind: "ask", ok: x.ok, topic: x.topic, month: x.due, q: x.q, said: x.big, fams: x.votes, score: Object.values(x.votes || {}).reduce((a, v) => a + v, 0) });
       dueAsks();
     }));
   })();
