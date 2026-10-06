@@ -28554,6 +28554,24 @@ function spiritCards(arr, type) {
     });
   }).join("");
 }
+// الصورةُ مكانَ الطلسم إن وُجدت، والطلسمُ تحتها بزرّ «اعرض الطلسم»
+function loadSpiritImages(main) {
+  main.querySelectorAll(".imgslot").forEach((slot) => {
+    const slug = slot.id.replace("slot-", "");
+    const img = new Image();
+    img.alt = slug.replace(/-/g, " ");
+    img.onload = () => {
+      const seal = slot.innerHTML;
+      slot.innerHTML = "";
+      slot.appendChild(img);
+      slot.insertAdjacentHTML("afterend", `<details class="seal-box" style="margin-top:.4rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">اعرض الطلسم</summary><div class="imgslot" style="margin-top:.4rem">${seal}</div></details>`);
+      const d = slot.nextElementSibling, sm = d.querySelector("summary");
+      d.addEventListener("toggle", () => { sm.textContent = d.open ? "أخفِ الطلسم" : "اعرض الطلسم"; });
+    };
+    img.onerror = () => {};
+    img.src = `assets/spirits/${slug}.png`;
+  });
+}
 // أسماءُ رؤساء الملائكة الفعليّون هنا: عمليّون (يُستحضَرون) أو لهم عملٌ حقيقيٌّ
 // موثَّقٌ باسمهم (hasRealPractice) — الباقي (بلا عملٍ ولا استحضار) انتقل كاملًا
 // إلى «معلوماتٌ فقط» فلا يبقى مكرَّرًا هنا ولا يبدو كأنّ له استعمالًا.
@@ -28575,13 +28593,7 @@ PANELS.spirits = (main) => {
   $("#g2", main).innerHTML = spiritCards(ARCHANGELS_ACTIVE, "arch");
   $("#g3", main).innerHTML = spiritCards(Object.entries(spirits.PLANET_ANGELS).map(([planet, name]) => ({ name, planet, role: `الموكَّل بكوكب ${planet}`, dayName: PLANETS_INFO?.[planet]?.day })), "planet-angel");
   // حاول تحميل الصور إن وُجدت
-  main.querySelectorAll(".imgslot").forEach((slot) => {
-    const slug = slot.id.replace("slot-", "");
-    const img = new Image();
-    img.onload = () => { slot.innerHTML = ""; slot.appendChild(img); };
-    img.onerror = () => {};
-    img.src = `assets/spirits/${slug}.png`;
-  });
+  loadSpiritImages(main);
 };
 
 // 13) التسخير ──────────────────────────────────────────────────────
@@ -29989,13 +30001,7 @@ PANELS.infoOnly = (main) => {
     </div>`;
     wireCards(main);
   })();
-  main.querySelectorAll(".imgslot").forEach((slot) => {
-    const slug = slot.id.replace("slot-", "");
-    const img = new Image();
-    img.onload = () => { slot.innerHTML = ""; slot.appendChild(img); };
-    img.onerror = () => {};
-    img.src = `assets/spirits/${slug}.png`;
-  });
+  loadSpiritImages(main);
 };
 
 // ── إقلاع ────────────────────────────────────────────────────────────
