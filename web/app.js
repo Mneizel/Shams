@@ -38,6 +38,7 @@ import qiraa from "../engines/qiraa.js";
 import arif from "../engines/arif.js";
 import tarkiba from "../engines/tarkiba.js";
 import spirits from "../data/spirits.data.js";
+import kingDawat from "../data/kings-dawat.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
 import { CITY_GROUPS, CITY_INDEX, tzOffsetAt } from "./cities.data.js";
@@ -1682,6 +1683,18 @@ PANELS.talismans = (main) => {
 // عمل تسخير)؛ الباقي (إسرافيل، عزرائيل، رضوان، مالك، منكر ونكير، رقيب وعتيد،
 // حملة العرش) أسماءٌ دينيّةٌ ثابتة لا عملَ سحريًّا مرتبطًا بها في هذه الكتب.
 const OPERATIONAL_ANGEL_NAMES = new Set(Object.values(spirits.PLANET_ANGELS));
+// دعوةُ الملك من شمس المعارف: وِردُ يومه بسورة يس، ومقطعُه من قسم «قل أوحي» (نصٌّ حرفيّ)
+function kingDawa(e) {
+  const d = kingDawat.KING_DAWAT[spirits.SEVEN_KINGS.indexOf(e)]; if (!d) return "";
+  return `<details class="dawa-box" style="margin-top:.5rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">دعوتُه من شمس المعارف</summary>
+    <div class="kv" style="margin-top:.5rem"><b>وِردُ يوم ${esc(d.day)} بسورة يس</b>${d.wirdAngel ? ` (مع ${esc(d.wirdAngel)})` : ""}</div>
+    <pre class="recite-text">${esc(d.wird)}</pre>
+    <div class="kv" style="margin-top:.5rem"><b>مقطعُه من قسم «قل أوحي»</b> (يُقرأ بين الفاتحة والخاتمة المشتركتين، تحت بطاقات الملوك)</div>
+    <pre class="recite-text">${esc(d.qul)}</pre>
+    ${d.note ? `<div class="gloss">${esc(d.note)}</div>` : ""}
+    <div class="gloss">المصدر: ${esc(kingDawat.SOURCE.book)}، ${esc(kingDawat.SOURCE.edition)} — ${esc(kingDawat.SOURCE.awrad)}؛ و${esc(kingDawat.SOURCE.qul)}. منقولٌ حرفيًّا.</div>
+  </details>`;
+}
 function spiritCards(arr, type) {
   return arr.map((e) => {
     const c = art.card({ ...e, kind: e.kind || type });
@@ -1693,6 +1706,7 @@ function spiritCards(arr, type) {
         <b>مجالُه:</b> ${esc(e.domain)}<br>
         <b>مرافقُه من الملائكة:</b> ${esc(e.comrade)}</div>
         <div class="kv" style="margin-top:.4rem"><b>ماذا تفعل بهذا؟</b> هذا أحد الملوك السبعة، كلٌّ منهم يُستحضَر عمليًّا (بيومه وساعته وبخوره أعلاه) ضمن عملِ «التسخير والتصريف» — افتحه واختر غرضًا لترى العملية الكاملة معه.</div>`;
+      extra += kingDawa(e);
     } else if (type === "planet-angel") {
       extra = `<div class="kv" style="margin-top:.5rem"><b>يومُه:</b> ${esc(e.dayName || "—")} (يوم كوكبه)</div>
         <div class="kv" style="margin-top:.4rem"><b>ماذا تفعل بهذا؟</b> ملَكٌ عمليّ: يُستحضَر ضمن عملِ «التسخير والتصريف» لأيّ غرضٍ يخصّ كوكبَه — ${navLink("taskhir", "افتحه لترى اليوم والساعة والبخور كاملةً")}.</div>`;
@@ -1743,6 +1757,15 @@ PANELS.spirits = (main) => {
   main.innerHTML = `${head('spirits', 'الأرواح والملوك')}
     <p class="kv">كلُّ من في هذه الصفحة عمليٌّ: يُستحضَر ضمن «التسخير والتصريف»، أو له عملٌ حقيقيٌّ موثَّقٌ باسمه (موضَّحٌ ببطاقته). الأسماءُ الدينيّةُ التي لا عملَ سحريًّا مرتبطًا بها (رضوان، مالك، إسرافيل...) والقَصصُ الشعبيّةُ (المردة، أبناء إبليس) انتقلت إلى «معلوماتٌ فقط» بالمرجع — هون بس اللي فعلًا بتفتح له «التسخير» وتسويه.</p>
     <h2>الملوك السبعة (عمليّون)</h2><div class="grid" id="g1"></div>
+    <details class="card" style="margin-top:.8rem"><summary style="cursor:pointer"><b>دعواتُ الملوك من شمس المعارف: كيف تُقرأ</b></summary>
+      <div class="kv" style="margin-top:.5rem">لكلّ ملكٍ في بطاقته زرُّ «دعوتُه من شمس المعارف»، وفيه نصّان حرفيّان من الكتاب: <b>وِردُ يومه بسورة يس</b>، و<b>مقطعُه من قسم «قل أوحي»</b>. قال البوني في الأوراد:</div>
+      <pre class="recite-text">${esc(kingDawat.AWRAD_INTRO)}</pre>
+      <div class="kv" style="margin-top:.5rem"><b>فاتحةُ قسم «قل أوحي»</b> (تُقرأ قبل مقطع الملك):</div>
+      <pre class="recite-text">${esc(kingDawat.QUL_OPEN)}</pre>
+      <div class="kv" style="margin-top:.5rem"><b>خاتمتُه</b> (تُقرأ بعده):</div>
+      <pre class="recite-text">${esc(kingDawat.QUL_CLOSE)}</pre>
+      <div class="gloss">المصدر: ${esc(kingDawat.SOURCE.book)}، ${esc(kingDawat.SOURCE.edition)}. منقولٌ حرفيًّا.</div>
+    </details>
     <h2>توزيعُ أربعةٍ منهم على الجهات الأصليّة</h2>
     <p class="kv">مرجعٌ إضافيٌّ فقط (لا يُستعمَل وحده في عمل)؛ الجهةُ الفعليّةُ لكلّ عملٍ مذكورةٌ ببطاقة العمل نفسِه في «التسخير».</p>
     <div style="overflow-x:auto"><table class="tbl" id="gdir"></table></div>

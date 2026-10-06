@@ -398,6 +398,15 @@ import falak from "../engines/falak.js";
     const f = tk.reading({ name: "ميس", mother: "منى", sex: "f", birth: new Date("1997-05-12T10:00:00Z"), lat: 31.95, lon: 35.93, timeUnknown: true });
     ok(f.timingFrom === "sun" && /ظاهرُكِ|تُظهرين|بين ظاهركِ/.test(f.agreeText) && /يومُكِ/.test(f.day.text), "التركيبة: بلا ساعةٍ من برج الشمس، وبصيغة المؤنّث");
   }
+  // دعواتُ الملوك السبعة (شمس المعارف، نصٌّ حرفيّ): كلُّ يومٍ يذكرُ ملكَه في الوِرد وملَكَه في قسم «قل أوحي»
+  {
+    const kd = (await import("../data/kings-dawat.data.js")).default;
+    const KING = ["مذهب", "مرة", "محرز الأحمر", "برقان", "شمهورش", "أبيض", "ميمون"], ANG = ["روقيائيل", "جبرائيل", "سمائيل", "ميكائيل", "صرفيائيل", "عنيائيل", "صفيائيل"];
+    eq(kd.KING_DAWAT.length, 7, "دعوات الملوك: سبعةُ أيّام");
+    ok(kd.KING_DAWAT.every((d, i) => d.wird.includes(KING[i])), "دعوات الملوك: وِردُ كلِّ يومٍ يذكرُ ملكَه");
+    ok(kd.KING_DAWAT.every((d, i) => d.qul.startsWith(`أقسمت عليك يا ${ANG[i]}`)), "دعوات الملوك: مقطعُ «قل أوحي» يبدأُ بملَك اليوم");
+    ok(kd.QUL_OPEN.startsWith("اللهم يا خدام هذه الدعوة") && kd.QUL_CLOSE.endsWith("لو تعلمون عظيم."), "دعوات الملوك: الفاتحةُ والخاتمة كاملتان");
+  }
   // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
   {
     const fs = await import("node:fs");
