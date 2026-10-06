@@ -1712,10 +1712,7 @@ function spiritCards(arr, type) {
     return card({
       title: c.name, k: c.planet || "",
       body: `<div class="imgslot" id="slot-${esc(c.slug)}">${c.sigilSvg.replace("<svg", '<svg class="seal"')}</div>
-        <div class="kv" style="margin-top:.5rem">${esc(c.description || "")}</div>${extra}
-        <details style="margin-top:.4rem"><summary class="kv" style="cursor:pointer">برومبت الصورة + اسم الملف</summary>
-          <div class="kv mono" style="font-size:.72rem;margin-top:.3rem">assets/spirits/${esc(c.slug)}.png</div>
-          <div class="kv" style="font-size:.78rem;margin-top:.3rem">${esc(c.imagePrompt)}</div></details>`
+        <div class="kv" style="margin-top:.5rem">${esc(c.description || "")}</div>${extra}`
     });
   }).join("");
 }
