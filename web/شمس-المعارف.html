@@ -2302,7 +2302,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "ec9ef9c801";
+const ENGINE_VER = "c368f522b9";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -25752,7 +25752,7 @@ function reading(c) {
     day, pivots,
     timingFrom: c.timeUnknown ? "sun" : "asc",
     descriptions: Object.fromEntries(Object.entries(BIRTH_NUMBER).map(([n, v]) => [n, { planet: v.planet, text: v.text }])),
-    note: "أداةٌ تجريبيّة: تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
+    note: "تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
   };
 }
 
@@ -27113,7 +27113,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["tarkiba", "🧪 التركيبة الغريبة (تجريبيّ)"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["tarkiba", "🧪 التركيبة الغريبة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -27146,7 +27146,7 @@ const BRIEF = {
   khawass: "كتالوجُ الأسماء الحسنى والآيات والأدعية والموادّ وخواصِّها.",
   debunk: "شرحٌ صريحٌ لحيلٍ شائعةٍ عند بعض العرّافين — طبقةٌ توعويّةٌ منفصلة.",
   corpus: "بحثٌ داخل نصّ «شمس المعارف الكبرى».",
-  tarkiba: "أداةٌ تجريبيّةٌ ليست من الكتب: تخلطُ أدواتٍ من المحرّك وتتعلّمُ من «صح / غلط» هل تصيب.",
+  tarkiba: "أداةٌ ليست من كتابٍ بعينه: تخلطُ أدواتٍ من المحرّك وتتعلّمُ من «صح / غلط» هل تصيب.",
   fihris: "أبوابُ «شمس المعارف الكبرى» بموضوعاتها، وبجانب كلِّ بابٍ الأداةُ التي تطبّقُه في الموقع.",
   manual: "دليلُ استخدامِ كلّ أداة: ما هي، وماذا تُدخِل، وكيف تقرأ الناتج.",
   infoOnly: "معلوماتٌ للاطّلاع فقط لا تدخل في الحساب.",
@@ -29424,7 +29424,7 @@ PANELS.arif = (main) => {
     </div>
     <div id="arifDue"></div>
     <div id="arifQuiz"></div>
-    <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء. وإجاباتُك «صار / لم يصر» على الأشهر الماضية تُعلّمُ العارفَ أيَّ العلومِ تصيبُ معك${FEEDBACK_URL ? "، وتُرسَلُ (مع الاسم) لتحسين العارف للجميع" : ""}.</span>
+    <div class="arif-learn"><span>تُرتَّبُ المواضيعُ بحسب ما ${F ? "فتحتِه" : "فتحتَه"} مؤخّرًا، ولا يُخفى شيء.</span>
       <button class="btn sm sec" id="arifReset" type="button">أرجِعِ الترتيبَ الأصليّ وامسحْ ما تعلّمه</button></div>`);
 
   const box = $("#arifYears", main), md = $("#arifMonth", main);
@@ -29632,7 +29632,7 @@ PANELS.full = (main) => {
     </div>` : ""}`);
 };
 
-// التركيبة الغريبة (تجريبيّ) ─────────────────────────────────────────
+// التركيبة الغريبة ─────────────────────────────────────────
 const TK_FB = () => arifFbKey().replace(ARIF_FB0, "smk-tk-fb");
 const TK_EVENTS = ["زواج", "ولد", "شغل جديد", "انتقال بيت", "مرض", "خسارة", "سفر", "غيره"];
 PANELS.tarkiba = (main) => {
@@ -29650,7 +29650,7 @@ PANELS.tarkiba = (main) => {
   const fixer = (id) => `<div class="tk-fix" data-fix="${id}" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>أيُّ وصفٍ ${k_("أقربُ لك", "أقربُ لكِ")}؟</label><select style="width:100%;max-width:100%;min-width:0">${Object.entries(r.descriptions).map(([n, d]) => `<option value="${n}">${esc(d.planet)}: ${esc(d.text.slice(0, 45))}…</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`;
   const past = r.pivots.filter((p) => p.past && p.age >= 18), future = r.pivots.filter((p) => !p.past).slice(0, 4);
   main.insertAdjacentHTML("beforeend", subjectBar(c) + `<div id="tkWrap">
-    <div class="warn" style="background:transparent">🧪 <b>تجريبيّ:</b> ${esc(r.note)}${r.timingFrom === "sun" ? " ساعةُ ميلادك غيرُ مدخَلة، فالسنواتُ محسوبةٌ من برج الشمس." : ""} إجاباتُك «صح / غلط» تُعلّمُ الأداةَ أين تصيب.</div>
+    <div class="warn" style="background:transparent">${esc(r.note)}${r.timingFrom === "sun" ? " ساعةُ ميلادك غيرُ مدخَلة، فالسنواتُ محسوبةٌ من برج الشمس." : ""} إجاباتُك «صح / غلط» تُعلّمُ الأداةَ أين تصيب.</div>
     <div class="grid wide">
       ${card({ title: `${k_("ظاهرُك", "ظاهرُكِ")} (${esc(fixedPlanet("zahir", r.zahir))})`, k: `${AR(r.zahir.n)} ⇐ ${AR(r.zahir.root)}`, body: desc("zahir", r.zahir) + btns("zahir") + fixer("zahir"), basis: "مجموعُ حروف الاسم واسم الأمّ بالجُمّل ⇒ الجذرُ الرقميّ ⇒ كوكبُه ووصفُه (Cheiro)." })}
       ${card({ title: `${k_("باطنُك", "باطنُكِ")} (${esc(fixedPlanet("batin", r.batin))})`, k: `${AR(r.batin.n)} ⇐ ${AR(r.batin.root)}`, body: desc("batin", r.batin) + btns("batin") + fixer("batin"), basis: "التكسيرُ المركّب لحروف الاسم واسم الأمّ (كما في كتب الجفر لعدد «باطن» الاسم) ⇒ الجذر ⇒ كوكبُه ووصفُه." })}

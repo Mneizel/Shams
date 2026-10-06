@@ -76,7 +76,7 @@ export function reading(c) {
     day, pivots,
     timingFrom: c.timeUnknown ? "sun" : "asc",
     descriptions: Object.fromEntries(Object.entries(BIRTH_NUMBER).map(([n, v]) => [n, { planet: v.planet, text: v.text }])),
-    note: "أداةٌ تجريبيّة: تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
+    note: "تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
   };
 }
 

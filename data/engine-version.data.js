@@ -1,3 +1,3 @@
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-export const ENGINE_VER = "ec9ef9c801";
+export const ENGINE_VER = "c368f522b9";
