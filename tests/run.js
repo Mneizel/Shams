@@ -415,6 +415,46 @@ import falak from "../engines/falak.js";
     ok(cal.filter((m) => m.now).length === 1 && cal.every((m) => m.now || (m.enter && m.leave && m.leave > m.enter)), "المنازل: منزلةٌ واحدةٌ الآن، ولكلٍّ دخولٌ قبل خروجه");
     eq(mz.natal(new Date("1991-11-09T02:35:00Z")).number, 20, "المنازل: منزلةُ مولد محمد (٩/١١/١٩٩١ ٤:٣٥) = ٢٠ النعائم");
   }
+  // الخواتمُ والأختامُ الكوكبيّة (أغريبا، طبعة Tyson)
+  {
+    const kh = (await import("../engines/khawatim.js")).default;
+    const P = kh.all();
+    eq(P.map((p) => p.planet), ["زحل", "المشتري", "المريخ", "الشمس", "الزهرة", "عطارد", "القمر"], "الخواتم: الكواكبُ السبعة بالترتيب الكلدانيّ");
+    ok(P.every((p) => { const t = kh.checkTable(p.planet); return t.order === p.table.order && t.magic === p.table.row && t.total === p.table.sum; }), "الخواتم: كلُّ جدولٍ وفقٌ تامٌّ بمجموع صفّه ومجموعه كما في ك٢ ف٢٢");
+    ok(P.every((p) => p.names.every((e) => kh.gematria(e.heb) === e.n)), "الخواتم: كلُّ «ذكاءٍ» و«روحٍ» يساوي عددَه بحروفه العبريّة");
+    ok(P.every((p) => p.names.every((e) => kh.sigilPath(p.planet, e).points.every(Boolean))), "الخواتم: كلُّ حرفٍ في الختم يقعُ في خانةٍ من جدول كوكبه");
+    eq(kh.sigilPath("المشتري", P[1].names[0]).cells, [10, 5, 8, 11, 3], "الخواتم: ختمُ يوفيئيل — اليود والألف معًا في خانة ١١ (Tyson)");
+    eq(kh.sigilPath("القمر", P[6].names[0]).cells, [8, 70, 6, 4, 1, 10], "الخواتم: ختمُ حشموداي — الشين والميم في خانة ٧٠ (Tyson)");
+    eq(kh.sigilPath("المريخ", P[2].names[1]).cells.filter((x) => x === 2).length, 3, "الخواتم: ختمُ برزابل يمسُّ خانةَ ٢ ثلاثَ مرّات (Tyson)");
+    eq(kh.weekdayPlanet("1991-11-09").planet, "زحل", "الخواتم: ٩/١١/١٩٩١ سبتٌ ⇒ زحل");
+    const yr = kh.yourRing({ namePlanet: "زحل", birthDate: "1991-11-09" });
+    ok(yr.same && yr.byName.planet === "زحل", "الخواتم: كوكبُ الاسم ويوم الميلاد واحدٌ ⇒ خاتمٌ واحد");
+    const nx = kh.nextWorkTime("الزهرة", new Date("2026-10-06T12:00:00Z"), 31.95, 35.91);
+    ok(nx && nx.start.getUTCDay() === 5 && nx.end > nx.start, "الخواتم: أقربُ ساعةٍ للزهرة يومَ الجمعة");
+    // ركّب خاتمًا لحاجة: الوقتُ بشروط الكتاب وحدها (ك١ ف٤٧، ك٢ ف٢٩–٣٠)
+    const wl = kh.work("love", { from: new Date("2026-10-06T16:00:00Z"), lat: 31.95, lon: 35.91 });
+    eq(wl.planet.planet, "الزهرة", "الخواتم: حاجةُ الوفاق والمحبّة ⇐ جدولُ الزهرة (ك٢ ف٢٢)");
+    ok(wl.time.complete && wl.time.checks.every((x) => x.ok) && wl.time.start.getDay() === 5, "الخواتم: وقتُ الزهرة كاملُ الشروط وفي يومها (الجمعة)");
+    ok(wl.time.checks.every((x) => /^ك[١٢] ف/.test(x.ref)), "الخواتم: كلُّ شرطِ وقتٍ معه مرجعُه من الكتاب");
+    ok(!wl.time.checks.some((x) => /خالي السير|راجع/.test(x.text)), "الخواتم: لا شروطَ من خارج الكتاب (خلوّ السير، الرجوع)");
+    ok(kh.goals().every((g) => g.id === "mine" || kh.all().some((p) => p.planet === g.planet)), "الخواتم: كلُّ حاجةٍ مربوطةٌ بجدول كوكب");
+    eq(kh.goalForQuestion("بدي اتزوج؟").id, "love", "الخواتم: اقتراحُ الحاجة من موضوع السؤال");
+    eq(kh.workForPlanet("المريخ", { from: new Date("2026-10-06T16:00:00Z") }).goal.book, kh.planet("المريخ").table.good, "الخواتم: عملُ خاتم كوكبٍ بعينه = نفعُ جدوله");
+    // صورُ الوجوه الستّ والثلاثين
+    const wj = (await import("../engines/wujuh.js")).default;
+    ok(wj.all().length === 36 && wj.all().every((f) => f.image && f.meaning), "الوجوه: ستٌّ وثلاثون صورةً لكلٍّ صورتُها ودلالتُها");
+    eq([wj.faceOf(0).signName, wj.faceOf(0).face, wj.faceOf(225).signName, wj.faceOf(225).face], ["الحمل", 1, "العقرب", 2], "الوجوه: ٠° الحمل الأوّل، ٢٢٥° (١٥° العقرب) الوجه الثاني");
+    const wn = wj.natal(new Date("1991-11-09T02:35:00Z"), 31.95, 35.91);
+    ok(wn.sun.signName === "العقرب" && wn.sun.face === 2 && wn.ascendant.signName === "الميزان", "الوجوه: شمسُ ٩/١١/١٩٩١ في الوجه الثاني من العقرب، والطالعُ في الميزان");
+    eq(wj.natal(new Date("1991-11-09T02:35:00Z"), 31.95, 35.91, false).ascendant, null, "الوجوه: بلا ساعة ميلاد لا صورةَ طالع");
+    const wt = wj.risingTimes(new Date("2026-10-06T16:00:00Z"), 31.95, 35.91);
+    ok(wt.length === 36 && wt.filter((x) => x.now).length === 1 && wt.every((x) => x.now || (x.enter && x.leave > x.enter)), "الوجوه: تطلعُ الستّةُ والثلاثون كلُّها في يوم، لكلٍّ طلوعٌ قبل غيابه");
+    const AR_ = (await import("../data/agrippa-rings.data.js")).default;
+    ok(Object.keys(AR_.FUMES).filter((k) => k !== "ref" && k !== "goodRule").length === 7 && !JSON.stringify(AR_.FUMES).includes("examples"), "الخواتم: بخورُ الكواكب السبعة من ك١ ف٤٤ بلا أمثلةٍ من خارجه");
+    ok(P.every((p) => p.planet in AR_.UNFORTUNATE) && AR_.UNFORTUNATE["المشتري"] === null && /رصاص/.test(AR_.UNFORTUNATE["القمر"].how), "الخواتم: ادّعاءاتُ الكوكب المنحوس لكلّ كوكب (المشتري بلا عمل) للمجادلة");
+    ok(AR_.DEBUNK_POINTS.length >= 6 && /رجعتُ عن أكثر هذا الكتاب/.test(AR_.AGRIPPA_RETRACTION.text), "الخواتم: نقاطُ الردّ واعترافُ أغريبا بالرجوع");
+    ok(kh.sigilSVG("الشمس", P[3].names[1]).startsWith("<svg") && kh.sigilSVG("الشمس").includes(">36<"), "الخواتم: رسمُ الجدول والختم SVG");
+  }
   // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
   {
     const fs = await import("node:fs");

@@ -40,6 +40,9 @@ import tarkiba from "../engines/tarkiba.js";
 import spirits from "../data/spirits.data.js";
 import kingDawat from "../data/kings-dawat.data.js";
 import manazil from "../engines/manazil.js";
+import khawatim from "../engines/khawatim.js";
+import wujuh from "../engines/wujuh.js";
+import agrippaRings from "../data/agrippa-rings.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
 import { CITY_GROUPS, CITY_INDEX, tzOffsetAt } from "./cities.data.js";
@@ -305,8 +308,8 @@ const NAV = [
   ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["tarkiba", "🧪 التركيبة الغريبة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
-  ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
-  ["العمل والعلاج", [["talismans", "✒️ الطلاسم"], ["spirits", "👁 الأرواح والملوك"], ["taskhir", "🔥 التسخير والتصريف"], ["khawass", "📿 الخواصّ"]]],
+  ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"], ["wujuh", "♈ صور الوجوه"]]],
+  ["العمل والعلاج", [["talismans", "✒️ الطلاسم"], ["khawatim", "💍 الخواتم والأختام الكوكبيّة"], ["spirits", "👁 الأرواح والملوك"], ["taskhir", "🔥 التسخير والتصريف"], ["khawass", "📿 الخواصّ"]]],
   ["المرجع وكشف الدجل", [["debunk", "🃏 ألعاب العرافة وحِيَلها"], ["fihris", "🗂 فهرس الكتاب"], ["corpus", "📖 نصّ الكتاب"], ["manual", "📘 الكُتيب — دليل الاستخدام"], ["infoOnly", "📚 معلوماتٌ فقط (لا تُستخدَم)"]]]
 ];
 
@@ -1517,6 +1520,55 @@ PANELS.raml = (main) => {
   if (c0.question) $("#rg", main).click();
 };
 
+// صورُ الوجوه الستّ والثلاثين ───────────────────────────────────────
+// المادّةُ في data/wujuh.data.js (المرجعُ في تعليقها، لا على الصفحة)؛ الحسابُ في engines/wujuh.js.
+function wujuhFaceHTML(f) {
+  return `<div class="kv"><b>${esc(f.signName)}، الوجه ${AR(f.face)}</b> (من ${AR(f.from)}° إلى ${AR(f.to)}°)${f.ruler ? ` — ربُّه ${esc(f.ruler)}` : ""}</div>
+    <div class="kv" style="margin-top:.3rem"><b>الصورة:</b> ${esc(f.image)}</div>
+    <div class="kv" style="margin-top:.3rem"><b>تدلّ على:</b> ${esc(f.meaning)}</div>`;
+}
+PANELS.wujuh = (main) => {
+  const c = ctx();
+  main.innerHTML = `${head("wujuh", "صور الوجوه الستّ والثلاثين")}
+    <p class="kv">${esc(wujuh.INTRO)} لكلّ برجٍ ثلاثةُ وجوه، كلُّ وجهٍ عشرُ درجات، ولكلّ وجهٍ صورةٌ «تطلعُ» معه في الأفق الشرقيّ، وما تدلّ عليه.</p>
+    <h2>وجوهُ مولدك</h2><div id="wjNatal"></div>
+    <h2>الصورةُ الطالعةُ الآن، ومتى تطلعُ كلُّ صورةٍ اليوم</h2><div id="wjNow"></div>
+    <h2>الوجوهُ الستّةُ والثلاثون</h2><div id="wjAll"></div>
+    <h2>صورٌ خارجَ فلك البروج</h2><div id="wjOut"></div>`;
+
+  // وجوهُ المولد
+  if (c.birth) {
+    let n = null; try { n = wujuh.natal(c.birth, c.lat, c.lon, c.timeKnown); } catch {}
+    $("#wjNatal", main).innerHTML = n ? `<div class="grid wide">
+      ${n.ascendant ? card({ title: "صورةُ طالعك", k: `${n.ascendant.signName} ${AR(n.ascendant.degree)}°`, body: wujuhFaceHTML(n.ascendant),
+          basis: "الوجهُ الذي كان يطلعُ في الأفق الشرقيّ لحظةَ ميلادك في مدينتك." })
+        : card({ title: "صورةُ طالعك", k: "تحتاجُ ساعةَ الميلاد", body: `<div class="warn">الطالعُ يتغيّرُ كلَّ ساعتين تقريبًا، والوجهُ كلَّ أربعين دقيقة؛ أدخِلْ ساعةَ ميلادك في «بطاقتي» لتظهرَ صورةُ طالعك.</div>` })}
+      ${card({ title: "صورةُ شمسك", k: `${n.sun.signName} ${AR(n.sun.degree)}°`, body: wujuhFaceHTML(n.sun), basis: "الوجهُ الذي كانت فيه الشمسُ يومَ ميلادك." })}
+      ${card({ title: "صورةُ قمرك", k: `${n.moon.signName} ${AR(n.moon.degree)}°`, body: wujuhFaceHTML(n.moon),
+          basis: c.timeKnown ? "الوجهُ الذي كان فيه القمرُ لحظةَ ميلادك." : "الوجهُ الذي كان فيه القمرُ ظهرَ يوم ميلادك (القمرُ يقطعُ الوجهَ في نحو ٢٠ ساعة؛ أدخِل الساعةَ للدقّة)." })}
+    </div>` : `<div class="warn">تعذّر الحساب.</div>`;
+  } else $("#wjNatal", main).innerHTML = `<div class="warn">املأ <b>تاريخ الميلاد</b> (وساعتَه إن عرفتها) والمدينة في «بطاقتي» لتظهرَ صورُ مولدك. وبقيّةُ الصفحة متاحةٌ بلا بيانات.</div>`;
+
+  // الطالعُ الآن + جدولُ اليوم
+  let times = []; try { times = wujuh.risingTimes(c.now, c.lat, c.lon); } catch {}
+  const cur = times.find((x) => x.now);
+  $("#wjNow", main).innerHTML = (cur ? `<div class="grid wide">${card({ title: "الطالعةُ الآن", k: `${cur.signName}، الوجه ${AR(cur.face)}`, body: wujuhFaceHTML(cur) + (cur.leave ? `<div class="kv" style="margin-top:.3rem">تبقى طالعةً حتى <b>${esc(shortWhen(cur.leave))}</b>.</div>` : "") })}</div>` : "") +
+    `<p class="kv">الأفقُ يدورُ بالوجوه كلّها في يومٍ واحد، فتطلعُ كلُّ صورةٍ مرّةً في اليوم قرابةَ أربعين دقيقة (تطولُ في بعض البروج وتقصرُ في بعض). الأوقاتُ لمدينتك وبتوقيت جهازك:</p>
+    <div style="overflow-x:auto"><table class="tbl"><tr><th>الوجه</th><th>الصورة</th><th>تدلّ على</th><th>تطلع</th><th>تغيب عن الأفق</th></tr>
+    ${times.map((x) => `<tr${x.now ? ' style="background:var(--gold-soft)"' : ""}><td><b>${esc(x.signName)} ${AR(x.face)}</b>${x.now ? " ← <b>الآن</b>" : ""}</td><td>${esc(x.image)}</td><td>${esc(x.meaning)}</td><td>${x.now ? "الآن" : esc(shortWhen(x.enter))}</td><td>${x.leave ? esc(shortWhen(x.leave)) : "—"}</td></tr>`).join("")}
+    </table></div>`;
+
+  // الستّةُ والثلاثون بحسب البرج
+  const A = wujuh.all();
+  $("#wjAll", main).innerHTML = `<div class="grid wide">${Array.from({ length: 12 }, (_, s) => card({ title: A[s * 3].signName, k: "ثلاثةُ وجوه",
+    body: A.slice(s * 3, s * 3 + 3).map((f) => `<div class="kv" style="margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--line)"><b>الوجه ${AR(f.face)}</b> (${AR(f.from)}°–${AR(f.to)}°)${f.ruler ? ` — ربُّه ${esc(f.ruler)}` : ""}<br><b>الصورة:</b> ${esc(f.image)}<br><b>تدلّ على:</b> ${esc(f.meaning)}</div>`).join("") })).join("")}</div>`;
+
+  // خارجَ فلك البروج
+  $("#wjOut", main).innerHTML = `<p class="kv">${esc(wujuh.OUTSIDE_NOTE)}</p>
+    <div style="overflow-x:auto"><table class="tbl"><tr><th>الصورة</th><th>نفعُها</th></tr>${wujuh.OUTSIDE.map((x) => `<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.use)}</td></tr>`).join("")}</table></div>`;
+  wireCards(main);
+};
+
 // 9) الفلك ──────────────────────────────────────────────────────────
 PANELS.falak = (main) => {
   main.innerHTML = `${head('falak', 'الفلك والساعات')}`;
@@ -1692,6 +1744,173 @@ PANELS.talismans = (main) => {
          <div class="kv" style="margin-top:.5rem"><b>الغرض:</b> ${esc(t.purpose)}</div>
          <div class="kv" style="margin-top:.3rem"><b>كيف يُستعمَل:</b> ${esc(t.usage || "—")}</div>` })
   ).join("");
+  wireCards(main);
+};
+
+// الخواتمُ الكوكبيّة وأختامُ الكواكب (أغريبا) ───────────────────────
+// نصُّ الطريقة كما هو، بلا أسماء كتبٍ ولا أرقام فصول على الصفحة (المراجعُ في data/agrippa-rings.data.js).
+const khList = (xs) => xs.map((x) => `<span title="${esc(x.en)}"${x.toxic ? ' style="color:var(--bad)"' : ""}>${esc(x.ar)}</span>`).join("، ");
+const khNotBook = (t) => `<div class="gloss" style="margin-top:.3rem"><b>ملاحظة:</b> ${esc(t)}</div>`;
+const khOurs = (t) => t ? `<div class="warn" style="margin-top:.3rem"><b>تنبيه:</b> ${esc(t)}</div>` : "";
+function khRingHTML(p) {
+  return `<div class="kv">«تأخذُ حجرًا ونباتًا ممّا تحت ذلك الكوكب، وتصنعُ الخاتمَ من المعدن الموافق له»<br>
+    <b>معادنُ ${esc(p.planet)}:</b> ${khList(p.metals)}<br><b>أحجارُه:</b> ${khList(p.stones)}<br><b>نباتُه:</b> ${khList(p.plants)}</div>${khOurs(p.ring.caution)}`;
+}
+// ادّعاءُ الكتاب للجدول مع الكوكب المنحوس — نصٌّ للمعرفة والمجادلة، لا يُربَط بحاسبة الوقت
+function khUnfortunateHTML(planet) {
+  const u = agrippaRings.UNFORTUNATE[planet];
+  return `<details style="margin-top:.4rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">ادّعاءُ الطريقة مع الكوكب المنحوس — للمجادلة</summary>
+    ${u ? `<div class="kv" style="margin-top:.4rem"><b>الطريقة:</b> ${esc(u.how)}.<br><b>وما يدّعي أنّه يحدث:</b> «${esc(u.claim)}»</div>`
+      : `<div class="kv" style="margin-top:.4rem">ليس لجدول ${esc(planet)} عملٌ منحوس — له نفعُه فقط.</div>`}
+    <div class="gloss" style="margin-top:.3rem"><b>الردُّ (منّا) باختصار:</b> نفسُ الجدول «ينفع» مع الكوكب السعيد و«يضرّ» مع المنحوس، فكلُّ نتيجةٍ لها تفسيرٌ جاهز، ولا شيءَ يمكن أن يُثبتَ فشله. وصاحبُ الطريقة نفسه رجع عن أكثرها. التفصيلُ في «للمجادلة» آخرَ الصفحة.</div></details>`;
+}
+// العملُ الكامل: متى وماذا وكيف — من الكتاب، وكلُّ سطرٍ بمرجعه
+function khWorkHTML(w, why = "") {
+  const p = w.planet, g = w.goal, t = w.time, M = w.method;
+  const good = p.names.filter((e) => /intelligence/.test(e.role));
+  const sep = 'style="margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line)"';
+  return `<div class="grid wide">${card({ title: `العمل: ${g.label}`, k: `خاتمُ ${p.planet}`,
+    body: `${why ? `<div class="kv">${why}</div>` : ""}
+      ${g.book ? `<div class="kv"><b>نفعُه:</b> «${esc(g.book)}»</div>` : ""}
+      ${g.notFromBook ? khNotBook(g.notFromBook) : ""}
+
+      <div class="kv" ${sep}><b>١) متى — الوقتُ المحسوبُ لمدينتك:</b></div>
+      ${t ? `<div class="big" style="margin:.3rem 0">${esc(shortWhen(t.start))} حتى ${esc(shortWhen(t.end))}</div>
+        <div class="kv">ساعةُ ${esc(p.planet)} في يوم ${esc(p.day)}: يكونُ الكوكبُ حاكمًا في اليوم والساعة.</div>
+        ${t.complete ? `<div class="kv" style="margin-top:.3rem">اجتمعت فيها الشروطُ كلُّها:</div>` : `<div class="warn" style="margin-top:.3rem">لم تجتمع الشروطُ كلُّها في أيّ ساعةٍ لـ${esc(p.planet)} خلال ${AR(t.searchedDays)} يومًا؛ هذه الساعةُ أقربُ ما اجتمع فيه أكثرُها، والناقصُ معلَّمٌ ✗ أدناه.</div>`}
+        <ul class="kv" style="margin:.4rem 0;padding-inline-start:1.1rem">${t.checks.map((x) => `<li>${x.ok ? "✓" : "✗"} ${esc(x.text)}</li>`).join("")}</ul>
+        <div class="gloss">الأصل: «حين يطلعُ الكوكبُ طلوعًا سعيدًا، مع نظرٍ سعيدٍ من القمر أو اقترانه به»، و«ضعْه في حظوظه، سعيدًا قويًّا، حاكمًا في اليوم والساعة وفي شكل الفلك… ولا تعملْ شيئًا بلا عون القمر». فُحصت الشروطُ في منتصف الساعة.</div>
+        ${khNotBook("لم تُحسَب من الشروط: «الدرجاتُ المظلمة والآبار والخلاء»، وسهمُ السعادة وربُّه، وربُّ الاجتماع والاستقبال، ومنزلةُ القمر الموافقة — لأنّ جداولَها ليست في الأصل.")}`
+      : `<div class="warn">تعذّر حسابُ الوقت لهذا الموقع.</div>`}
+
+      <div class="kv" ${sep}><b>٢) ماذا تجهّز:</b></div>
+      ${khRingHTML(p)}
+      ${g.stone ? `<div class="kv" style="margin-top:.3rem">«ويحلُّ السحرَ إن نُقش على ${esc(g.stone)}»</div>` : ""}
+
+      <div class="kv" ${sep}><b>٣) ما يُنقَش:</b> «ولا تُغفِلْ نقشَ الصور والأسماء والأختام (Characters)»<br>
+        وفي جدول ${esc(p.planet)}: «فوقه أسماءٌ إلهيّة، مع ذكاءٍ للخير وروحٍ للشرّ، ومنه يُستخرَجُ ختمُ ${esc(p.planet)} وأرواحه»</div>
+      <table class="tbl"><tr><th>الصفة</th><th>الاسم</th><th>بالعبريّة</th><th>العدد</th></tr>
+        ${p.divine.map((d) => `<tr><td>اسمٌ إلهيّ</td><td>${esc(d.name)}</td><td dir="rtl" lang="he">${esc(d.heb)}</td><td>${AR(d.n)}</td></tr>`).join("")}
+        ${good.map((e) => `<tr><td>${esc(e.label)} (للخير)</td><td>${esc(e.ar)}<br><small>${esc(e.name)}</small></td><td dir="rtl" lang="he">${esc(e.heb)}</td><td>${AR(e.n)}</td></tr>`).join("")}</table>
+      <div class="kv" style="margin-top:.3rem">«ويُنقَشُ الجدولُ على ${esc(p.table.plate)}»</div>
+      ${khawatim.sigilSVG(p.planet).replace("<svg", '<svg class="seal printable"')}
+      ${good.map((e) => khawatim.sigilSVG(p.planet, e).replace("<svg", '<svg class="seal printable"')).join("")}
+      <button class="btn sm sec printbtn" type="button">🖨️ اطبع الجدول وختمَ الذكاء / احفظهما PDF</button>
+      ${khNotBook("رسمُ الختم آليٌّ بالقاعدة (كلُّ حرفٍ في خانة عدده)، وقد يختلفُ عن الرسم القديم في الانحناءات. وصورُ الكواكب التي تُنقَش لم تُضَف بعد.")}
+
+      <div class="kv" ${sep}><b>٤) البخور:</b> «${esc(agrippaRings.FUMES.goodRule)}»<br>
+        «ولـ${esc(p.planet)} من البخور: ${esc(w.fume.simple)}»</div>
+      <details style="margin-top:.3rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">التركيبُ الأوّلُ لبخور ${esc(p.planet)} كما هو</summary>
+        <div class="kv" style="margin-top:.3rem">«${esc(w.fume.compound)}»</div>
+        ${khOurs("في هذا التركيب دماءٌ وأدمغةُ حيوانات (وفي بعضها دمُ إنسان ودمُ حيض) وموادُّ سامّة؛ يُعرَضُ نصًّا للمعرفة، ولا نرشّحه.")}</details>
+
+      <div class="kv" ${sep}><b>٥) كيف:</b></div>
+      <ol class="kv" style="margin:.3rem 0;padding-inline-start:1.3rem">${M.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+      <div class="kv"></div>
+      ${khNotBook("ليس في هذه الطريقة كلامٌ يُتلى عند الصنع، ولا ترتيبٌ أدقُّ من هذا. العزائمُ التي في «التسخير والتصريف» طريقةٌ أخرى.")}
+
+      <div class="kv" ${sep}><b>٦) اللُّبس:</b> «${esc(M.apollonius)}»</div>`,
+    reveal: t ? t.checks.map((x) => `${x.ok ? "✓" : "✗"} ${x.text}`).join("\n") : "" })}</div>`;
+}
+PANELS.khawatim = (main) => {
+  const c = ctx();
+  const P = khawatim.all();
+  const G = khawatim.goals();
+  main.innerHTML = `${head("khawatim", "الخواتم والأختام الكوكبيّة")}
+    <p class="kv">لكلِّ كوكبٍ معدنُه وأحجارُه ونباتُه وبخورُه، وطريقةُ صنع خاتمه ووقتُه، وجدولُه بأسمائه وأعداده و«ذكائه» و«روحه» وأختامها. اختر حاجتك فيُركَّبُ لك العملُ كاملًا: ماذا ومتى وكيف. (الاسمُ الأصليُّ للمادّة يظهرُ حين تقفُ على الكلمة، وما عليه ⚠ سامّ.)</p>
+    <h2>ركّب خاتمًا لحاجتك</h2>
+    <div class="form"><div class="fld"><label>الحاجة</label><select id="khGoal">${G.map((g) => `<option value="${g.id}">${esc(g.label)}${g.planet ? ` — ${esc(g.planet)}` : ""}</option>`).join("")}</select></div>
+      <button class="btn" id="khGo" type="button">ركّب العمل كاملًا</button></div>
+    <div id="khHint"></div><div id="khWork"></div>
+    <h2>خاتمُك</h2><div id="khMine"></div>
+    <h2>طريقةُ صنع الخاتم</h2><div id="khMethod"></div>
+    <h2>الكواكبُ السبعة: موادُّها وجداولُها وأسماؤها</h2>
+    <div class="form" style="flex-wrap:wrap;margin-bottom:.6rem">${P.map((p) => `<button type="button" class="btn sm sec" data-khgo="${p.weekday}">${esc(p.planet)}</button>`).join("")}</div>
+    <div class="grid wide" id="khPlanets"></div>
+    <h2>للمجادلة: كيف تردُّ على مَن يحتجُّ بهذه الجداول</h2><div id="khDebunk"></div>`;
+
+  let namePlanet = null;
+  if (c.name && c.mother && c.nameOk && c.motherOk) { try { namePlanet = ak.reading(c.name, c.mother).planet.name; } catch {} }
+  const opt = { namePlanet, birthDate: c.date || null, from: c.now, lat: c.lat, lon: c.lon };
+  const who = [namePlanet ? `كوكبُ اسمك: <b>${esc(namePlanet)}</b>` : "", c.date ? `يومُ ميلادك: <b>${esc(khawatim.weekdayPlanet(c.date).day)}</b> (${esc(khawatim.weekdayPlanet(c.date).planet)})` : ""].filter(Boolean).join(" · ");
+  const show = (w) => { $("#khWork", main).innerHTML = khWorkHTML(w, who); wireCards($("#khWork", main)); };
+
+  // اقتراحُ الحاجة من سؤال «بطاقتي» (اقتراحٌ من الموقع لا من الكتاب)
+  const sug = khawatim.goalForQuestion(c.question);
+  if (sug && G.some((g) => g.id === sug.id)) {
+    $("#khGoal", main).value = sug.id;
+    $("#khHint", main).innerHTML = khNotBook(`اخترنا «${G.find((g) => g.id === sug.id).label}» اقتراحًا لأنّ موضوعَ سؤالك «${c.question}» هو «${sug.topic}». غيّرها إن لم تكن حاجتك.`);
+  }
+  const run = () => { try { show(khawatim.work($("#khGoal", main).value, opt)); } catch (e) { $("#khWork", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; } };
+  $("#khGo", main).onclick = run;
+  if (sug) run();
+
+  // خاتمُك: كوكبُ الاسم وكوكبُ يوم الميلاد — الربطُ بالشخص من الموقع، والعملُ من الكتاب
+  const yr = khawatim.yourRing({ namePlanet, birthDate: c.date || null });
+  const mineCard = (p, why, k) => card({ title: `خاتمُ ${p.planet}`, k, body: `<div class="kv">${why}</div>
+      <div class="kv" style="margin-top:.3rem"><b>نفعُه:</b> «${esc(p.table.good)}»</div>
+      ${khNotBook("الطريقةُ لا تذكرُ خاتمًا بحسب اسم الشخص أو يوم ميلاده؛ هذا الربطُ من الموقع، والعملُ نفسه بالطريقة.")}
+      <button type="button" class="btn sm" style="margin-top:.4rem" data-khplanet="${esc(p.planet)}">ركّب عملَ هذا الخاتم كاملًا ↑</button>` });
+  const cards = [];
+  if (yr.byName) cards.push(mineCard(yr.byName, `كوكبُ اسمك (جُمّل «${esc(c.name)}» + جُمّل «${esc(c.mother)}» ÷ ٧ — كما في «الأسماء والخدّام»): <b>${esc(yr.byName.planet)}</b>`, "بالاسم"));
+  if (yr.byDay && !yr.same) cards.push(mineCard(yr.byDay, `وُلدتَ يومَ <b>${esc(yr.birthWeekday.day)}</b>، وربُّه <b>${esc(yr.byDay.planet)}</b>`, "بيوم الميلاد"));
+  $("#khMine", main).innerHTML = cards.length
+    ? `${yr.same ? `<p class="kv">كوكبُ اسمك وكوكبُ يوم ميلادك واحد (<b>${esc(yr.byName.planet)}</b>).</p>` : ""}<div class="grid wide">${cards.join("")}</div>`
+    : `<div class="warn">املأ <b>الاسم</b> و<b>اسم الأمّ</b> أو <b>تاريخ الميلاد</b> في «بطاقتي» ليظهر خاتمُك. وبقيّةُ الصفحة متاحةٌ بلا بيانات.</div>`;
+  main.querySelectorAll("[data-khplanet]").forEach((b) => b.addEventListener("click", () => {
+    try { show(khawatim.workForPlanet(b.dataset.khplanet, opt)); } catch { return; }
+    $("#khWork", main).scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+
+  // طريقةُ الصنع + خاتمُ اليوم (على عادة أبولونيوس)
+  const M = agrippaRings.RING_METHOD;
+  const today = khawatim.planet(khawatim.weekdayPlanet(`${c.now.getFullYear()}-${String(c.now.getMonth() + 1).padStart(2, "0")}-${String(c.now.getDate()).padStart(2, "0")}`).planet);
+  $("#khMethod", main).innerHTML = `<div class="grid wide">
+    ${card({ title: "في الخواتم وتركيبها", body: `<div class="kv">«${esc(M.virtue)}»</div>
+      <ol class="kv" style="margin:.5rem 0;padding-inline-start:1.3rem">${M.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+      <div class="gloss">«${esc(M.apollonius)}»</div>` })}
+    ${card({ title: `خاتمُ اليوم: ${today.planet}`, k: today.day, body: `<div class="kv">على عادة أبولونيوس (يلبسُ كلَّ يومٍ خاتمَ كوكبه)، خاتمُ اليوم خاتمُ <b>${esc(today.planet)}</b>:</div>${khRingHTML(today)}` })}
+  </div>`;
+
+  // الكواكبُ السبعة
+  const roleNote = { intelligence: "للخير", intelligences: "للخير", spirit: "للشرّ", "spirit-of-spirits": "للشرّ", "intelligence-of-intelligences": "للخير" };
+  $("#khPlanets", main).innerHTML = P.map((p) => {
+    const t = p.table;
+    return `<div id="kh-${p.weekday}">${card({ title: `${p.planet} (${p.en})`, k: `يومُه ${p.day}`,
+      body: `<div class="kv">${esc(p.nature)}</div>
+        <div class="kv" style="margin-top:.6rem;padding-top:.4rem;border-top:1px solid var(--line)"><b>خاتمُ ${esc(p.planet)}:</b></div>${khRingHTML(p)}
+        <div class="kv" style="margin-top:.3rem"><b>بخورُه:</b> «${esc(agrippaRings.FUMES[p.planet].simple)}»</div>
+        <button type="button" class="btn sm" style="margin-top:.4rem" data-khplanet="${esc(p.planet)}">ركّب عملَ خاتم ${esc(p.planet)} كاملًا ↑</button>
+        <div class="kv" style="margin-top:.6rem;padding-top:.4rem;border-top:1px solid var(--line)"><b>جدولُ ${esc(p.planet)}:</b> مربّعُ ${AR(t.order)}×${AR(t.order)}، كلُّ صفٍّ وعمودٍ وقطرٍ = <b>${AR(t.row)}</b>، ومجموعُه <b>${AR(t.sum)}</b>.<br>
+          «يُنقَشُ على ${esc(t.plate)}: ${esc(t.good)}»</div>
+        <div class="gloss">${esc(agrippaRings.UNFORTUNATE_NOTE)}</div>
+        ${khUnfortunateHTML(p.planet)}
+        ${khawatim.sigilSVG(p.planet).replace("<svg", '<svg class="seal printable"')}
+        <button class="btn sm sec printbtn" type="button">🖨️ اطبع الجدول / احفظه PDF</button>
+        <div class="kv" style="margin-top:.6rem"><b>الأسماءُ الإلهيّة بأعدادها:</b></div>
+        <table class="tbl"><tr><th>العدد</th><th>الاسم</th><th>بالعبريّة</th></tr>${p.divine.map((d) => `<tr><td>${AR(d.n)}</td><td>${esc(d.name)}</td><td dir="rtl" lang="he">${esc(d.heb)}</td></tr>`).join("")}</table>
+        <div class="kv" style="margin-top:.6rem"><b>الذكاءُ والروح:</b>${p.noIntelligence ? ` <span class="gloss">${esc(p.noIntelligence)}</span>` : ""}</div>
+        <table class="tbl"><tr><th>الصفة</th><th>الاسم</th><th>بالعبريّة</th><th>العدد</th></tr>${p.names.map((e) => `<tr><td>${esc(e.label)} <small>(${roleNote[e.role] || ""})</small></td><td>${esc(e.ar)}<br><small>${esc(e.name)}</small></td><td dir="rtl" lang="he">${esc(e.heb)}</td><td><b>${AR(e.n)}</b>${e.bookN ? `<br><small>في الأصل ${AR(e.bookN)}</small>` : ""}</td></tr>`).join("")}</table>
+        ${p.names.filter((e) => e.note).map((e) => `<div class="gloss">${esc(e.note)}</div>`).join("")}
+        ${p.names.map((e) => { const sp = khawatim.sigilPath(p.planet, e); return `<details style="margin-top:.4rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">ختمُ ${esc(e.ar)} على الجدول</summary>
+          ${khawatim.sigilSVG(p.planet, e).replace("<svg", '<svg class="seal printable"')}
+          <button class="btn sm sec printbtn" type="button">🖨️ اطبع الختم / احفظه PDF</button>
+          <div class="gloss">الخانات بالترتيب: ${sp.steps.map((s) => `${esc(s.letters)}=${AR(s.cell)}`).join(" ← ")}</div></details>`; }).join("")}`,
+      basis: "كلُّ اسمٍ يساوي بحروفه العبريّة أحدَ أعداد جدول كوكبه (الرتبة، أو عددَ الخانات، أو مجموعَ الصفّ، أو مجموعَ الجدول). والختمُ: تضعُ كلَّ حرفٍ في الخانة التي فيها عددُه (وما جاوز الجدولَ يُنزَلُ بـ«أيق بكر»: ٣٠←٣، ٢٠٠←٢٠ أو ٢…) ثمّ تصلُ الخاناتِ بخطّ؛ الدائرةُ بدايتُه والخطُّ المعترضُ نهايتُه.",
+      reveal: "الأختامُ هنا مرسومةٌ آليًّا بالقاعدة؛ الرسومُ القديمة قد تختلفُ في الانحناءات والزخرفة. وختمُ الكوكب نفسه صورةٌ لا تُشتقُّ بقاعدة، فلم يُرسَم.\nالأعدادُ كلُّها مُتحقَّقٌ منها حسابيًّا." })}</div>`;
+  }).join("");
+  main.querySelectorAll("#khPlanets [data-khplanet]").forEach((b) => b.addEventListener("click", () => {
+    try { show(khawatim.workForPlanet(b.dataset.khplanet, opt)); } catch { return; }
+    $("#khWork", main).scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  // للمجادلة: اعترافُ أغريبا + نقاطُ الردّ
+  const RT = agrippaRings.AGRIPPA_RETRACTION;
+  $("#khDebunk", main).innerHTML = `<div class="grid wide">
+    ${card({ title: "صاحبُ الطريقة نفسه تراجع عنها", k: RT.ref, body: `<div class="kv">«${esc(RT.text)}»</div><div class="gloss">${esc(RT.note)}</div>` })}
+    ${card({ title: "نقاطُ الردّ (منّا)", k: "ابدأ بأيّها شئت", body: `<ol class="kv" style="margin:0;padding-inline-start:1.3rem">${agrippaRings.DEBUNK_POINTS.map((x) => `<li style="margin-bottom:.45rem"><b>${esc(x.t)}:</b> ${esc(x.d)}</li>`).join("")}</ol>
+      <div class="gloss" style="margin-top:.4rem">طريقةُ المجادلة: اطلب منه أن يقول قبل العمل ماذا سيحدث ومتى بالضبط، وما الذي لو حدث يعترفُ أنّ العمل فشل. إن رفض أن يحدّد، فقد اعترف أنّ ادّعاءه لا يُفحَص.</div>` })}
+  </div>`;
+  main.querySelectorAll("[data-khgo]").forEach((b) => b.addEventListener("click", () => $("#kh-" + b.dataset.khgo, main)?.scrollIntoView({ behavior: "smooth", block: "start" })));
   wireCards(main);
 };
 
