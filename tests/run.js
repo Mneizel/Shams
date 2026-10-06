@@ -449,6 +449,13 @@ import falak from "../engines/falak.js";
     eq(wj.natal(new Date("1991-11-09T02:35:00Z"), 31.95, 35.91, false).ascendant, null, "الوجوه: بلا ساعة ميلاد لا صورةَ طالع");
     const wt = wj.risingTimes(new Date("2026-10-06T16:00:00Z"), 31.95, 35.91);
     ok(wt.length === 36 && wt.filter((x) => x.now).length === 1 && wt.every((x) => x.now || (x.enter && x.leave > x.enter)), "الوجوه: تطلعُ الستّةُ والثلاثون كلُّها في يوم، لكلٍّ طلوعٌ قبل غيابه");
+    // الأختامُ الكبرى للكواكب السبعة (صورٌ مضمَّنة)
+    const PS = (await import("../data/planet-seals.data.js")).default;
+    ok(kh.all().every((p) => String(PS[p.planet] || "").startsWith("data:image/png;base64,")), "الأختام الكبرى: صورةٌ لكلّ كوكبٍ من السبعة");
+    // الربطُ بالتركيبة والعارف موجودٌ في الواجهة
+    const appSrc = (await import("node:fs")).readFileSync("web/app.js", "utf8");
+    ok(appSrc.includes('btns("wjAsc")') && appSrc.includes('btns("wjSun")') && appSrc.includes("khStoneHTML(r.day.planet)"), "التركيبة: صورةُ الطالع والشمس وحجرُك ومعدنُك");
+    ok(appSrc.includes("arifExtrasHTML(q, c)"), "العارف: خاتمُ الحاجة والصورةُ الطالعةُ بعد الجواب");
     const AR_ = (await import("../data/agrippa-rings.data.js")).default;
     ok(Object.keys(AR_.FUMES).filter((k) => k !== "ref" && k !== "goodRule").length === 7 && !JSON.stringify(AR_.FUMES).includes("examples"), "الخواتم: بخورُ الكواكب السبعة من ك١ ف٤٤ بلا أمثلةٍ من خارجه");
     ok(P.every((p) => p.planet in AR_.UNFORTUNATE) && AR_.UNFORTUNATE["المشتري"] === null && /رصاص/.test(AR_.UNFORTUNATE["القمر"].how), "الخواتم: ادّعاءاتُ الكوكب المنحوس لكلّ كوكب (المشتري بلا عمل) للمجادلة");

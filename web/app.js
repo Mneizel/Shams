@@ -43,6 +43,7 @@ import manazil from "../engines/manazil.js";
 import khawatim from "../engines/khawatim.js";
 import wujuh from "../engines/wujuh.js";
 import agrippaRings from "../data/agrippa-rings.data.js";
+import PLANET_SEAL_IMG from "../data/planet-seals.data.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
 import { CITY_GROUPS, CITY_INDEX, tzOffsetAt } from "./cities.data.js";
@@ -1752,6 +1753,11 @@ PANELS.talismans = (main) => {
 const khList = (xs) => xs.map((x) => `<span title="${esc(x.en)}"${x.toxic ? ' style="color:var(--bad)"' : ""}>${esc(x.ar)}</span>`).join("، ");
 const khNotBook = (t) => `<div class="gloss" style="margin-top:.3rem"><b>ملاحظة:</b> ${esc(t)}</div>`;
 const khOurs = (t) => t ? `<div class="warn" style="margin-top:.3rem"><b>تنبيه:</b> ${esc(t)}</div>` : "";
+// الختمُ الكبيرُ للكوكب (صورةٌ من الأصل) داخل SVG ليطبعَه زرُّ الطباعة مع الجداول
+function khBigSealSVG(planet) {
+  const src = PLANET_SEAL_IMG[planet]; if (!src) return "";
+  return `<svg class="seal printable" viewBox="0 0 300 300" role="img" aria-label="ختم ${esc(planet)}"><rect width="300" height="300" rx="10" fill="#fff"/><image href="${src}" x="15" y="15" width="270" height="270" preserveAspectRatio="xMidYMid meet"/></svg>`;
+}
 function khRingHTML(p) {
   return `<div class="kv">«تأخذُ حجرًا ونباتًا ممّا تحت ذلك الكوكب، وتصنعُ الخاتمَ من المعدن الموافق له»<br>
     <b>معادنُ ${esc(p.planet)}:</b> ${khList(p.metals)}<br><b>أحجارُه:</b> ${khList(p.stones)}<br><b>نباتُه:</b> ${khList(p.plants)}</div>${khOurs(p.ring.caution)}`;
@@ -1793,9 +1799,11 @@ function khWorkHTML(w, why = "") {
         ${p.divine.map((d) => `<tr><td>اسمٌ إلهيّ</td><td>${esc(d.name)}</td><td dir="rtl" lang="he">${esc(d.heb)}</td><td>${AR(d.n)}</td></tr>`).join("")}
         ${good.map((e) => `<tr><td>${esc(e.label)} (للخير)</td><td>${esc(e.ar)}<br><small>${esc(e.name)}</small></td><td dir="rtl" lang="he">${esc(e.heb)}</td><td>${AR(e.n)}</td></tr>`).join("")}</table>
       <div class="kv" style="margin-top:.3rem">«ويُنقَشُ الجدولُ على ${esc(p.table.plate)}»</div>
+      <div class="kv" style="margin-top:.3rem"><b>ختمُ ${esc(p.planet)}:</b></div>
+      ${khBigSealSVG(p.planet)}
       ${khawatim.sigilSVG(p.planet).replace("<svg", '<svg class="seal printable"')}
       ${good.map((e) => khawatim.sigilSVG(p.planet, e).replace("<svg", '<svg class="seal printable"')).join("")}
-      <button class="btn sm sec printbtn" type="button">🖨️ اطبع الجدول وختمَ الذكاء / احفظهما PDF</button>
+      <button class="btn sm sec printbtn" type="button">🖨️ اطبع الختم والجدول وختمَ الذكاء / احفظها PDF</button>
       ${khNotBook("رسمُ الختم آليٌّ بالقاعدة (كلُّ حرفٍ في خانة عدده)، وقد يختلفُ عن الرسم القديم في الانحناءات. وصورُ الكواكب التي تُنقَش لم تُضَف بعد.")}
 
       <div class="kv" ${sep}><b>٤) البخور:</b> «${esc(agrippaRings.FUMES.goodRule)}»<br>
@@ -1811,6 +1819,25 @@ function khWorkHTML(w, why = "") {
 
       <div class="kv" ${sep}><b>٦) اللُّبس:</b> «${esc(M.apollonius)}»</div>`,
     reveal: t ? t.checks.map((x) => `${x.ok ? "✓" : "✗"} ${x.text}`).join("\n") : "" })}</div>`;
+}
+// للتركيبة: حجرُك ومعدنُك من كوكبٍ معطى (موادُّ كوكبه كما هي)
+function khStoneHTML(planet) {
+  const p = khawatim.planet(planet); if (!p) return "";
+  return `<div class="kv"><b>معادنُ ${esc(p.planet)}:</b> ${khList(p.metals)}<br><b>أحجارُه:</b> ${khList(p.stones)}</div>${khOurs(p.ring.caution)}`;
+}
+// للعارف: خاتمُ حاجة السؤال ووقتُه، والصورةُ الطالعةُ لحظةَ السؤال
+function arifExtrasHTML(q, c) {
+  const g = khawatim.goalForQuestion(q);
+  let ring = "";
+  if (g) {
+    let np = null; if (g.id === "mine") { try { np = ak.reading(c.name, c.mother).planet.name; } catch {} }
+    let w = null; try { w = khawatim.work(g.id, { namePlanet: np, from: c.now, lat: c.lat, lon: c.lon }); } catch {}
+    if (w) ring = `<div class="kv"><b>خاتمُ حاجتك:</b> ${esc(w.goal.label)} — خاتمُ <b>${esc(w.planet.planet)}</b>.${w.time ? ` أقربُ وقتٍ لصنعه: <b>${esc(shortWhen(w.time.start))}</b>${w.time.complete ? "" : " (لم تجتمع فيه الشروطُ كلُّها)"}.` : ""}</div>
+      <button type="button" class="btn sm sec" style="margin-top:.3rem" data-nav-kh="${esc(g.id)}">العملُ كاملًا: ماذا ومتى وكيف ←</button>`;
+  }
+  let face = ""; try { const f = wujuh.rising(c.now, c.lat, c.lon);
+    face = `<div class="kv" style="margin-top:.5rem"><b>الصورةُ الطالعةُ لحظةَ سؤالك</b> (${esc(f.signName)}، الوجه ${AR(f.face)}): ${esc(f.image)} — تدلّ على: ${esc(f.meaning)}</div>${khNotBook("ربطُ صورة الوجه الطالع بالسؤال من الموقع، لا من الأصل.")}`; } catch {}
+  return ring || face ? `<div class="arif-insight" style="margin-top:.6rem">${ring}${face}</div>` : "";
 }
 PANELS.khawatim = (main) => {
   const c = ctx();
@@ -1837,13 +1864,15 @@ PANELS.khawatim = (main) => {
 
   // اقتراحُ الحاجة من سؤال «بطاقتي» (اقتراحٌ من الموقع لا من الكتاب)
   const sug = khawatim.goalForQuestion(c.question);
-  if (sug && G.some((g) => g.id === sug.id)) {
+  let fromArif = null; try { fromArif = sessionStorage.getItem("smk-kh-goal"); sessionStorage.removeItem("smk-kh-goal"); } catch {}
+  if (fromArif && G.some((g) => g.id === fromArif)) { $("#khGoal", main).value = fromArif; try { show(khawatim.work(fromArif, opt)); } catch {} }
+  if (!fromArif && sug && G.some((g) => g.id === sug.id)) {
     $("#khGoal", main).value = sug.id;
     $("#khHint", main).innerHTML = khNotBook(`اخترنا «${G.find((g) => g.id === sug.id).label}» اقتراحًا لأنّ موضوعَ سؤالك «${c.question}» هو «${sug.topic}». غيّرها إن لم تكن حاجتك.`);
   }
   const run = () => { try { show(khawatim.work($("#khGoal", main).value, opt)); } catch (e) { $("#khWork", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; } };
   $("#khGo", main).onclick = run;
-  if (sug) run();
+  if (sug && !fromArif) run();
 
   // خاتمُك: كوكبُ الاسم وكوكبُ يوم الميلاد — الربطُ بالشخص من الموقع، والعملُ من الكتاب
   const yr = khawatim.yourRing({ namePlanet, birthDate: c.date || null });
@@ -1885,6 +1914,9 @@ PANELS.khawatim = (main) => {
           «يُنقَشُ على ${esc(t.plate)}: ${esc(t.good)}»</div>
         <div class="gloss">${esc(agrippaRings.UNFORTUNATE_NOTE)}</div>
         ${khUnfortunateHTML(p.planet)}
+        <div class="kv" style="margin-top:.6rem"><b>ختمُ ${esc(p.planet)}:</b></div>
+        ${khBigSealSVG(p.planet)}
+        <button class="btn sm sec printbtn" type="button">🖨️ اطبع الختم / احفظه PDF</button>
         ${khawatim.sigilSVG(p.planet).replace("<svg", '<svg class="seal printable"')}
         <button class="btn sm sec printbtn" type="button">🖨️ اطبع الجدول / احفظه PDF</button>
         <div class="kv" style="margin-top:.6rem"><b>الأسماءُ الإلهيّة بأعدادها:</b></div>
@@ -1897,7 +1929,7 @@ PANELS.khawatim = (main) => {
           <button class="btn sm sec printbtn" type="button">🖨️ اطبع الختم / احفظه PDF</button>
           <div class="gloss">الخانات بالترتيب: ${sp.steps.map((s) => `${esc(s.letters)}=${AR(s.cell)}`).join(" ← ")}</div></details>`; }).join("")}`,
       basis: "كلُّ اسمٍ يساوي بحروفه العبريّة أحدَ أعداد جدول كوكبه (الرتبة، أو عددَ الخانات، أو مجموعَ الصفّ، أو مجموعَ الجدول). والختمُ: تضعُ كلَّ حرفٍ في الخانة التي فيها عددُه (وما جاوز الجدولَ يُنزَلُ بـ«أيق بكر»: ٣٠←٣، ٢٠٠←٢٠ أو ٢…) ثمّ تصلُ الخاناتِ بخطّ؛ الدائرةُ بدايتُه والخطُّ المعترضُ نهايتُه.",
-      reveal: "الأختامُ هنا مرسومةٌ آليًّا بالقاعدة؛ الرسومُ القديمة قد تختلفُ في الانحناءات والزخرفة. وختمُ الكوكب نفسه صورةٌ لا تُشتقُّ بقاعدة، فلم يُرسَم.\nالأعدادُ كلُّها مُتحقَّقٌ منها حسابيًّا." })}</div>`;
+      reveal: "الأختامُ هنا مرسومةٌ آليًّا بالقاعدة؛ الرسومُ القديمة قد تختلفُ في الانحناءات والزخرفة. وختمُ الكوكب نفسه منقولٌ صورةً من الأصل.\nالأعدادُ كلُّها مُتحقَّقٌ منها حسابيًّا." })}</div>`;
   }).join("");
   main.querySelectorAll("#khPlanets [data-khplanet]").forEach((b) => b.addEventListener("click", () => {
     try { show(khawatim.workForPlanet(b.dataset.khplanet, opt)); } catch { return; }
@@ -2973,6 +3005,8 @@ PANELS.arif = (main) => {
       ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
       ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
+    $("#arifAns", main).insertAdjacentHTML("beforeend", arifExtrasHTML(q, c));
+    $("#arifAns", main).querySelectorAll("[data-nav-kh]").forEach((b) => b.addEventListener("click", () => { try { sessionStorage.setItem("smk-kh-goal", b.dataset.navKh); } catch {} route("khawatim"); }));
     // «صح» ⇒ تُصدَّقُ طرقُ النافذة؛ «مش صح» ⇒ يُطلَبُ تاريخُ الزواج الحقيقيّ (أو «ما تزوّجت») لتُعرَفَ الطرقُ التي أصابت والتي أخطأت
     const resend = () => $("#arifAsk", main).requestSubmit();
     $("#arifAns", main).querySelectorAll("[data-mok]").forEach((b) => b.addEventListener("click", () => {
@@ -3116,6 +3150,11 @@ PANELS.tarkiba = (main) => {
       ${card({ title: `${k_("اسمُك", "اسمُكِ")} الباطن: ${esc(r.hiddenName.name)}`, body: `<div class="kv">خاصّيّتُه: ${esc(r.hiddenName.khassa)}</div>` + btns("hidden"), basis: `الباطن mod ٩٩ ⇒ الاسمُ رقم ${AR(r.hiddenName.index)} من الأسماء الحسنى.` })}
       ${card({ title: `${k_("شكلُك", "شكلُكِ")} في الرمل: ${esc(r.figure.ar)}`, k: esc(r.figure.nature), body: `<div class="kv">${esc(r.figure.meaning)}</div>` + btns("figure"), basis: "الباطن mod ١٦ ⇒ شكلٌ من الأشكال الستّةَ عشر." })}
       ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
+      ${(() => { let n = null; try { n = wujuh.natal(c.birth, c.lat, c.lon, c.timeKnown); } catch {} if (!n) return "";
+        const fc = (f) => `<div class="kv"><b>الصورة:</b> ${esc(f.image)}</div><div class="kv" style="margin-top:.3rem"><b>تدلّ على:</b> ${esc(f.meaning)}</div>`;
+        return (n.ascendant ? card({ title: `صورةُ ${k_("طالعك", "طالعكِ")}`, k: `${esc(n.ascendant.signName)}، الوجه ${AR(n.ascendant.face)}`, body: fc(n.ascendant) + btns("wjAsc"), basis: "الوجهُ الذي كان يطلعُ في الأفق لحظةَ الميلاد، وصورتُه وما تدلّ عليه." }) : "")
+          + card({ title: `صورةُ ${k_("شمسك", "شمسكِ")}`, k: `${esc(n.sun.signName)}، الوجه ${AR(n.sun.face)}`, body: fc(n.sun) + btns("wjSun"), basis: "الوجهُ الذي كانت فيه الشمسُ يومَ الميلاد، وصورتُه وما تدلّ عليه." }); })()}
+      ${card({ title: `${k_("حجرُك ومعدنُك", "حجرُكِ ومعدنُكِ")}`, k: `من ${esc(r.day.planet)}`, body: khStoneHTML(r.day.planet) + `<button type="button" class="btn sm sec" style="margin-top:.4rem" data-nav="khawatim">${k_("ركّبْ خاتمَك", "ركّبي خاتمَكِ")} ←</button>`, basis: "موادُّ الكوكب نفسه الذي منه «يومُك»." })}
       ${r.mood ? card({ title: "الميلُ للاكتئاب", k: r.mood.level === "clear" ? "دليلٌ واضح" : "دليلٌ خفيف", body: `<div class="kv">${esc(r.mood.text)}</div><div class="gloss">الدليل: ${esc(r.mood.why.join("، "))}.</div>` + btns("mood") + moodFixer(), basis: `دلائلُ «السوداء» من زحل: نظرُ عداوةٍ للقمر أو عطارد${c.timeKnown ? " أو الطالع" : ""}، والقمرُ أو عطاردُ في بيتَي زحل.${c.timeKnown ? "" : " بلا ساعة ميلادٍ لا يُنظرُ إلى الطالع فقد يفوتُ الدليل."}` }) : ""}
     </div>
     <h2>${k_("سنواتُك", "سنواتُكِ")} المفصليّة</h2>
@@ -3131,7 +3170,7 @@ PANELS.tarkiba = (main) => {
     const b = ev.target.closest("[data-tok]"), box = b?.closest("[data-tk]"); if (!box) return;
     const id = box.dataset.tk, ok = b.dataset.tok === "1";
     save(id, { ok });
-    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name, mood: r.mood && `ميلٌ ${r.mood.level === "clear" ? "واضح" : "خفيف"} (${r.mood.why.join("، ")})` })[id];
+    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar,  wjAsc: (() => { try { const f = wujuh.natal(c.birth, c.lat, c.lon, c.timeKnown).ascendant; return f && `${f.signName} ${f.face}`; } catch { return ""; } })(), wjSun: (() => { try { const f = wujuh.natal(c.birth, c.lat, c.lon, c.timeKnown).sun; return `${f.signName} ${f.face}`; } catch { return ""; } })(),day: r.day.name, mood: r.mood && `ميلٌ ${r.mood.level === "clear" ? "واضح" : "خفيف"} (${r.mood.why.join("، ")})` })[id];
     arifSend({ kind: "tarkiba", ok, item: id, said: String(said || "").slice(0, 300), lines: [r.timingFrom] });
     box.querySelectorAll("[data-tok]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     if (!box.querySelector(".saved")) box.insertAdjacentHTML("beforeend", `<span class="saved">انحفظ ✓</span>`);
