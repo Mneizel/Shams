@@ -2543,7 +2543,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "2384212501";
+const ENGINE_VER = "0979e0e279";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -5570,7 +5570,7 @@ const STONES = [
 ];
 
 const SAFETY =
-  "أيُّ مادّةٍ موسومةٍ toxic هنا تسبّب أذًى بدنيًّا حقيقيًّا موثَّقًا طبّيًّا، " +
+  "أيُّ مادّةٍ موسومةٍ بأنّها سامّة ⚠ هنا تسبّب أذًى بدنيًّا حقيقيًّا موثَّقًا طبّيًّا، " +
   "بصرف النظر عن السحر. لا تُحرَق في مكانٍ مغلق، ولا تُبتلَع، ولا تُقتنى بلا داعٍ.";
 
 ;__exports["INCENSE"]=INCENSE;__exports["HERBS"]=HERBS;__exports["STONES"]=STONES;__exports["SAFETY"]=SAFETY;return __exports;})();
@@ -6422,12 +6422,15 @@ const FIGURE_IN_HOUSE_OVERRIDES = {
 };
 
 // أيّ بيتٍ يخصّ أيّ سؤال (تلميحات للربط الآليّ)
+// الترتيبُ مهمّ: أوّلُ كلمةٍ تُطابَقُ تُحدّدُ البيت — فالخاصّةُ أوّلًا، والعامّةُ («عام»، «نفس»، «أب») آخرًا
+// (كان «عام» أوّلَها فيذهبُ كلُّ سؤالٍ فيه «هذا العام» إلى البيت الأوّل؛ وكان «أتزوّج» لا يطابقُ «زواج»).
 const TOPIC_HOUSE = {
-  "عام": 1, "نفس": 1, "صحة": 6, "مرض": 6, "مال": 2, "رزق": 2, "عمل": 10, "وظيفة": 10,
-  "زواج": 7, "خطبة": 7, "حب": 7, "شريك": 7, "خصومة": 7, "قضية": 7, "دعوى": 7,
-  "سفر": 9, "هجرة": 9, "غائب": 3, "خبر": 3, "ولد": 5, "حمل": 5, "دين": 2,
-  "عدو": 12, "سحر": 12, "حبس": 12, "ميراث": 8, "موت": 8, "أب": 4, "بيت": 4, "أرض": 4,
+  "زواج": 7, "تزوج": 7, "خطبة": 7, "عريس": 7, "عروس": 7, "حب": 7, "شريك": 7, "خصومة": 7, "قضية": 7, "دعوى": 7,
+  "صحة": 6, "مرض": 6, "مريض": 6, "شفاء": 6, "مال": 2, "رزق": 2, "فلوس": 2, "عمل": 10, "وظيفة": 10, "شغل": 10, "ترقية": 10,
+  "سفر": 9, "سافر": 9, "هجرة": 9, "غائب": 3, "خبر": 3, "ولد": 5, "حمل": 5, "حامل": 5, "دين": 2,
+  "عدو": 12, "سحر": 12, "حبس": 12, "ميراث": 8, "موت": 8, "بيت": 4, "أرض": 4,
   "صديق": 11, "أمنية": 11, "سلطان": 10,
+  "عام": 1, "نفس": 1, "أب": 4,
 };
 
 // نظرُ البيت إلى البيت (بحسب البُعد بينهما) — للحكم بموافقة الطالع لبيت المسألة.
@@ -6867,7 +6870,7 @@ const BAD_DAYS_NOTE =
 const CORNER_SIGNING = {
   corners: ["بُدُوح (٢ ٤ / ٦ ٨) موزَّعةً على الزوايا", "اسمُ مَلَك الكوكب", "اسمُ الخادم المُصرَّف", "طبعُ الكوكب (نار/هواء/ماء/تراب)"],
   awtad: "الأوتادُ الأربعة: يُكتَب على كلِّ ضلعٍ اسمٌ من «آجٍ هجٍ وجٍ زهجٍ» (أسماء العزائم).",
-  note: "بصراحة: «بُدُوح» و«زهج» معًا فعلًا كلمتا توقيعٍ متكرّرتان في المصدر المذكور [SA] (وُجدتا في أكثر من موضعٍ فيه)، لكنّ توزيعَ أربع كلماتٍ محدَّدة (آجٍ/هجٍ/وجٍ/زهجٍ) واحدةً على كلّ ضلعٍ تحديدًا لم أجده بنصّه هناك — فهذا الجزءُ تحديدًا غيرُ مؤكَّدٍ من الأصل، لا مجرَّد «زخرفة» فحسب.",
+  note: "بصراحة: «بُدُوح» و«زهج» معًا فعلًا كلمتا توقيعٍ متكرّرتان في الأصل (وُجدتا في أكثر من موضعٍ فيه)، لكنّ توزيعَ أربع كلماتٍ محدَّدة (آجٍ/هجٍ/وجٍ/زهجٍ) واحدةً على كلّ ضلعٍ تحديدًا لم يوجد بنصّه هناك — فهذا الجزءُ تحديدًا غيرُ مؤكَّدٍ من الأصل، لا مجرَّد «زخرفة» فحسب.",
 };
 
 const SOURCES_META = {
@@ -19180,8 +19183,9 @@ const norm360 = (x) => ((x % 360) + 360) % 360;
 function dayRuler(date, lat, lon) {
   let d = new Date(date);
   if (lat != null && lon != null) {
-    const sr = sunTimes(d, lat, lon).sunrise;
-    if (d < sr) d = new Date(d.getTime() - 86400000);
+    // اليومُ الفلكيُّ من آخرِ شروقٍ قبل اللحظة (كما في جدول الساعات)؛ كان sunTimes بعد الظهر يلتقطُ شروقَ الغد فيرجعُ يومًا
+    try { d = new Date(planetaryHoursForMoment(d, lat, lon).sunrise); }
+    catch { const sr = sunTimes(d, lat, lon).sunrise; if (d < sr) d = new Date(d.getTime() - 86400000); }
   }
   const idx = d.getDay(); // 0 = الأحد
   return { weekday: DAY_NAMES[idx], planet: DAY_RULERS[idx], index: idx };
@@ -21494,11 +21498,12 @@ function mulberry32(a) {
  * إن جاء فردًا فالطالعُ فاسدٌ عند أهل الصناعة ويُعادُ الضربُ فورًا — لا يُعتَمَد.
  * فنُعيد الضربَ آليًّا (ببذرةٍ متسلسلةٍ حتميّة) حتى يصحّ الميزان، ونُثبت عددَ الإعادات.
  */
+// البذرةُ باليوم لا بالدقيقة: «نفس المدخلات في نفس اليوم ⇒ نفس الطالع» (كانت الدقيقةُ تُغيّرُ الطالعَ بين صفحةٍ وأخرى)
 function mothersFromSeed({ name = "", mother = "", question = "", when } = {}) {
   const d = when ? new Date(when) : new Date();
   const base = [
     abjad.jummal(name), abjad.jummal(mother), abjad.jummal(question),
-    d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes()
+    d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()
   ].join("|");
   const MAX_REDO = 8;
   for (let attempt = 0; attempt <= MAX_REDO; attempt++) {
@@ -23022,8 +23027,10 @@ function read(c, opt = {}) {
 
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
+  // سطرُ الزواج مرّةً واحدة؛ وإن كان الزواجُ المحسوبُ قد مضى فالحديثُ عن «العلاقة» لا «الارتباط»
+  const mLine = marriageLine(c, ctx, k_, opt.weights), mPast = mLine.startsWith("الحسابُ يدلُّ على زواجٍ");
   const areas = [
-    { key: "love", title: "الزواج والعائلة", text: `${marriageLine(c, ctx, k_, opt.weights)}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
+    { key: "love", title: "الزواج والعائلة", text: `${mLine}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}${mPast ? "أحسنُ وقتٍ للعلاقة ولترتيب البيت" : "أحسنُ وقتٍ للارتباط أو لترتيب البيت"} بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
     { key: "work", title: "الشغل", text: `${k_("يناسبُك", "يناسبُكِ")}: ${L.work.text.split("؛")[0]}. يقوى بين ${W.work.best.label}${W.work.worst.v < -0.45 ? `، ويثقلُ بين ${W.work.worst.label}` : ""}.`, src: "صاحبُ العمل (بطليموس م٤ ف٤) + المرورُ على الشمس والعاشر + الأزمنة" },
     { key: "study", title: "العلم والسفر", text: `أنسبُ وقتٍ لدراسةٍ أو دورةٍ أو سفرٍ نافع بين ${W.study.best.label}.`, src: "المرورُ على البيت التاسع + الأزمنة" },
     { key: "money", title: "المال", text: L.wealth ? `${L.wealth.text}${L.wealth.strong ? "" : "، لكن متأخّرًا"}. أحسنُ وقتٍ للمال بين ${W.money.best.label}${W.money.worst.v < -0.45 ? `، ولا ${k_("تُقرضْ ولا تدخلْ", "تُقرضي ولا تدخلي")} في دَينٍ بين ${W.money.worst.label}` : ""}.` : `أحسنُ وقتٍ للمال بين ${W.money.best.label}.`, src: "سهمُ السعادة وصاحبُه (بطليموس م٤ ف٢) + المرورُ عليه" },
@@ -23292,7 +23299,7 @@ function wafqForTarget(n, target) {
   const half = (n * (n * n - 1)) / 2;
 
   // (1) target من مضاعفات n
-  if (target % n === 0) {
+  if ((target - half) % n === 0) {
     const a = (target - half) / n;
     const square = makeSquare(n, a, 1);
     return {
@@ -23314,8 +23321,9 @@ function wafqForTarget(n, target) {
     }
   }
 
-  // (3) تقريب لأقرب مضاعَف من n
-  const realized = n * Math.round(target / n);
+  // (3) تقريبٌ لأقرب مجموعٍ يُعطي عددًا بادئًا صحيحًا (لا كسور في الخانات)
+  let realized = target, k = 0;
+  while ((realized - half) % n !== 0) { k++; realized = target + (k % 2 ? -1 : 1) * Math.ceil(k / 2); }
   const a = (realized - half) / n;
   const square = makeSquare(n, a, 1);
   return {
@@ -24815,7 +24823,7 @@ function sigilSVG(planetName, entry = null, { size = 220, showNumbers = true } =
     s += `<line x1="${pad}" y1="${pad + i * cell}" x2="${pad + size}" y2="${pad + i * cell}" stroke="currentColor" stroke-opacity=".25"/>`;
   }
   if (showNumbers) t.forEach((row, r) => row.forEach((v, c) => {
-    s += `<text x="${cx(c)}" y="${cy(r)}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="currentColor" fill-opacity="${entry ? 0.35 : 0.85}" font-family="sans-serif">${v}</text>`;
+    s += `<text x="${cx(c)}" y="${cy(r)}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="currentColor" fill-opacity="${entry ? 0.35 : 0.85}" font-family="sans-serif">${String(v).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d])}</text>`;
   }));
   if (entry) {
     const { points } = sigilPath(planetName, entry);
@@ -26049,6 +26057,8 @@ function fortune(age, now) {
   if (min !== maj) line += min === "saad" ? `، وفي داخلها فترةٌ ألطف (${F.minorLord}) حتّى ${fmtMY(endMin)}` : min === "nahs" ? `، وفي داخلها فترةٌ أشدّ (${F.minorLord}) حتّى ${fmtMY(endMin)}` : `، وفي داخلها فترةٌ وسط (${F.minorLord}) حتّى ${fmtMY(endMin)}`;
   if (F.nextMinor && F.yearsLeftMinor < 1.5) line += `، ثمّ فترةُ ${F.nextMinor} (${NAT_AR[NATURE[F.nextMinor]]})`;
   line += `؛ وسنتُك هذه ${NAT_AR[yr]} (${age.profection.yearLord}).`;
+  // المرحلةُ تمتدُّ سنوات، فلا تناقضُ «شهرًا طيّبًا» في «العارف»: يُقال ذلك صراحةً
+  line += ` هذه مراحلُ عمرٍ تمتدُّ سنوات، والأشهرُ داخلها تختلف؛ تفصيلُها شهرًا بشهر في «العارف بالأمر».`;
   const next = F.nextLord ? `بعدها تبدأ مرحلةُ ${F.nextLord} (${NAT_AR[NATURE[F.nextLord]]}) في ${fmtMY(endMaj)}.` : "";
   return { overall, overallAr: NAT_AR[overall], line, next, major: { lord: F.majorLord, nature: maj, ends: endMaj }, minor: { lord: F.minorLord, nature: min, ends: endMin }, year: { lord: age.profection.yearLord, nature: yr } };
 }
@@ -26892,7 +26902,8 @@ function operation(goalId, opt = {}) {
     const d = new Date(probe.getTime() + i * 86400000);
     if (DAY_NAMES[d.getDay()] === target) {
       const ph = falak.planetaryHoursForMoment(d, lat, lon);
-      const hr = ph.hours.find((h) => h.ruler === planet);
+      const hr = ph.hours.find((h) => h.ruler === planet && h.end > when);
+      if (!hr) continue; // فاتت ساعاتُ الكوكب في هذا اليوم ⇒ الأسبوعُ القادم
       chosen = { date: d, hourStart: hr?.start, hourEnd: hr?.end, hourIndex: hr?.i, phase: hr?.phase };
     }
   }
@@ -26957,7 +26968,7 @@ function operation(goalId, opt = {}) {
   const barhat = barhatiyya({ day, request: requestText });
   const secretServant = secretScript(servant, "قلم النجوم");
   const signing = cornerSigning(planet, servant);
-  const badDay = chosen?.date ? isBadDay(chosen.date) : isBadDay(when);
+  const badDay = chosen?.date ? isBadDay(chosen.hourStart || chosen.date) : isBadDay(when);
   const nayranjOption = NAYRANJ[goalId] ? nayranj(goalId) : null;
   reveal.push(
     `القسَم: البرهتيّة (${BARHATIYYA.length} كلمة) — كلمةُ يوم ${day}: ${barhat.dayWord || "—"}؛ نصٌّ محفوظٌ بلا معنى`,
@@ -27400,7 +27411,7 @@ const MANUAL = [
     what: "استخراج «جواب» سؤالٍ من الحروف: بسط، تكسير، زبر وبيّنات، مثلّث الأعداد، دوائر الإبدال، والإسقاط.",
     inputs: "اكتب السؤال، فعّل دمج اسمك، اضغط «استخرج». العمليات المساعدة تعمل على اسمك في «بطاقتي».",
     output: "حرف الجواب + «باب» من ٢٨ بابًا (جملة). الكشف يبيّن: المجموع الكلّي ثمّ باقي القسمة على ٢٨.",
-    debunk: "لا خوارزمية جفرٍ متّفقٌ عليها. الجواب = letterAt(المجموع mod 28) ← جملةٌ من جدول. غيّر كلمةً في السؤال ⇒ حرفٌ وبابٌ آخران."
+    debunk: "لا خوارزمية جفرٍ متّفقٌ عليها. الجوابُ حرفٌ يُؤخذُ من باقي قسمة المجموع على ٢٨، ثمّ جملةٌ من جدول. غيّر كلمةً في السؤال ⇒ حرفٌ وبابٌ آخران."
   },
   {
     id: "zairja",
@@ -27834,8 +27845,26 @@ function loadCtx() {
 // أسماءُ البروج كما يعرفُها الناس: الكتبُ القديمةُ تسمّي العذراءَ «السنبلة». يُبدَّلُ الاسمُ في العرض فقط
 // (البياناتُ مفهرسةٌ بالاسم القديم)، ويبقى في نصوصِ الكشف (.reveal/.basis) لأنّها نقلٌ عن الكتب.
 const POPULAR_NAMES = [[/السنبلة/g, "العذراء"]];
+// تنظيفُ العرض: الأرقامُ اللاتينيّةُ ⇐ هنديّة (كبقيّة الموقع)، وحذفُ الترقيم المكرّر («.،» و«..» لا «...») الناتجِ عن
+// نصوصٍ تنتهي بنقطةٍ ثمّ يُلحَقُ بها فاصل. لا يمسُّ الحقولَ ولا الرسومَ (svg) ولا النصوصَ الأجنبيّة (dir=ltr / lang).
+const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+function tidyText(root) {
+  if (!root || typeof document === "undefined" || !document.createTreeWalker) return;
+  const w = document.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */);
+  const todo = [];
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (!/[0-9]|\.\s*[.،]|،\s*\./.test(n.nodeValue)) continue;
+    const p = n.parentElement;
+    if (!p || !p.closest || p.closest("script, style, textarea, input, svg, [dir=ltr], [lang]:not([lang^=ar])")) continue;
+    todo.push(n);
+  }
+  for (const n of todo) {
+    n.nodeValue = n.nodeValue.replace(/\.\s*،/g, "،").replace(/،\s*\./g, "،").replace(/(^|[^.])\.\.(?!\.)/g, "$1.").replace(/[0-9]/g, (d) => AR_DIGITS[d]);
+  }
+}
 function popularNames(root) {
   if (!root || typeof document === "undefined" || !document.createTreeWalker) return;
+  try { tidyText(root); } catch {}
   const w = document.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */);
   const todo = [];
   for (let n = w.nextNode(); n; n = w.nextNode()) {
@@ -27890,8 +27919,11 @@ const traceText = (arr) => (arr || []).join("\n");
 
 // عمليّةُ تسخيرٍ كاملة (خاتم + قسَم + قلم سرّي + عزيمة + يوم قمريّ + نقض + شروط) —
 // تُستعمَل أينما ذُكر خادمٌ أو ملَكٌ مرتبطٌ بالاسم، لا في لوحة «التسخير» وحدها.
+const NJ = (t) => String(t ?? "").replace(/[.،\s]+$/, "");
 function taskhirOpFullHTML(op) {
   const todayStr = new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  // اليومُ القمريُّ محسوبٌ ليوم العمل المختار (لا لليوم الحاليّ)، فيُذكَرُ تاريخُه هو
+  const workDayStr = new Date(op.timing?.hourWindow?.start || op.timing?.chosenDate || Date.now()).toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   return `<div class="grid wide">${card({
     title: `خطواتُ العمل: ${op.goal.label}`, k: op.target ? `بينك وبين ${op.target.name}` : "خاصٌّ بك",
     body: `<div class="kv">الغايةُ: <b>${esc(op.goal.intent)}</b>${op.target ? ` — بينك وبين <b>${esc(op.target.name)}</b> (${esc(op.target.note)})` : ""}.</div>
@@ -27903,9 +27935,9 @@ function taskhirOpFullHTML(op) {
         <li>${esc(op.conditions.items[1])}</li>
         <li>${esc(op.conditions.items[2])}</li>
         <li>${esc(op.conditions.items[3])}</li>
-        <li>${esc(op.conditions.items[5])} (البخور المقصود: <b>${esc(op.incense.text)}</b>، المذكور بالخطوة ٣ — يبقى مشتعلًا طَوَالَ الجلسة ولا تلتفت أو تتكلّم أثناءها).</li>
+        <li>${esc(op.conditions.items[5])} (البخور المقصود: <b>${esc(NJ(op.incense.text))}</b>، المذكور بالخطوة ٣ — يبقى مشتعلًا طَوَالَ الجلسة ولا تلتفت أو تتكلّم أثناءها).</li>
         <li>${esc(op.conditions.items[4])} (لو كرّرت العملَ عدّة أيّام كما بالخطوة ٥، حافظ على نفس ساعة اليوم في كلّ مرّة، ولو لم تكن نفس يوم الأسبوع المذكور بالخطوة ٣).</li>
-        <li>اليوم القمريّ (اليوم ${esc(todayStr)}): محسوبٌ رقمُه <b>${AR(op.badDay.lunarDay)}</b> من ١ إلى ٣٠ (تقريبُ عدد الأيّام منذ آخر محاقٍ للقمر، لا يوم السنة ولا تاريخًا) ⇒ ${op.badDay.bad ? "<b class='warn'>رقمٌ منحوسٌ بالجدول — أجِّل العملَ ليومٍ آخر</b>" : "<b>غير منحوس، تقدر تبلش اليوم</b>"}.</li>
+        <li>اليوم القمريّ ليومِ العمل (${esc(workDayStr)}): محسوبٌ رقمُه <b>${AR(op.badDay.lunarDay)}</b> من ١ إلى ٣٠ (تقريبُ عدد الأيّام منذ آخر محاقٍ للقمر، لا يوم السنة ولا تاريخًا) ⇒ ${op.badDay.bad ? "<b class='warn'>رقمٌ منحوسٌ بالجدول — أجِّل العملَ ليومٍ آخر</b>" : "<b>غير منحوس، يومُ العمل صالح</b>"}.</li>
       </ul>
       <div class="warn">${esc(op.conditions.safety)}</div>
       ${op.incense.toxic ? `<div class="warn">⚠ ${esc(op.incense.warning)}</div>` : ""}
@@ -27931,7 +27963,7 @@ function taskhirOpFullHTML(op) {
         const heStr = he.toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" });
         return `أقربُ يوم <b>${esc(op.timing.day)}</b> من الآن: <b>${esc(dateStr)}</b>، وساعةُ <b>${esc(op.timing.hourRuler)}</b> فيه تحديدًا من <b>${esc(hsStr)}</b> إلى <b>${esc(heStr)}</b> (ساعةٌ كوكبيّةٌ لا ساعةٌ عاديّة — تختلف حدودُها كلَّ يوم؛ هذا حسابُها الفعليُّ لهذا التاريخ بموقعك المسجَّل، لا تقريبًا).`;
       })()}
-      وأنت متّجهٌ ناحية <b>${esc(op.place.direction)}</b>، لابسًا أو واضعًا قماشًا لونُه <b>${esc(op.garb)}</b>، وأحرِق البخور التالي طَوَالَ العمل: <b>${esc(op.incense.text)}</b>.</div>
+      وأنت متّجهٌ ناحية <b>${esc(op.place.direction)}</b>، لابسًا أو واضعًا قماشًا لونُه <b>${esc(op.garb)}</b>، وأحرِق البخور التالي طَوَالَ العمل: <b>${esc(NJ(op.incense.text))}</b>.</div>
 
       <div class="kv" style="margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line)"><b>٤) اقرأ بصوتٍ خافتٍ (أو همسًا)، وأنت جالسٌ بوضعيّةِ الخطوة ٣ (نفسُ اليوم/الساعة/الجهة/اللون/البخور)، بهذا الترتيب:</b></div>
       <div class="kv" style="margin-top:.3rem">أوّلًا كرّر القسَم التالي <b>${AR(op.barhatiyya.repeat)}</b> مرّة:</div>
@@ -27939,6 +27971,7 @@ function taskhirOpFullHTML(op) {
       <div class="gloss" style="margin-top:.2rem">بصراحة: ${esc(op.barhatiyya.note)}</div>
       <div class="kv" style="margin-top:.4rem">ثمّ اقرأ نصَّ العزيمة التالي كما هو (كلُّه كلامٌ يُقال، لا تفصيلَ عملٍ داخله):</div>
       <pre class="recite-text">${esc(op.azima)}</pre>
+      <div class="gloss" style="margin-top:.3rem">الخادمُ «${esc(op.servantName)}» مستخرَجٌ من اسمك فلا يتغيّر، ويُنادى في كلّ عملٍ بكوكب ذلك العمل (هنا ${esc(op.planet)})؛ لذلك قد تراه في عملٍ آخرَ منسوبًا إلى كوكبٍ غيره.</div>
       <div class="kv" style="margin-top:.4rem">وأخيرًا، كرِّر طلبك (اسمَ حاجتك) <b>${AR(op.repetition.count)}</b> مرّة (${esc(op.repetition.basis)}).</div>
 
       <div class="kv" style="margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line)"><b>٥) كرِّر الخطوتَين ٣ و٤ كاملتَين، مرّةً كلّ يوم، لمدّة <b style="color:var(--warn)">${AR(op.conditions.fastingDays)} أيّامٍ متتالية</b> (صائمًا فيها إن استطعت) — نفسُ الساعة من اليوم في كلّ مرّة، ولو اختلف يومُ الأسبوع.</b> راقب هل تظهر معك هذه العلامات المذكورة في الكتب (لا يقين بها، مجرّد ما يُنسَب تقليديًّا لبدء الاستجابة): ${esc(op.claimedSigns)}.</div>
@@ -27947,7 +27980,7 @@ function taskhirOpFullHTML(op) {
       <div class="kv">${esc(op.dismissal)}</div>
       <ol class="kv">${op.undo.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
       <div class="kv" style="font-style:italic">${esc(op.undo.note)}</div>
-      ${op.nayranj ? `<div class="kv" style="margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line)"><b>طريقةٌ بديلة (نيرنج «${esc(op.nayranj.title)}»)</b> — لو أردتَ تجربةَ هذا العمل بدل ما سبق: اصنع ${esc(op.nayranj.figure)}، اكتب عليه ${esc(op.nayranj.inscribe)}، افعل ${esc(op.nayranj.act)}، بمكان ${esc(op.nayranj.place)}، بتوقيت ${esc(op.nayranj.timing)} ومدّة ${esc(op.nayranj.duration)}. نقضُه: ${esc(op.nayranj.reverse)}.</div>` : ""}`,
+      ${op.nayranj ? `<div class="kv" style="margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line)"><b>طريقةٌ بديلة (نيرنج «${esc(op.nayranj.title)}»)</b> — لو أردتَ تجربةَ هذا العمل بدل ما سبق:<br>• <b>ما يُصنَع:</b> ${esc(NJ(op.nayranj.figure))}<br>• <b>ما يُكتَب عليه:</b> ${esc(NJ(op.nayranj.inscribe))}<br>• <b>العمل:</b> ${esc(NJ(op.nayranj.act))}<br>• <b>المكان:</b> ${esc(NJ(op.nayranj.place))}<br>• <b>الوقت:</b> ${esc(NJ(op.nayranj.timing))}، <b>والمدّة:</b> ${esc(NJ(op.nayranj.duration))}<br>• <b>نقضُه:</b> ${esc(NJ(op.nayranj.reverse))}</div>` : ""}`,
     reveal: traceText(op.reveal) + (op.nayranj ? "\n\n" + traceText(op.nayranj.trace) : "")
   })}</div>`;
 }
@@ -27990,6 +28023,8 @@ const BRIEF = {
   falak: "الحالُ الفلكيّة لحظةَ الميلاد والآن: الطالع، والكواكب، والساعات، والأسهم.",
   asma: "من اسمك واسم أمّك: الملَك والروحانيّ والخادم ورتبةُ ما بك.",
   talismans: "الطلاسمُ المسمّاة، كلٌّ بشكله ووقته ومادّته من الكتاب.",
+  khawatim: "خاتمُ كلِّ كوكب: معدنُه وحجرُه وبخورُه ووقتُ صنعه، وجدولُه وأختامُه — وتركيبُ خاتمٍ لحاجتك.",
+  wujuh: "الصورُ الستّ والثلاثون التي تطلعُ مع وجوه البروج: صورةُ طالعك وشمسك وقمرك، ومتى تطلعُ كلُّ صورة.",
   spirits: "فهرسُ الملوك ورؤساء الملائكة وملائكة الكواكب، مع وصفٍ وختمٍ لكلٍّ.",
   taskhir: "يركّب «عملًا» كاملًا لغايةٍ ما: الخادم والوقت والبخور والعزيمة.",
   khawass: "كتالوجُ الأسماء الحسنى والآيات والأدعية والموادّ وخواصِّها.",
@@ -28064,7 +28099,7 @@ const SHELL = {
     </section>
     ${c.ready ? `<section class="card">
       <h3><span>بطاقتي مكتملة</span><span class="k">كلُّ الأدوات تحسب لهذا الشخص</span></h3>
-      <div class="sum"><div class="who">${esc(c.name)} <span class="kv" style="font-size:.95rem">ابن/ة ${esc(c.mother)}</span></div>
+      <div class="sum"><div class="who">${esc(c.name)} <span class="kv" style="font-size:.95rem">${c.sex === "f" ? "ابنة" : "ابن"} ${esc(c.mother)}</span></div>
         <div class="meta"><span>${svgI("cal")}${d ? `${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}` : ""}</span><span>${svgI("clock")}${AR(c.time)}</span><span>${svgI("pin")}${esc(c.city || "إحداثيّاتٌ يدويّة")}</span>
         <span>${svgI("q")}${c.question ? esc(c.question) : "لم يُختَر سؤال"}</span></div></div>
       <div class="form-foot"><button class="btn" type="button" data-go="session">${svgI("candle")}ابدأ الجلسة الكاملة</button><button class="btn ghost" type="button" data-go="card">${svgI("edit")}تعديل البطاقة</button></div>
@@ -28145,7 +28180,7 @@ function renderDeco() {
   }
   const r = cachedReading(c), I = r?.identity;
   if (!I) { box.innerHTML = generic(); return; }
-  const who = `${c.name} ابن/ة ${c.mother}`;
+  const who = `${c.name} ${c.sex === "f" ? "ابنة" : "ابن"} ${c.mother}`;
   const f = r.fortune || {};
   let h;
   if (["home", "card", "asma", "spirits", "taskhir", "hal", "full", "arif"].includes(id)) {
@@ -28285,9 +28320,9 @@ PANELS.session = (main) => {
     let out1 = subjectBar(c);
     out1 += `<div class="card closing"><h3><span>الخلاصة</span></h3>
       <div class="normal"><div class="kv" style="font-size:1.05rem">${r.answer
-        ? `مسألتُك «${esc(c.question)}»: الحكمُ <b>${esc(r.answer.verdict.direction)}</b> بإجماعٍ ${esc(r.answer.verdict.consensus)} بين الجفر والزايرجة وأحكام المسائل${agree === true ? "، ووافقه الرمل" : agree === false ? "، لكن خالفه الرملُ (فصّلنا الخلافَ أدناه)" : ""}.
+        ? `مسألتُك «${esc(c.question)}»: الحكمُ <b>${esc(r.answer.verdict.direction)}</b>، والطرقُ الثلاث (الجفر والزايرجة وأحكام المسائل) ${esc(r.answer.verdict.consensus)}${agree === true ? "، ووافقه الرمل" : agree === false ? "، لكن خالفه الرملُ (فصّلنا الخلافَ أدناه)" : ""}.
           ${op ? ` والعملُ الأنسبُ: ${esc(op.goal.label)} يومَ ${esc(op.timing.day)}.` : ""}
-          والتوقيتُ العامُّ اليومَ: ${esc(r.timing.todayVerdict)}.`
+          والتوقيتُ العامُّ اليومَ: ${esc(NJ(r.timing.todayVerdict))}.`
         : `أدخِل سؤالًا في «بطاقتي» لتحصل على جوابِ مسألةٍ وتوصيةِ عملٍ محدَّدة؛ هويّتُك وتوقيتُك اليوم أدناه على أيّ حال.`}</div></div>
       </div>`;
 
@@ -28298,8 +28333,8 @@ PANELS.session = (main) => {
     // ١) الهويّة الروحانيّة الموجزة (عمود جانبي)
     sideCards += card({
       title: "مَن يُقرَأ له", k: `${esc(id.planet)} · ${esc(id.element)}`,
-      body: `<div class="kv">كوكبُك <b>${esc(id.planet)}</b>، طبعُك <b>${esc(id.element)}</b>، خادمُك <b>${esc(id.servantName)}</b>.
-        اليوم (${esc(fmtDate(c.now))}) ربُّه <b>${esc(r.skyNow.day.planet)}</b>، وحكمُه على طالعك: <b>${esc(r.timing.todayVerdict)}</b>.</div>`,
+      body: `<div class="kv">كوكبُك <b>${esc(id.planet)}</b>، عنصرُ اسمك <b>${esc(id.element)}</b>، خادمُك <b>${esc(id.servantName)}</b>.
+        اليوم (${esc(fmtDate(c.now))}) ربُّه <b>${esc(r.skyNow.day.planet)}</b>، وحكمُه على طالعك: <b>${esc(NJ(r.timing.todayVerdict))}</b>.</div>`,
     });
     stepBlocks += `<h2>كيف تسخّر خادمَك العامّ هذا — العملُ كاملًا</h2>
       ${(() => { try { return taskhirOpFullHTML(taskhir.operation("تسخير_خادم", { name: c.name, mother: c.mother, when: c.now, lat: c.lat, lon: c.lon })); } catch (e) { return `<div class="warn">${esc(e.message)}</div>`; } })()}`;
@@ -28310,7 +28345,7 @@ PANELS.session = (main) => {
         title: "جوابُ المسألة", k: `${esc(r.answer.verdict.direction)} · ${esc(r.answer.verdict.consensus)}`,
         body: `<div class="qline">مسألتُك: <b>«${esc(c.question)}»</b> (بابُها: ${esc(topic)})</div>
           <div class="big" style="font-size:1.1rem">${esc(r.answer.verdict.text)}</div>
-          ${r.answer.timing ? `<div class="kv" style="margin-top:.3rem"><b>التوقيت:</b> ${esc(r.answer.timing)}.</div>` : ""}
+          ${r.answer.timing ? `<div class="kv" style="margin-top:.3rem"><b>التوقيت:</b> ${esc(r.answer.timing)}.</div><div class="gloss" style="margin-top:.2rem">كلُّ طريقةٍ (الجفر، الرمل، المسائل، العارف) تحسبُ الوقتَ بحسابها، فقد تختلفُ المُدَدُ بين الصفحات؛ هذا وقتُ هذه الطريقة.</div>` : ""}
           ${c.needsTarget ? (c.targetName
             ? `<div class="kv" style="margin-top:.4rem">هذا حكمٌ عامٌّ من اسمك وصياغة سؤالك (طريقةٌ في الاختيارات تعتمد لحظةَ السؤال)؛ وبطاقة «شاهدُ التوافق» أسفل هي الجزءُ المبنيُّ فعليًّا على اسمِ <b>${esc(c.targetName)}</b>.</div>`
             : `<div class="kv" style="margin-top:.4rem"><b>بصراحة:</b> هذا الحكمُ مبنيٌّ على اسمك وصياغة سؤالك فقط — ما دخل فيه اسمُ الشخص الآخر إطلاقًا لأنّك لم تكتبه. اكتب اسمه في «بطاقتي» ليظهر شاهدُ توافقٍ حقيقيّ مبنيٌّ على الاسمين معًا.</div>`) : ""}`,
@@ -28448,12 +28483,12 @@ PANELS.reading = (main) => {
       ${card({
         title: "هويّةُ الاسم", k: `${esc(id.planet)} · ${esc(id.element)}`,
         body: `<div class="big">${esc(id.planet)}</div>
-          <div class="kv">اسمُك واسمُ أمّك يقعان تحت حُكمِ <b>${esc(id.planet)}</b>، وطبعُك <b>${esc(id.element)}</b>، وبرجُ اسمِك (بالحساب، لا برجُ ميلادك) <b>${esc(id.sign)}</b>${sunSign(sky) ? ` — أمّا برجُ ميلادك الفلكيّ (موقعُ الشمس يومَ ولدت) فهو <b>${esc(sunSign(sky))}</b>` : ""}، ومنزلتُك من منازل القمر <b>${esc(mansionName)}</b>.<br>
+          <div class="kv">اسمُك واسمُ أمّك يقعان تحت حُكمِ <b>${esc(id.planet)}</b>، وعنصرُ اسمِك <b>${esc(id.element)}</b>، وبرجُ اسمِك (بالحساب، لا برجُ ميلادك) <b>${esc(id.sign)}</b>${sunSign(sky) ? ` — أمّا برجُ ميلادك الفلكيّ (موقعُ الشمس يومَ ولدت) فهو <b>${esc(sunSign(sky))}</b>` : ""}، ومنزلتُك من منازل القمر <b>${esc(mansionName)}</b>.<br>
           مَلَكُ اسمِك <b>${esc(id.angel || "—")}</b>، وخادمُك المُوكَّل <b>${esc(id.servantName)}</b>.</div>
           <div class="kv" style="margin-top:.4rem"><b>ما فائدة هذا؟</b> هذه هويّتُك التي تُبنى عليها بقيّةُ البطاقاتِ أدناه (التوقيتُ المناسب، النبوءة، طلسمُ اسمك).</div>`,
         basis: `جُمّل «${esc(c.name)}» + جُمّل «${esc(c.mother)}» = ${AR(id.total)}؛ ثمّ إسقاطٌ بـ٧ (الكوكب) و٤ (العنصر) و١٢ (البرج) و٢٨ (المنزلة).`,
         reveal: traceText(r.reveal.slice(0, 11)) + "\n\nالكوكبُ والطبعُ والمنزلةُ اختِيرت من رقمٍ واحد (٤٥٦…)؛ أيُّ اسمٍ مجموعُه نفسُه يُخرِج النتيجةَ نفسَها. لا صلةَ لها بك.",
-        vs: [`«اسمُك يحكمه ${esc(id.planet)}، وطبعُك ${esc(id.element)}، وخادمُك ${esc(id.servantName)}.»`,
+        vs: [`«اسمُك يحكمه ${esc(id.planet)}، وعنصرُه ${esc(id.element)}، وخادمُك ${esc(id.servantName)}.»`,
           `${AR(id.total)} = جُمّل الاسم + جُمّل الأمّ\n${AR(id.total)} mod 7 → جدول الكواكب → «${id.planet}»\nأيّ شخصٍ مجموع اسمه ${AR(id.total)} يخرج له نفس الشيء.`]
       })}
       </div>
@@ -28462,7 +28497,7 @@ PANELS.reading = (main) => {
       <div class="grid wide">
       ${card({
         title: "التوقيتُ المختار", k: esc(r.timing.todayVerdict),
-        body: `<div class="kv">حكمُ اليوم على طالعك: <b>${esc(r.timing.todayVerdict)}</b>.<br>
+        body: `<div class="kv">حكمُ اليوم على طالعك: <b>${esc(NJ(r.timing.todayVerdict))}</b>.<br>
           وأفضلُ وقتٍ لمهمّاتك ومطالبك:<br><b>${esc(bestDayText)}</b><br>
           وهو أقربُ ${esc(r.timing.bestDay)} من اليوم (${fmtDate(c.now)})، وفيه أوّلُ ساعةٍ يحكمها ${esc(r.timing.bestHourRuler)} كوكبُ اسمك.</div>`,
         basis: `كوكبُ الاسم «${esc(id.planet)}» (من الرقم ${AR(id.total)}) ويومُه «${esc(r.timing.bestDay)}»، ثمّ حسابُ ساعاته الكوكبيّة لأقرب تاريخ.`,
@@ -28472,7 +28507,7 @@ PANELS.reading = (main) => {
         title: "النبوءة", k: `${esc(id.planet)} · ${esc(id.element)}`,
         body: `<div class="kv" style="font-size:1.03rem">«${esc(r.fortune.byPlanet)}»</div>
           <div class="kv" style="margin-top:.6rem;font-size:1.03rem">«${esc(r.fortune.byElement)}»</div>
-          <div class="kv" style="margin-top:.6rem"><b>الوقت:</b> «${esc(r.fortune.timing)}» — أي نحوَ ${esc(timingResolved)}.</div>
+          <div class="kv" style="margin-top:.6rem"><b>الوقت:</b> «${esc(r.fortune.timing)}» — ${esc(timingResolved)}.</div>
           <div class="kv" style="margin-top:.6rem"><b>ما يُوافق منزلتَك «${esc(mansionName)}» من الأعمال:</b> ${esc(r.fortune.suitableWorks)}</div>`,
         basis: `الرقم ${AR(id.total)}: إسقاطٌ بـ٧ (نصّ الكوكب)، بـ٤ (نصّ العنصر)، بـ١٢ = ${AR(id.total % 12 || 12)} (عبارة التوقيت رقم ${AR(id.total % 12 || 12)} من ١٢).`,
         reveal: `BY_PLANET["${id.planet}"] + BY_ELEMENT["${id.element}"] + TIMING_BY_SIGN[${AR(id.total % 12)}]\nثلاثةُ انتقاءاتٍ من جداولَ ثابتة، عامّةٌ تنطبق على أيّ أحد. نفسُ الاسم ⇒ نفسُ النبوءة حرفيًّا أبدًا.`,
@@ -28482,7 +28517,7 @@ PANELS.reading = (main) => {
         title: "جوابُ المسألة", k: `${esc(r.answer.verdict.direction)} · ثقة ${AR(r.answer.verdict.confidence)}٪`,
         body: `<div class="qline">مسألتُك: <b>«${esc(c.question)}»</b> (${esc(r.answer.topic)})</div>
           <div class="big" style="font-size:1.12rem">${esc(r.answer.verdict.text)}</div>
-          ${r.answer.timing ? `<div class="kv" style="margin-top:.4rem"><b>التوقيت:</b> ${esc(r.answer.timing)}.</div>` : ""}
+          ${r.answer.timing ? `<div class="kv" style="margin-top:.4rem"><b>التوقيت:</b> ${esc(r.answer.timing)}.</div><div class="gloss" style="margin-top:.2rem">كلُّ طريقةٍ (الجفر، الرمل، المسائل، العارف) تحسبُ الوقتَ بحسابها، فقد تختلفُ المُدَدُ بين الصفحات؛ هذا وقتُ هذه الطريقة.</div>` : ""}
           <div class="kv" style="margin-top:.6rem"><b>ما قالته كلُّ طريقة</b> (توافُقُها: <b>${esc(r.answer.verdict.consensus)}</b>):</div>
           <ul class="kv" style="margin:.3rem 0">${r.answer.methods.map((m) => `<li><b>${esc(m.name)}</b> — يميلُ إلى «${esc(m.lean)}»: ${esc(m.say)}</li>`).join("")}</ul>
           ${r.answer.verdict.dissent && r.answer.verdict.dissent.length ? `<div class="kv" style="margin-top:.3rem">المخالِف: ${r.answer.verdict.dissent.map(esc).join("، ")}.</div>` : ""}
@@ -28767,7 +28802,10 @@ PANELS.jummal = (main) => {
     </div>`;
   };
   $("#bg", main).onclick = () => {
-    const nb = abjad.nameBattle($("#ba", main).value, $("#bb", main).value);
+    // لا حكمَ على اسمٍ فارغ (كان يحسبُ «متكافئان» على لا شيء)
+    const va = $("#ba", main).value.trim(), vb = $("#bb", main).value.trim();
+    if (!va || !vb || !abjad.normalize(va).trim() || !abjad.normalize(vb).trim()) { $("#bout", main).innerHTML = `<p class="kv">اكتبِ الاسمين بحروفٍ عربيّةٍ أوّلًا.</p>`; return; }
+    const nb = abjad.nameBattle(va, vb);
     $("#bout", main).innerHTML = `<div class="grid">${card({
       title: `الغالبُ والمغلوب`, k: `«${esc(nb.a.name)}» × «${esc(nb.b.name)}»`,
       body: `<div class="big">${esc(nb.winnerName === nb.a.name ? "الغلبةُ لـ" + nb.a.name : nb.winnerName === nb.b.name ? "الغلبةُ لـ" + nb.b.name : nb.winnerName)}</div>
@@ -29253,7 +29291,7 @@ PANELS.falak = (main) => {
   </div>`;
   // منازلُ القمر: متى يدخلُ القمرُ كلَّ منزلةٍ خلال الشهر القادم (للاختيار)
   { const cal = manazil.calendar(c.now).sort((a, b) => (a.now ? -1 : b.now ? 1 : a.enter - b.enter)), natalN = manazil.natal(c.birth, c.timeKnown).number;
-    $("#manazil", main).innerHTML = `<p class="kv">مرتّبةٌ بحسب موعد دخول القمر، تبدأُ بالتي هو فيها الآن. طريقتُها في الكتب: تختارُ المنزلةَ التي تصلحُ لعملك (أو منزلةَ مولدك)، وتبدأُ العملَ والقمرُ فيها. القمرُ يقطعُ المنازلَ كلَّها في نحو ٢٧ يومًا، ويقيمُ في كلِّ منزلةٍ قرابةَ يوم.</p>
+    $("#manazil", main).innerHTML = `<p class="kv">مرتّبةٌ بحسب موعد دخول القمر، تبدأُ بالتي هو فيها الآن. طريقتُها في الكتب: تختارُ المنزلةَ التي تصلحُ لعملك (أو منزلةَ مولدك)، وتبدأُ العملَ والقمرُ فيها. القمرُ يقطعُ المنازلَ كلَّها في نحو ٢٧ يومًا، ويقيمُ في كلِّ منزلةٍ قرابةَ يوم. و«روحانيّتُها» (سعد/نحس/ممتزجة) صفةُ المنزلة نفسها، أمّا «تصلحُ لـ» فما ذكره الكتابُ من أعمالها خيرًا وشرًّا — لذلك قد تجدُ منزلةً «سعدًا» وفي أعمالها شيءٌ مذموم، أو «نحسًا» وفي أعمالها خير.</p>
       <div style="overflow-x:auto"><table class="tbl"><tr><th>المنزلة</th><th>روحانيّتُها</th><th>تصلحُ لـ</th><th>يدخلُها القمر</th><th>يخرجُ منها</th></tr>
       ${cal.map((m) => `<tr${m.now ? ' style="background:var(--gold-soft)"' : ""}><td><b>${AR(m.number)} ${esc(m.name)}</b>${m.now ? " ← <b>الآن</b>" : ""}${m.number === natalN ? " ✦ منزلةُ مولدك" : ""}</td><td>${esc(m.roohaniyya)}</td><td>${esc(m.work)}</td><td>${m.now ? "الآن" : esc(shortWhen(m.enter))}</td><td>${m.leave ? esc(shortWhen(m.leave)) : "—"}</td></tr>`).join("")}
       </table></div>
@@ -29284,7 +29322,8 @@ PANELS.falak = (main) => {
   if (hor && !/الصنعةُ|مادّةُ الرؤيا/.test(hor.verdict)) saveAsk({ src: "horary", q: c.question.slice(0, 200), topic: arif.topicOfQuestion(c.question), big: hor.verdict, due: dueFrom(hor.timing?.count, hor.timing?.unit), votes: { horary: hor.score > 1 ? 1 : hor.score < -1 ? -1 : 0 } });
   let bAsc = 100; try { bAsc = falak.ascendant(c.birth, c.lat, c.lon).longitude; } catch {}
   const pf = falak.annualProfection(c.birth, c.now, bAsc);
-  const fd = falak.firdaria(c.birth, c.now);
+  let fdNight = false; try { fdNight = falak.snapshot(c.birth, c.lat, c.lon).lots?.sect === "ليليّ"; } catch {}
+  const fd = falak.firdaria(c.birth, c.now, { byNight: fdNight });
   let am = null; try { am = falak.almuten(c.birth, c.lat, c.lon); } catch {}
   const el = c.question ? falak.election(falak.classifyAstroTopic(c.question), c.now, new Date(new Date(c.now).getTime() + 3 * 864e5), c.lat, c.lon) : null;
   const nm = manazil.natal(c.birth, c.timeKnown);
@@ -29392,7 +29431,7 @@ PANELS.asma = (main) => {
 PANELS.talismans = (main) => {
   const c = ctx();
   main.innerHTML = `${head('talismans', 'الطلاسم')}
-    <p class="kv">طلاسمُ مسمّاةٌ من الكتاب — كلُّها مرسومةٌ SVG بلا صور خارجية. أحدَ عشرَ منها عامّةٌ (لأيّ أحد)، وواحدٌ («وفق الاسم») مبنيٌّ على اسمك أنت تحديدًا — موضَّحٌ لكلِّ طلسمٍ: غرضُه، وكيف يُستعمَل فعليًّا.</p>
+    <p class="kv">طلاسمُ مسمّاةٌ من الكتاب — كلُّها مرسومةٌ داخل الموقع بلا صورٍ خارجيّة. أحدَ عشرَ منها عامّةٌ (لأيّ أحد)، وواحدٌ («وفق الاسم») مبنيٌّ على اسمك أنت تحديدًا — موضَّحٌ لكلِّ طلسمٍ: غرضُه، وكيف يُستعمَل فعليًّا.</p>
     <div class="grid" id="tg"></div>`;
   $("#tg", main).innerHTML = talNamed.renderAll(c.name).map((t) =>
     card({ title: t.name, k: t.id === "wafq-name" ? "خاصٌّ باسمك" : "عامّ",
@@ -29479,21 +29518,20 @@ function khWorkHTML(w, why = "") {
 // للتركيبة: حجرُك ومعدنُك من كوكبٍ معطى (موادُّ كوكبه كما هي)
 function khStoneHTML(planet) {
   const p = khawatim.planet(planet); if (!p) return "";
-  return `<div class="kv"><b>معادنُ ${esc(p.planet)}:</b> ${khList(p.metals)}<br><b>أحجارُه:</b> ${khList(p.stones)}</div>${khOurs(p.ring.caution)}`;
+  // «حجرُك» لا يُقترَحُ فيه سامّ (الزرنيخ، الزئبق) — يبقى في قوائم صفحة الخواتم كما في الأصل
+  const safe = (xs) => xs.filter((x) => !x.toxic);
+  return `<div class="kv"><b>معادنُ ${esc(p.planet)}:</b> ${khList(safe(p.metals))}<br><b>أحجارُه:</b> ${khList(safe(p.stones))}</div>${p.planet === "زحل" ? khOurs(p.ring.caution) : ""}`;
 }
-// للعارف: خاتمُ حاجة السؤال ووقتُه، والصورةُ الطالعةُ لحظةَ السؤال
+// للعارف: خاتمُ حاجة السؤال ووقتُه (وقتُ صنع الخاتم، غيرُ «أنسب يوم للبدء»)
 function arifExtrasHTML(q, c) {
   const g = khawatim.goalForQuestion(q);
-  let ring = "";
-  if (g) {
-    let np = null; if (g.id === "mine") { try { np = ak.reading(c.name, c.mother).planet.name; } catch {} }
-    let w = null; try { w = khawatim.work(g.id, { namePlanet: np, from: c.now, lat: c.lat, lon: c.lon }); } catch {}
-    if (w) ring = `<div class="kv"><b>خاتمُ حاجتك:</b> ${esc(w.goal.label)} — خاتمُ <b>${esc(w.planet.planet)}</b>.${w.time ? ` أقربُ وقتٍ لصنعه: <b>${esc(shortWhen(w.time.start))}</b>${w.time.complete ? "" : " (لم تجتمع فيه الشروطُ كلُّها)"}.` : ""}</div>
-      <button type="button" class="btn sm sec" style="margin-top:.3rem" data-nav-kh="${esc(g.id)}">العملُ كاملًا: ماذا ومتى وكيف ←</button>`;
-  }
-  let face = ""; try { const f = wujuh.rising(c.now, c.lat, c.lon);
-    face = `<div class="kv" style="margin-top:.5rem"><b>الصورةُ الطالعةُ لحظةَ سؤالك</b> (${esc(f.signName)}، الوجه ${AR(f.face)}): ${esc(f.image)} — تدلّ على: ${esc(f.meaning)}</div>${khNotBook("ربطُ صورة الوجه الطالع بالسؤال من الموقع، لا من الأصل.")}`; } catch {}
-  return ring || face ? `<div class="arif-insight" style="margin-top:.6rem">${ring}${face}</div>` : "";
+  if (!g) return "";
+  let np = null; if (g.id === "mine") { try { np = ak.reading(c.name, c.mother).planet.name; } catch {} }
+  let w = null; try { w = khawatim.work(g.id, { namePlanet: np, from: c.now, lat: c.lat, lon: c.lon }); } catch {}
+  if (!w) return "";
+  return `<div class="arif-insight" style="margin-top:.6rem"><div class="kv"><b>خاتمُ حاجتك:</b> ${esc(w.goal.label)} — خاتمُ <b>${esc(w.planet.planet)}</b>.${w.time ? ` أقربُ وقتٍ لصنعه: <b>${esc(shortWhen(w.time.start))}</b>${w.time.complete ? "" : " (لم تجتمع فيه الشروطُ كلُّها)"}.` : ""}</div>
+    <div class="gloss">هذا وقتُ <b>صنع الخاتم</b> بشروط الكواكب، وهو غيرُ «أنسب يوم للبدء» أعلاه (وقتُ البدء بالأمر نفسه).</div>
+    <button type="button" class="btn sm sec" style="margin-top:.3rem" data-nav-kh="${esc(g.id)}">العملُ كاملًا: ماذا ومتى وكيف ←</button></div>`;
 }
 PANELS.khawatim = (main) => {
   const c = ctx();
@@ -30377,7 +30415,7 @@ function halHTML(r, fbOn = false) {
       reveal: `مزاجُ الخريطة (Lilly، ف١٠٦) — الشهادات:\n${T.chart.testimonies.map((t) => `• ${t.who}: ${t.q.map((q) => ({ H: "حارّ", C: "بارد", M: "رطب", D: "يابس" })[q]).join(" ")}${t.w > 1 ? ` (×${t.w})` : ""}${t.why ? " — " + t.why : ""}`).join("\n")}\nالمجموع: ${tq(T.chart.tally)} — المتضادّاتُ يُسقطُ بعضُها بعضًا.\nصاحبُ المولد (المؤتمن): ${T.chart.geniture || "—"}\n\nمزاجُ حروفِ الاسم: ${Object.entries(T.name.counts).map(([k, v]) => `${k} ${AR(v)}`).join("، ")}${T.name.mizaj ? "\n" + T.name.mizaj : ""}${r.significator ? `\n\nدليلُ الأخلاق: ${r.significator.planet} (${r.significator.why}) — قوّتُه ${AR(r.significator.strength.score)} ⇒ ${({ strong: "قويّ", weak: "ضعيف", middle: "متوسّط" })[r.significator.strength.level]}` : ""}` })}
     <div class="grid wide">${groupCards}</div>
     ${r.degrees ? card({ title: k_("درجةُ طالعِك", "درجةُ طالعِكِ"), k: "",
-      body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d, i) => `<li class="${i ? "src" : ""}" style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
+      body: `<div class="gloss" style="margin-bottom:.4rem">كلُّ درجةٍ من البرج لها وصفٌ في الكتب. وإذا قيل فيها «عاشرةً» أو «سابعةً» أو «ثامنةً»… فالمقصودُ حكمُها إذا وقعت في ذلك البيت من الخريطة (البيتُ السابع للزواج، والعاشر للعمل، والثامن للموت والميراث، والثاني عشر للأعداء والهموم).</div><ul class="kv" style="margin:0;padding-inline-start:1.1rem">${r.degrees.points.map((d, i) => `<li class="${i ? "src" : ""}" style="margin:.4rem 0"><b>${esc(d.point)}</b> في الدرجة ${AR(d.n)} من ${esc(d.sign)}${d.entry ? `${d.entry.q ? ` — <i>${esc(d.entry.q)}</i>` : ""}${d.text ? `: ${esc(d.text)}` : ""}${d.planetNote ? `<br><span class="gloss">وقال إذا حلّها ${esc(d.point)}: ${esc(d.planetNote)}</span>` : ""}` : ` <span class="gloss">— أغفلها ناسخُ المخطوط</span>`}</li>`).join("")}</ul>
         <div class="gloss src" style="margin-top:.5rem">الدرجةُ الأولى من ٠° إلى ١° من البرج. قولُ الكتاب «مَن وُلد بها» يعني مَن كانت طالعَه، فطبعُ الدرجةِ يُذكرُ للطالع، وهو وحدَه يدخلُ شاهدًا في ${k_("صفاتِك", "صفاتِكِ")} أعلاه؛ وللكواكبِ نعتُ درجتِها وما قاله في الكوكبِ إذا حلّها. ولا تُعرَضُ أحكامُ الموتِ والأعمار.</div>`,
       reveal: `المصدر: ${r.degrees.src}\n${r.degrees.points.map((d) => `${d.point}: ${d.sign} ${d.n}${d.entry && d.entry.note ? ` (${d.entry.note})` : ""}`).join("\n")}` }) : ""}
     ${r.birthNumber ? card({ title: `${k_("رقمُ ميلادِك", "رقمُ ميلادِكِ")} ${AR(r.birthNumber.n)}`, k: esc(r.birthNumber.planet),
@@ -30385,12 +30423,14 @@ function halHTML(r, fbOn = false) {
       basis: esc(r.birthNumber.src) }) : ""}
     ${r.dalil ? card({ title: `${k_("مرتبةُ طالعِك", "مرتبةُ طالعِكِ")}: ${AR(r.dalil.rank)}`, k: esc(r.dalil.tab),
       body: `<div class="kv">${esc(r.dalil.text)}</div>${Object.entries(r.dalil.houses || {}).map(([k, v]) => `<div class="kv" style="margin-top:.35rem"><b>${esc(k)}:</b> ${esc(v)}</div>`).join("")}
-        <div class="gloss src" style="margin-top:.4rem">من اسمِك واسمِ أمّك بأعداد الحروف الهجائيّة (ا=١ … ي=٢٨) ÷ ٩. مؤلّفٌ متأخّر، فيدخلُ صفاتِك شاهدًا ثانويًّا.</div>`,
+        <div class="gloss src" style="margin-top:.4rem">من اسمِك واسمِ أمّك بأعداد الحروف الهجائيّة (ا=١ … ي=٢٨) ÷ ٩. مؤلّفٌ متأخّر، فيدخلُ صفاتِك شاهدًا ثانويًّا.</div>
+        <div class="gloss" style="margin-top:.3rem">«المرتبة» رقمٌ من ١ إلى ٩ يُحسَبُ من حروف اسمك واسم أمّك، ولكلّ رقمٍ وصفٌ ثابت؛ والكلمةُ بجانب الرقم (${esc(r.dalil.tab)}) طبعُ هذه المرتبة.</div>`,
       basis: esc(r.dalil.src) + ` ص${AR(r.dalil.page)}`, reveal: traceText(r.dalil.trace) }) : ""}
     ${r.bodyForm ? card({ title: k_("شكلُك وجسمُك", "شكلُكِ وجسمُكِ"), k: "",
       body: `<div class="kv src"><b>عند بطليموس:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.ptolemy.map((x) => `<li>${esc(x.text)} <span class="gloss src">— ${esc(x.who)}</span></li>`).join("")}</ul>
         <div class="kv src"><b>عند Lilly:</b></div><ul class="kv" style="margin:.2rem 0;padding-inline-start:1.1rem">${r.bodyForm.lilly.map((x) => `<li>${esc(x.text)} <span class="gloss src">— ${esc(x.who)}</span></li>`).join("")}</ul>
-        <div class="gloss src">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>`,
+        <div class="gloss src">الكتابان يصفان الهيئةَ «في الغالب»، وتغيّرُها البلدُ والوراثة. قارنْ بنفسِك لتعرفَ هل أصابا.</div>
+        <div class="gloss" style="margin-top:.3rem">هذه أوصافٌ من طريقتين مختلفتين، فقد يختلفُ بعضُها عن بعض (ممتلئٌ هنا ونحيلٌ هناك)؛ خذْ ما يشبهُك منها.</div>`,
       basis: r.bodyForm.src.map(esc).join(" · ") }) : ""}
     ${(r.body.length || (r.ailments && (r.ailments.hits.length || r.ailments.ascPart))) ? card({ title: k_("ما قد يُتعِبُ بدنَك", "ما قد يُتعِبُ بدنَكِ"), body: (r.ailments ? `${r.ailments.hits.map((x) => `<div class="kv" style="margin:.3rem 0"><b class="src">قال بطليموس: </b>${esc(x.malefic)} ${esc(x.how === "فيه" ? "في" : x.how)} ${esc(x.place)} (${esc(x.sign)}) ⇒ قد يتعبُ <b>${esc(x.part)}</b>، ومن جنسِ ${esc(x.malefic)}: ${esc(x.nature)}. <span class="gloss">${x.injury ? "النحسُ مشرِّق: الغالبُ آفةٌ عارضةٌ لا مرضٌ مزمن" : "النحسُ مغرِّب: الغالبُ مرضٌ يطولُ أو يعاود"}<span class="src"> — ${esc(r.ailments.src)}</span></span></div>`).join("")}${r.ailments.hits.length ? `<div class="kv" style="margin:.3rem 0">${esc(r.ailments.relief)}.</div>` : `<div class="kv" style="margin:.3rem 0">لا يقعُ نحسٌ على الطالع ولا الغارب ولا السادس عند بطليموس.</div>`}<div class="kv" style="margin:.3rem 0">وطالعُك ${esc(r.ailments.ascPart.sign)} ويحكمُ من البدن <b>${esc(r.ailments.ascPart.part)}</b>. <span class="gloss src">— ${esc(r.ailments.ascPart.src)}</span></div>` : "") + r.body.map((b) => `<div class="kv" style="margin:.3rem 0">${b.src ? `<b class="src">قال أبو معشر: </b>` : ""}${esc(b.text)}${b.src ? ` <span class="gloss src">— ${esc(b.src)}</span>` : ""}</div>`).join("") + `<div class="gloss src">من «الأمزجة العرضيّة» عند ابن سينا (ما يعرضُ حين تزيدُ الكيفيّةُ الغالبةُ عن حدِّها) ومن «طبع الطالع» عند أبي معشر. ليس تشخيصًا طبّيًّا.</div>` }) : ""}
     ${singles.length ? `<details class="intro src"><summary>ميولٌ يشهدُ لها دليلٌ واحدٌ فقط (${AR(singles.length)})</summary><div class="body">
@@ -30658,7 +30698,7 @@ PANELS.arif = (main) => {
         <button class="btn sec" type="button" id="mf-never">${F ? "ما تزوّجت" : "ما تزوّجت"}</button>
       </form>` : ""}
       ${A.marriage?.diagnose ? `<div class="arif-insight" style="margin-top:.4rem"><b>مقارنةُ الحساب بزواجِ${F ? "كِ" : "ك"} الحقيقيّ:</b> ${esc(AR(A.marriage.diagnose.text))} <button type="button" class="btn sm sec" id="mf-reset">غيّرِ التاريخ</button></div>` : ""}
-      ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div>` : ""}
+      ${A.bestDay ? `<div class="kv" style="margin-top:.3rem">أنسبُ يومٍ للبدء: <b>${esc(AR(A.bestDay.label))}</b>، في ساعة ${esc(A.bestDay.hourRuler)}.</div><div class="gloss" style="margin-top:.2rem">كلُّ طريقةٍ (الجفر، الرمل، المسائل، العارف) تحسبُ الوقتَ بحسابها، فقد تختلفُ المُدَدُ بين الصفحات؛ وهذا وقتُ العارف.</div>` : ""}
       ${A.horary?.details?.length ? `<ul class="kv" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.horary.details.slice(0, 6).map((x) => `<li>${esc(AR(x.text))}<small class="src"> — ${esc(x.src)}</small></li>`).join("")}</ul>` : ""}
       <ul class="kv src" style="margin:.4rem 0 0;padding-inline-start:1.1rem">${A.votes.map((v) => `<li>${esc(AR(v.why))}</li>`).join("")}${A.raml.figure ? `<li>شكلُ بيت المسألة: ${esc(A.raml.figure)} (${esc(A.raml.house || "")})</li>` : ""}</ul>`;
     $("#arifAns", main).insertAdjacentHTML("beforeend", arifExtrasHTML(q, c));
@@ -30744,8 +30784,8 @@ PANELS.full = (main) => {
     <h2>٢. هويّتُك</h2>
     <div class="grid wide">
     ${card({ title: "من تاريخِ ميلادك", body: `<div class="kv">برجُ ميلادِك (موضعُ الشمس) <b>${esc(N.sunSign)}</b>، وطالعُك <b>${esc(N.ascendant)}</b>، وقمرُك في <b>${esc(N.moonSign)}</b>، ووُلدتَ في يومٍ ربُّه <b>${esc(N.dayRuler)}</b>.</div>` })}
-    ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وطبعُه <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
-      ${I.angelDesc ? `<div class="kv" style="margin-top:.4rem">و${esc(I.angelDesc.angel)} (ملَكَ يوم ${esc(I.angelDesc.day)}) بأنّه ${esc(I.angelDesc.desc)}، ويخدمُه من الملوك السفليّة ${esc(I.angelDesc.servant)}. <span class="gloss src">— ${esc(I.angelDesc.src)}</span></div>` : ""}
+    ${I ? card({ title: "من اسمِك واسمِ أمّك", k: "", body: `<div class="kv">كوكبُ اسمِك <b>${esc(I.planet)}</b>، وعنصرُ اسمِك <b>${esc(I.element)}</b>، وبرجُ اسمِك (بالحساب) <b>${esc(I.nameSign)}</b>، ومنزلتُه <b>${esc(I.mansion)}</b>.<br>الملَكُ الموكَّلُ بكوكبِك <b>${esc(I.angel || "—")}</b>، والخادمُ المستخرَجُ من اسمك <b>${esc(I.servant)}</b>.</div>
+      ${I.angelDesc ? `<div class="kv" style="margin-top:.4rem">ويُوصَفُ ${esc(I.angelDesc.angel)} (ملَكُ يوم ${esc(I.angelDesc.day)}) بأنّه ${esc(I.angelDesc.desc)}، ويخدمُه من الملوك السفليّة ${esc(I.angelDesc.servant)}. <span class="gloss src">— ${esc(I.angelDesc.src)}</span></div>` : ""}
       <div class="gloss src" style="margin-top:.4rem">هذه أسماءٌ تُستخرَجُ بالحساب من الاسم كما في الكتب، تُذكَرُ هنا للمعرفة. ما يتعلّقُ بالعمل بها في أدواتِه: ${navLink("asma", "الأسماء والخدّام")}.</div>` }) : ""}
     ${kafCard}
     </div>
@@ -30754,7 +30794,7 @@ PANELS.full = (main) => {
     <div class="grid wide">
     ${card({ title: `عمرُك ${AR(A.years)} سنة — ${esc(S.name)}`, k: `يحكمها ${esc(S.planet)}`, cls: "closing",
       body: `<div class="kv">${esc(S.text)}</div>
-        <div class="gloss" style="margin-top:.4rem">${S.yearsLeft != null ? `بقي من هذه المرحلة نحوُ ${AR(S.yearsLeft)} سنة، ثمّ ${esc(S.next.name)} (${esc(S.next.planet)}).` : "هذه آخرُ المراحل."}</div>`,
+        <div class="gloss" style="margin-top:.4rem">${S.yearsLeft != null ? `بقي من هذه المرحلة نحوُ ${AR(S.yearsLeft)} ${S.yearsLeft >= 3 && S.yearsLeft <= 10 ? "سنوات" : "سنة"}، ثمّ ${esc(S.next.name)} (${esc(S.next.planet)}).` : "هذه آخرُ المراحل."}</div>`,
       basis: esc(S.src), reveal: "أعمارُ الإنسان عند بطليموس: " + qiraa.AGES_LIST.map((x) => `${x.planet} ${x.from}–${x.to ?? "…"}`).join("، ") })}
     ${card({ title: "سنتُك هذه", k: `ربُّها ${esc(A.profection.yearLord)}`,
       body: `<div class="kv">من عيد ميلادك الأخير إلى القادم: ربُّ سنتِك <b>${esc(A.profection.yearLord)}</b>، ومحورُها «<b>${esc(A.profection.houseName)}</b>» (${esc(A.profection.houseTopic)}). ويدلُّ ربُّها على: ${esc(A.profection.governs || "—")}.</div>`,
@@ -30805,12 +30845,12 @@ PANELS.tarkiba = (main) => {
       ${card({ title: "الظاهر والباطن", body: `<div class="kv">${esc(r.agreeText)}</div>` + btns("agree"), basis: `عنصرا الكوكبين (${esc(r.zahir.element)} / ${esc(r.batin.element)}) وعنصرُ قمر الميلاد.` })}
       ${card({ title: `${k_("اسمُك", "اسمُكِ")} الباطن: ${esc(r.hiddenName.name)}`, body: `<div class="kv">خاصّيّتُه: ${esc(r.hiddenName.khassa)}</div>` + btns("hidden"), basis: `الباطن mod ٩٩ ⇒ الاسمُ رقم ${AR(r.hiddenName.index)} من الأسماء الحسنى.` })}
       ${card({ title: `${k_("شكلُك", "شكلُكِ")} في الرمل: ${esc(r.figure.ar)}`, k: esc(r.figure.nature), body: `<div class="kv">${esc(r.figure.meaning)}</div>` + btns("figure"), basis: "الباطن mod ١٦ ⇒ شكلٌ من الأشكال الستّةَ عشر." })}
-      ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
+      ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div><div class="gloss" style="margin-top:.3rem">«كوكبُ اسمك» هنا من حساب <b>باطن</b> الاسم؛ وفي صفحاتٍ أخرى (الأسماء، قراءتك الكاملة، الخواتم) يُحسَبُ من ظاهره، فقد يختلفان.</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
       ${(() => { let n = null; try { n = wujuh.natal(c.birth, c.lat, c.lon, c.timeKnown); } catch {} if (!n) return "";
         const fc = (f) => `<div class="kv"><b>الصورة:</b> ${esc(f.image)}</div><div class="kv" style="margin-top:.3rem"><b>تدلّ على:</b> ${esc(f.meaning)}</div>`;
         return (n.ascendant ? card({ title: `صورةُ ${k_("طالعك", "طالعكِ")}`, k: `${esc(n.ascendant.signName)}، الوجه ${AR(n.ascendant.face)}`, body: fc(n.ascendant) + btns("wjAsc"), basis: "الوجهُ الذي كان يطلعُ في الأفق لحظةَ الميلاد، وصورتُه وما تدلّ عليه." }) : "")
           + card({ title: `صورةُ ${k_("شمسك", "شمسكِ")}`, k: `${esc(n.sun.signName)}، الوجه ${AR(n.sun.face)}`, body: fc(n.sun) + btns("wjSun"), basis: "الوجهُ الذي كانت فيه الشمسُ يومَ الميلاد، وصورتُه وما تدلّ عليه." }); })()}
-      ${card({ title: `${k_("حجرُك ومعدنُك", "حجرُكِ ومعدنُكِ")}`, k: `من ${esc(r.day.planet)}`, body: khStoneHTML(r.day.planet) + `<button type="button" class="btn sm sec" style="margin-top:.4rem" data-nav="khawatim">${k_("ركّبْ خاتمَك", "ركّبي خاتمَكِ")} ←</button>`, basis: "موادُّ الكوكب نفسه الذي منه «يومُك»." })}
+      ${card({ title: `${k_("حجرُك ومعدنُك", "حجرُكِ ومعدنُكِ")}`, k: `من كوكب ${k_("باطنك", "باطنكِ")} (${esc(r.day.planet)})`, body: khStoneHTML(r.day.planet) + `<button type="button" class="btn sm sec" style="margin-top:.4rem" data-nav="khawatim">${k_("ركّبْ خاتمَك", "ركّبي خاتمَكِ")} ←</button>`, basis: "موادُّ الكوكب نفسه الذي منه «يومُك»." })}
       ${r.mood ? card({ title: "الميلُ للاكتئاب", k: r.mood.level === "clear" ? "دليلٌ واضح" : "دليلٌ خفيف", body: `<div class="kv">${esc(r.mood.text)}</div><div class="gloss">الدليل: ${esc(r.mood.why.join("، "))}.</div>` + btns("mood") + moodFixer(), basis: `دلائلُ «السوداء» من زحل: نظرُ عداوةٍ للقمر أو عطارد${c.timeKnown ? " أو الطالع" : ""}، والقمرُ أو عطاردُ في بيتَي زحل.${c.timeKnown ? "" : " بلا ساعة ميلادٍ لا يُنظرُ إلى الطالع فقد يفوتُ الدليل."}` }) : ""}
     </div>
     <h2>${k_("سنواتُك", "سنواتُكِ")} المفصليّة</h2>
@@ -30975,7 +31015,7 @@ PANELS.infoOnly = (main) => {
         body: numGrid(gt.square) + `<div class="gloss">${esc(gt.note)}</div>`,
         basis: "كلُّ خانةٍ = ٢ مرفوعًا لأسٍّ من مربّع لو-شو ⇒ حاصلُ ضربِ كلِّ سطرٍ وعمودٍ وقطرٍ ثابتٌ، ومكعبُ الوسط مثلُه." }); })(),
     (() => {
-      const rows = [4, 5, 6, 7, 8, 9, 10, 12].map((n) => { const c = awfaq.classifyNumber(n); return `${AR(n)}: <b>${esc(c.class)}</b>${c.circular ? " · دائريّ" : ""} · جبر: ${esc(String(c.acceptsJabr))}`; });
+      const rows = [4, 5, 6, 7, 8, 9, 10, 12].map((n) => { const c = awfaq.classifyNumber(n); return `${AR(n)}: <b>${esc(c.class)}</b>${c.circular ? " · دائريّ" : ""} · يقبلُ الجبر: ${c.acceptsJabr ? "نعم" : "لا"}`; });
       return card({ title: "تصنيف الأعداد وقبول الجبر", body: `<div class="kv">${rows.join("<br>")}</div>`,
         basis: "زوجُ الزوج (قوى ٢) / زوجُ الفرد (٦،١٠…) / زوجُ الزوج والفرد (١٢،٢٠…) / فردٌ / دائريٌّ (آخرُه يعود لذاته بالتربيع). الفرديّةُ وزوجُ الفرد تقبلان التطريف. [قدرة الخلاق ص ١٢–٥٣]" });
     })(),

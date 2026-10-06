@@ -65,7 +65,7 @@ export function sigilSVG(planetName, entry = null, { size = 220, showNumbers = t
     s += `<line x1="${pad}" y1="${pad + i * cell}" x2="${pad + size}" y2="${pad + i * cell}" stroke="currentColor" stroke-opacity=".25"/>`;
   }
   if (showNumbers) t.forEach((row, r) => row.forEach((v, c) => {
-    s += `<text x="${cx(c)}" y="${cy(r)}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="currentColor" fill-opacity="${entry ? 0.35 : 0.85}" font-family="sans-serif">${v}</text>`;
+    s += `<text x="${cx(c)}" y="${cy(r)}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="currentColor" fill-opacity="${entry ? 0.35 : 0.85}" font-family="sans-serif">${String(v).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d])}</text>`;
   }));
   if (entry) {
     const { points } = sigilPath(planetName, entry);

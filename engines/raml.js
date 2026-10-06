@@ -176,11 +176,12 @@ function mulberry32(a) {
  * إن جاء فردًا فالطالعُ فاسدٌ عند أهل الصناعة ويُعادُ الضربُ فورًا — لا يُعتَمَد.
  * فنُعيد الضربَ آليًّا (ببذرةٍ متسلسلةٍ حتميّة) حتى يصحّ الميزان، ونُثبت عددَ الإعادات.
  */
+// البذرةُ باليوم لا بالدقيقة: «نفس المدخلات في نفس اليوم ⇒ نفس الطالع» (كانت الدقيقةُ تُغيّرُ الطالعَ بين صفحةٍ وأخرى)
 export function mothersFromSeed({ name = "", mother = "", question = "", when } = {}) {
   const d = when ? new Date(when) : new Date();
   const base = [
     abjad.jummal(name), abjad.jummal(mother), abjad.jummal(question),
-    d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes()
+    d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()
   ].join("|");
   const MAX_REDO = 8;
   for (let attempt = 0; attempt <= MAX_REDO; attempt++) {

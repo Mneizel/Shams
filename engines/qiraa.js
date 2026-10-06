@@ -59,6 +59,8 @@ export function fortune(age, now) {
   if (min !== maj) line += min === "saad" ? `، وفي داخلها فترةٌ ألطف (${F.minorLord}) حتّى ${fmtMY(endMin)}` : min === "nahs" ? `، وفي داخلها فترةٌ أشدّ (${F.minorLord}) حتّى ${fmtMY(endMin)}` : `، وفي داخلها فترةٌ وسط (${F.minorLord}) حتّى ${fmtMY(endMin)}`;
   if (F.nextMinor && F.yearsLeftMinor < 1.5) line += `، ثمّ فترةُ ${F.nextMinor} (${NAT_AR[NATURE[F.nextMinor]]})`;
   line += `؛ وسنتُك هذه ${NAT_AR[yr]} (${age.profection.yearLord}).`;
+  // المرحلةُ تمتدُّ سنوات، فلا تناقضُ «شهرًا طيّبًا» في «العارف»: يُقال ذلك صراحةً
+  line += ` هذه مراحلُ عمرٍ تمتدُّ سنوات، والأشهرُ داخلها تختلف؛ تفصيلُها شهرًا بشهر في «العارف بالأمر».`;
   const next = F.nextLord ? `بعدها تبدأ مرحلةُ ${F.nextLord} (${NAT_AR[NATURE[F.nextLord]]}) في ${fmtMY(endMaj)}.` : "";
   return { overall, overallAr: NAT_AR[overall], line, next, major: { lord: F.majorLord, nature: maj, ends: endMaj }, minor: { lord: F.minorLord, nature: min, ends: endMin }, year: { lord: age.profection.yearLord, nature: yr } };
 }

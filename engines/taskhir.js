@@ -372,7 +372,8 @@ export function operation(goalId, opt = {}) {
     const d = new Date(probe.getTime() + i * 86400000);
     if (DAY_NAMES[d.getDay()] === target) {
       const ph = falak.planetaryHoursForMoment(d, lat, lon);
-      const hr = ph.hours.find((h) => h.ruler === planet);
+      const hr = ph.hours.find((h) => h.ruler === planet && h.end > when);
+      if (!hr) continue; // فاتت ساعاتُ الكوكب في هذا اليوم ⇒ الأسبوعُ القادم
       chosen = { date: d, hourStart: hr?.start, hourEnd: hr?.end, hourIndex: hr?.i, phase: hr?.phase };
     }
   }
@@ -437,7 +438,7 @@ export function operation(goalId, opt = {}) {
   const barhat = barhatiyya({ day, request: requestText });
   const secretServant = secretScript(servant, "قلم النجوم");
   const signing = cornerSigning(planet, servant);
-  const badDay = chosen?.date ? isBadDay(chosen.date) : isBadDay(when);
+  const badDay = chosen?.date ? isBadDay(chosen.hourStart || chosen.date) : isBadDay(when);
   const nayranjOption = NAYRANJ[goalId] ? nayranj(goalId) : null;
   reveal.push(
     `القسَم: البرهتيّة (${BARHATIYYA.length} كلمة) — كلمةُ يوم ${day}: ${barhat.dayWord || "—"}؛ نصٌّ محفوظٌ بلا معنى`,

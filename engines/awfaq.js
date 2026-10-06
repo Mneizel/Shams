@@ -152,7 +152,7 @@ export function wafqForTarget(n, target) {
   const half = (n * (n * n - 1)) / 2;
 
   // (1) target من مضاعفات n
-  if (target % n === 0) {
+  if ((target - half) % n === 0) {
     const a = (target - half) / n;
     const square = makeSquare(n, a, 1);
     return {
@@ -174,8 +174,9 @@ export function wafqForTarget(n, target) {
     }
   }
 
-  // (3) تقريب لأقرب مضاعَف من n
-  const realized = n * Math.round(target / n);
+  // (3) تقريبٌ لأقرب مجموعٍ يُعطي عددًا بادئًا صحيحًا (لا كسور في الخانات)
+  let realized = target, k = 0;
+  while ((realized - half) % n !== 0) { k++; realized = target + (k % 2 ? -1 : 1) * Math.ceil(k / 2); }
   const a = (realized - half) / n;
   const square = makeSquare(n, a, 1);
   return {

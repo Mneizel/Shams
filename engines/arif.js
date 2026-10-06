@@ -598,8 +598,10 @@ export function read(c, opt = {}) {
 
   // الجوانب
   const pill = (t) => { const v = months.filter((x) => x.k >= 0 && x.k < 12).reduce((a, x) => a + x.scores[t], 0) / 12; return v >= 0.35 ? { cls: "saad", text: "يتحسّن" } : v <= -0.35 ? { cls: "nahs", text: t === "health" ? "انتبه" : "متأخّر" } : { cls: "", text: "وسط" }; };
+  // سطرُ الزواج مرّةً واحدة؛ وإن كان الزواجُ المحسوبُ قد مضى فالحديثُ عن «العلاقة» لا «الارتباط»
+  const mLine = marriageLine(c, ctx, k_, opt.weights), mPast = mLine.startsWith("الحسابُ يدلُّ على زواجٍ");
   const areas = [
-    { key: "love", title: "الزواج والعائلة", text: `${marriageLine(c, ctx, k_, opt.weights)}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}أحسنُ وقتٍ للارتباط أو لترتيب البيت بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
+    { key: "love", title: "الزواج والعائلة", text: `${mLine}${L.marriage.spouse[0] ? L.marriage.spouse[0].replace(/^زوجةٌ/, k_("زوجةٌ", "زوجةٌ")) + "؛ " : ""}${mPast ? "أحسنُ وقتٍ للعلاقة ولترتيب البيت" : "أحسنُ وقتٍ للارتباط أو لترتيب البيت"} بين ${W.love.best.label}${W.love.worst.v < -0.45 ? `، والأصعبُ بين ${W.love.worst.label}` : ""}.`, src: "الزواج (بطليموس م٤ ف٥) + مرورُ الكواكب على القمر والزهرة + الأزمنة" },
     { key: "work", title: "الشغل", text: `${k_("يناسبُك", "يناسبُكِ")}: ${L.work.text.split("؛")[0]}. يقوى بين ${W.work.best.label}${W.work.worst.v < -0.45 ? `، ويثقلُ بين ${W.work.worst.label}` : ""}.`, src: "صاحبُ العمل (بطليموس م٤ ف٤) + المرورُ على الشمس والعاشر + الأزمنة" },
     { key: "study", title: "العلم والسفر", text: `أنسبُ وقتٍ لدراسةٍ أو دورةٍ أو سفرٍ نافع بين ${W.study.best.label}.`, src: "المرورُ على البيت التاسع + الأزمنة" },
     { key: "money", title: "المال", text: L.wealth ? `${L.wealth.text}${L.wealth.strong ? "" : "، لكن متأخّرًا"}. أحسنُ وقتٍ للمال بين ${W.money.best.label}${W.money.worst.v < -0.45 ? `، ولا ${k_("تُقرضْ ولا تدخلْ", "تُقرضي ولا تدخلي")} في دَينٍ بين ${W.money.worst.label}` : ""}.` : `أحسنُ وقتٍ للمال بين ${W.money.best.label}.`, src: "سهمُ السعادة وصاحبُه (بطليموس م٤ ف٢) + المرورُ عليه" },

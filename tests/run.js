@@ -415,6 +415,22 @@ import falak from "../engines/falak.js";
     ok(cal.filter((m) => m.now).length === 1 && cal.every((m) => m.now || (m.enter && m.leave && m.leave > m.enter)), "المنازل: منزلةٌ واحدةٌ الآن، ولكلٍّ دخولٌ قبل خروجه");
     eq(mz.natal(new Date("1991-11-09T02:35:00Z")).number, 20, "المنازل: منزلةُ مولد محمد (٩/١١/١٩٩١ ٤:٣٥) = ٢٠ النعائم");
   }
+  // إصلاحاتُ الفحص الشامل الثاني (٢٠٢٦-١٠-٠٦ مساءً)
+  {
+    const F = (await import("../engines/falak.js")).default, AW = (await import("../engines/awfaq.js")).default;
+    const T = (await import("../engines/taskhir.js")).default, RM = (await import("../engines/raml.js")).default;
+    eq(["2026-10-06T02:00:00Z", "2026-10-06T12:00:00Z", "2026-10-06T18:26:00Z"].map((x) => F.dayRuler(new Date(x), 31.95, 35.91).planet), ["القمر", "المريخ", "المريخ"], "ربُّ اليوم: قبل شروق الثلاثاء القمر، وبعد الظهر ومساءً المريخ (كان يرجعُ يومًا بعد الظهر)");
+    ok([[4, 227], [4, 228], [3, 92], [8, 1308], [7, 1000]].every(([n, tg]) => AW.wafqForTarget(n, tg).square.flat().every(Number.isInteger)), "الوفق: لا كسورَ في الخانات (كان ٦٤.٥…)");
+    const now = new Date("2026-10-06T18:26:00Z"), op = T.operation("تسخير_خادم", { name: "محمد", mother: "فاطمة", when: now, lat: 31.95, lon: 35.91 });
+    ok(new Date(op.timing.hourWindow.end) > now, "التسخير: ساعةُ العمل لم تنتهِ بعد (كانت تُقترَحُ ساعةٌ فاتت)");
+    const q = { name: "محمد", mother: "فاطمة", question: "هل أتزوّج هذه السنة؟" };
+    const r1 = RM.reading({ ...q, when: new Date("2026-10-06T18:00:00Z") }), r2 = RM.reading({ ...q, when: new Date("2026-10-06T18:09:00Z") });
+    ok(r1.house.n === 7 && r1.verdict === r2.verdict, "الرمل: سؤالُ الزواج إلى البيت السابع، والحكمُ ثابتٌ في اليوم (كان يتغيّرُ كلَّ دقيقة)");
+    eq(RM.reading({ ...q, question: "هل أسافر هذا العام؟", when: now }).house.n, 9, "الرمل: «هذا العام» لا يحرفُ السؤالَ إلى البيت الأوّل");
+    const app = (await import("node:fs")).readFileSync("web/app.js", "utf8");
+    ok(app.includes("falak.firdaria(c.birth, c.now, { byNight: fdNight })"), "الفلك: الفردارُ يراعي مولدَ الليل كما في «قراءتك الكاملة»");
+    ok(!app.includes("ابن/ة") && !app.includes("[SA]") && !app.includes("String(c.acceptsJabr)"), "لا «ابن/ة» ولا رموزَ برمجيّة ظاهرة");
+  }
   // الخواتمُ والأختامُ الكوكبيّة (أغريبا، طبعة Tyson)
   {
     const kh = (await import("../engines/khawatim.js")).default;
@@ -460,7 +476,7 @@ import falak from "../engines/falak.js";
     ok(Object.keys(AR_.FUMES).filter((k) => k !== "ref" && k !== "goodRule").length === 7 && !JSON.stringify(AR_.FUMES).includes("examples"), "الخواتم: بخورُ الكواكب السبعة من ك١ ف٤٤ بلا أمثلةٍ من خارجه");
     ok(P.every((p) => p.planet in AR_.UNFORTUNATE) && AR_.UNFORTUNATE["المشتري"] === null && /رصاص/.test(AR_.UNFORTUNATE["القمر"].how), "الخواتم: ادّعاءاتُ الكوكب المنحوس لكلّ كوكب (المشتري بلا عمل) للمجادلة");
     ok(AR_.DEBUNK_POINTS.length >= 6 && /رجعتُ عن أكثر هذا الكتاب/.test(AR_.AGRIPPA_RETRACTION.text), "الخواتم: نقاطُ الردّ واعترافُ أغريبا بالرجوع");
-    ok(kh.sigilSVG("الشمس", P[3].names[1]).startsWith("<svg") && kh.sigilSVG("الشمس").includes(">36<"), "الخواتم: رسمُ الجدول والختم SVG");
+    ok(kh.sigilSVG("الشمس", P[3].names[1]).startsWith("<svg") && kh.sigilSVG("الشمس").includes(">٣٦<"), "الخواتم: رسمُ الجدول والختم SVG");
   }
   // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
   {

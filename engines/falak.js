@@ -65,8 +65,9 @@ const norm360 = (x) => ((x % 360) + 360) % 360;
 export function dayRuler(date, lat, lon) {
   let d = new Date(date);
   if (lat != null && lon != null) {
-    const sr = sunTimes(d, lat, lon).sunrise;
-    if (d < sr) d = new Date(d.getTime() - 86400000);
+    // اليومُ الفلكيُّ من آخرِ شروقٍ قبل اللحظة (كما في جدول الساعات)؛ كان sunTimes بعد الظهر يلتقطُ شروقَ الغد فيرجعُ يومًا
+    try { d = new Date(planetaryHoursForMoment(d, lat, lon).sunrise); }
+    catch { const sr = sunTimes(d, lat, lon).sunrise; if (d < sr) d = new Date(d.getTime() - 86400000); }
   }
   const idx = d.getDay(); // 0 = الأحد
   return { weekday: DAY_NAMES[idx], planet: DAY_RULERS[idx], index: idx };
