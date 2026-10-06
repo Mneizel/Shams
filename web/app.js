@@ -1092,7 +1092,7 @@ PANELS.jummal = (main) => {
       <div class="fld"><label>المطلوب (الخصم/المحبوب)</label><input id="bb" placeholder="اكتب اسمَ الطرف الآخر"></div>
       <button class="btn" id="bg">احسب الغلبة</button>
     </div><div id="bout"></div>
-    <h2>طبُّ الحروف — تشخيصُ المرض من الاسم (السرّ المكشوف)</h2>
+    <h2>طبُّ الحروف — تشخيصُ المرض من الاسم</h2>
     <p class="kv">مُعبّأةٌ افتراضيًّا باسمك واسم أمّك من بطاقتك — عدِّلها فقط لو تريد تشخيص اسمٍ آخر.</p>
     <div class="form" id="lmform">
       <div class="fld"><label>اسم المريض</label><input id="lmn" value="${esc(c0.name || "يوسف")}"></div>
@@ -1127,7 +1127,7 @@ PANELS.jummal = (main) => {
         reveal: tk.rows.map((r) => `${r.seg} = ${r.value}`).join("\n") })}
       ${card({ title: "طبائع الحروف والمزاج", body: `<div class="kv">
         الغالب (مزجُ نظامين): <b>${esc(an.dominantNatureBlend)}</b> · كوكب الحروف الغالب: <b>${esc(an.dominantPlanet)}</b><br>
-        تقسيم شمس المعارف: ${Object.entries(an.natureCountBuni).map(([k, n]) => `${k} ${AR(n)}`).join(" · ")}<br>
+        تقسيم الكتاب: ${Object.entries(an.natureCountBuni).map(([k, n]) => `${k} ${AR(n)}`).join(" · ")}<br>
         على التوالي الأبجديّ: ${Object.entries(an.natureCountTawali).map(([k, n]) => `${k} ${AR(n)}`).join(" · ")}<br>
         نورانيّة ${AR(an.nuraniCount)}/${AR(an.count)} · شمسيّة ${AR(an.sunCount)} · قمريّة ${AR(an.moonCount)} · منقوطة ${AR(an.dottedCount)}<br>
         أقوى حرفٍ قيمةً: <b>${esc(an.strongestLetter || "—")}</b> (${AR(an.strongestValue)})</div>
@@ -1219,7 +1219,7 @@ PANELS.awfaq = (main) => {
     <h2>بُدُوح وطبائع الرتب</h2>
     <p class="kv">مربّعُ بُدُوح (أول بطاقة) له استعمالٌ مباشرٌ موضَّحٌ بداخله. بقيّةُ البطاقات مرجعٌ يوضّح متى يُستعمَل كلّ رتبةٍ (يوم/ساعة/غرض) — الوفقُ الجاهز نفسُه تجده بقسم «الأغراض» أسفل.</p>
     <div class="grid" id="lore"></div>
-    <h2>المثلّثان الخاليا الخانة («قدرة الخلاق»)</h2>
+    <h2>المثلّثان الخاليا الخانة</h2>
     <div class="grid">${hollowCards()}</div>
     <h2>وفق الاسم / العدد (بالتعمير)</h2>
     <p class="kv">مولِّدُ وفقٍ شخصيٍّ عامٍّ — معبَّأٌ افتراضيًّا باسمك من بطاقتك؛ غيِّره لو أردت وفقَ اسمٍ آخر أو رقم. بدون ربطه بغرضٍ معيّن. إذا تريد وفقًا لغرضٍ محدَّد فاستعمل قسم «الأغراض» أسفل بدلًا منه؛ وإن أردت وفقًا حِرزيًّا عامًّا فقط، يُكتَب هذا ويُحمَل مثل أيّ وفقٍ شخصيّ.</p>
@@ -1475,7 +1475,7 @@ PANELS.zairja = (main) => {
       reveal: traceText(h.trace) + "\n\n" + h.note + "\nنفسُ الاسم والسؤال ⇒ نفسُ البيت أبدًا؛ بابُ البيت قد لا يطابق الموضوعَ المصنَّف لأنّ أنبوب الحساب يمرّ بجداولَ وسيطة.",
     }); })()}
     ${(() => { const fl = zairja.operateFasl(c.question, { when: c.now, hourAscDegree: asc }); return card({
-      title: "زايرجةُ ج١ — طريقةُ الخاتمِ والأربعةَ عشرَ طالعًا",
+      title: "زايرجةُ الخاتمِ والأربعةَ عشرَ طالعًا",
       k: `خاتم ${AR(fl.khatamOrder)} · مفتاح ${esc(fl.keySign)}`,
       body: `<div class="kv">أدرتُ هذه الطريقةَ على مسألتك، فكان:<br>
         الطوالعُ الأربعةُ (من التاريخ القبطيّ): <b>${fl.fourAscendants.signs.map(esc).join(" · ")}</b>.<br>
@@ -1527,7 +1527,7 @@ PANELS.raml = (main) => {
           <div class="kv" style="margin-top:.5rem">شكلُ بيت المسألة: <b>${esc(r.house.figure.ar)}</b><br>
           ${esc(r.houseFigureMeaning)}<br>
           ${r.houseFigureIskandari ? `<span class="gloss">وعند الإسكندريّ («${esc(r.houseFigureIskandari.name)}»): ${esc(r.houseFigureIskandari.nature)}، دليلُه ${esc(r.houseFigureIskandari.sign)}.</span><br>` : ""}
-          ${r.houseFigureNafhat ? `<span class="gloss">وفي «نفحات الأسرار» («${esc(r.houseFigureNafhat.name)}» في هذا البيت): ${esc(r.houseFigureNafhat.text)}</span><br>` : ""}
+          ${r.houseFigureNafhat ? `<span class="gloss">وفي طريقةٍ أخرى («${esc(r.houseFigureNafhat.name)}» في هذا البيت): ${esc(r.houseFigureNafhat.text)}</span><br>` : ""}
           القاضي: <b>${esc(r.judge.ar)}</b> — ${esc(r.judgeMeaning)}<br>
           الشاهدان: ${esc(ch.witnesses.right.ar)} / ${esc(ch.witnesses.left.ar)} — ${esc(r.witnessNote)}<br>
           ${r.planetOpposition ? `<span class="gloss">${esc(r.planetOpposition)}</span><br>` : ""}
@@ -1536,7 +1536,7 @@ PANELS.raml = (main) => {
           تقديرُ الوقت: <b>${esc(r.timing.text)}</b> (من عنصر الشكل وعدد نقاطه)${r.timing.muthallath ? `<br><span class="gloss">${esc(r.timing.muthallath)}</span>` : ""}<br>
           ${r.figureLore ? `خصائص الشكل (المثلث): بربريًّا «${esc(r.figureLore.berber)}»، ${esc(r.figureLore.gender)} ${esc(r.figureLore.bound)}، كوكبه ${esc(r.figureLore.planet || "—")}، يُخاف منه: ${esc(r.figureLore.fear || "—")}<br>` : ""}
           ميزانُ الرمل: ${r.balanceOk ? `صحيح (مجموع النقاط زوج)${r.redoCount ? ` — أُعيد الضربُ ${AR(r.redoCount)} ${r.redoCount === 1 ? "مرّة" : "مرّات"} حتى صحّ` : ""}` : "<b>فاسدٌ رغم إعادة الضرب</b> — حالةٌ نادرةٌ جدًّا؛ الحكمُ أدناه احتياطيٌّ"}</div>
-          <div class="gloss" style="margin-top:.4rem">بحسب كلّ مصدر:${r.bySource.map((s) => `<br>• ${esc(s.source)} (وزن ${AR(s.weight)})${s.score != null ? ` ⇒ ${esc(s.verdict)} [${AR(s.score)}]` : `: ${esc(s.note || "")}`}`).join("")}<br><b>المزجُ الموزون = ${AR(r.score)}</b></div>
+          <div class="gloss" style="margin-top:.4rem">بحسب كلّ طريقة:${r.bySource.map((s, i) => `<br>• الطريقة ${AR(i + 1)} (وزن ${AR(s.weight)})${s.score != null ? ` ⇒ ${esc(s.verdict)} [${AR(s.score)}]` : `: ${esc(s.note || "")}`}`).join("")}<br><b>المزجُ الموزون = ${AR(r.score)}</b></div>
           <div class="kv" style="margin-top:.5rem"><b>ماذا تفعل بهذا؟</b> النصُّ الكبيرُ أعلاه هو حكمُ الرمل على سؤالك؛ وبقيّةُ التفاصيل (الشكل، القاضي، الشاهدان) هي الدليلُ الذي بُني عليه الحكم. التفصيلُ الكاملُ الإضافيُّ (الطالع بالكامل، تسكين البيوت، القراءة الثلاثيّة) لا عملَ فيه — انتقل إلى «معلوماتٌ فقط» بالمرجع.</div>`,
         basis: `الأساس: بذرةٌ رقميّةٌ من (جُمّل اسمك + جُمّل أمّك + جُمّل السؤال + تاريخ اليوم) ⇒ مولّدٌ عشوائيٌّ حتميّ ⇒ ١٦ سطرًا ⇒ الأشكال. الحكمُ مزجٌ موزونٌ لوزنٍ «فلكيّ» ووزنٍ «عُمانيّ» يختلفان في عناصر البيوت. نفس المدخلات في نفس اليوم ⇒ نفس الطالع.`,
         reveal: traceText(r.trace),
@@ -1628,7 +1628,7 @@ PANELS.falak = (main) => {
       <div style="overflow-x:auto"><table class="tbl"><tr><th>المنزلة</th><th>روحانيّتُها</th><th>تصلحُ لـ</th><th>يدخلُها القمر</th><th>يخرجُ منها</th></tr>
       ${cal.map((m) => `<tr${m.now ? ' style="background:var(--gold-soft)"' : ""}><td><b>${AR(m.number)} ${esc(m.name)}</b>${m.now ? " ← <b>الآن</b>" : ""}${m.number === natalN ? " ✦ منزلةُ مولدك" : ""}</td><td>${esc(m.roohaniyya)}</td><td>${esc(m.work)}</td><td>${m.now ? "الآن" : esc(shortWhen(m.enter))}</td><td>${m.leave ? esc(shortWhen(m.leave)) : "—"}</td></tr>`).join("")}
       </table></div>
-      <div class="gloss">الأوقاتُ بتوقيت جهازك. وصفُ المنازل من «شمس المعارف الكبرى»؛ وفي بعضها أعمالٌ مذمومةٌ ذكرها الكتاب، فاختر منها ما يصلحُ لخير.</div>`; }
+      <div class="gloss">الأوقاتُ بتوقيت جهازك. وصفُ المنازل من الكتاب؛ وفي بعضها أعمالٌ مذمومةٌ ذكرها الكتاب، فاختر منها ما يصلحُ لخير.</div>`; }
   // ── طبقة الأحكام: يبقى هنا بس اللي فيه توجيهٌ عمليّ مباشر ─────────────
   const ms = sky.moon, dq = sky.dayQuality;
   $("#ahkamKeep", main).innerHTML = `<div class="grid wide">
@@ -1746,7 +1746,7 @@ PANELS.asma = (main) => {
     ${(() => { try { return taskhirOpFullHTML(taskhir.operation("تسخير_خادم", { name: c.name, mother: c.mother, when: c.now, lat: c.lat, lon: c.lon })); } catch (e) { return `<div class="warn">${esc(e.message)}</div>`; } })()}
     <div class="grid wide">
     ${(() => { const sr = ak.spiritRank(c.name, c.mother); const tax = ak.jinnTaxonomy(); return card({
-      title: "رتبة «ما بك» على طريقة الرقاة (العفاريت والجنّ)", k: esc(sr.rank.name),
+      title: "رتبة «ما بك» على طريقة الرقاة", k: esc(sr.rank.name),
       body: `<div class="kv">جُمّل الاسم + الأمّ = <b>${AR(sr.total)}</b> ← ٪ ٦ ← المرتبة «<b>${esc(sr.rank.name)}</b>»: ${esc(sr.rank.def)}</div>
         <div class="kv" style="margin-top:.4rem">المراتبُ الستُّ: ${tax.ranks.map((x) => `<span class="mono">${esc(x.name)}</span>`).join(" ← ")}</div>
         <div class="gloss">${esc(tax.origin)}<br>${esc(sr.note)}</div>
@@ -1982,7 +1982,7 @@ const OPERATIONAL_ANGEL_NAMES = new Set(Object.values(spirits.PLANET_ANGELS));
 // دعوةُ الملك من شمس المعارف: وِردُ يومه بسورة يس، ومقطعُه من قسم «قل أوحي» (نصٌّ حرفيّ)
 function kingDawa(e) {
   const d = kingDawat.KING_DAWAT[spirits.SEVEN_KINGS.indexOf(e)]; if (!d) return "";
-  return `<details class="dawa-box" style="margin-top:.5rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">دعوتُه من شمس المعارف</summary>
+  return `<details class="dawa-box" style="margin-top:.5rem"><summary class="btn sm sec" style="display:inline-block;cursor:pointer">دعوتُه من الكتاب</summary>
     <div class="kv" style="margin-top:.5rem"><b>وِردُ يوم ${esc(d.day)} بسورة يس</b>${d.wirdAngel ? ` (مع ${esc(d.wirdAngel)})` : ""}</div>
     <pre class="recite-text">${esc(d.wird)}</pre>
     <div class="kv" style="margin-top:.5rem"><b>مقطعُه من قسم «قل أوحي»</b> (يُقرأ بين الفاتحة والخاتمة المشتركتين، تحت بطاقات الملوك)</div>
@@ -2053,8 +2053,8 @@ PANELS.spirits = (main) => {
   main.innerHTML = `${head('spirits', 'الأرواح والملوك')}
     <p class="kv">كلُّ من في هذه الصفحة عمليٌّ: يُستحضَر ضمن «التسخير والتصريف»، أو له عملٌ حقيقيٌّ موثَّقٌ باسمه (موضَّحٌ ببطاقته). الأسماءُ الدينيّةُ التي لا عملَ سحريًّا مرتبطًا بها (رضوان، مالك، إسرافيل...) والقَصصُ الشعبيّةُ (المردة، أبناء إبليس) انتقلت إلى «معلوماتٌ فقط» بالمرجع — هون بس اللي فعلًا بتفتح له «التسخير» وتسويه.</p>
     <h2>الملوك السبعة (عمليّون)</h2><div class="grid" id="g1"></div>
-    <details class="card" style="margin-top:.8rem"><summary style="cursor:pointer"><b>دعواتُ الملوك من شمس المعارف: كيف تُقرأ</b></summary>
-      <div class="kv" style="margin-top:.5rem">لكلّ ملكٍ في بطاقته زرُّ «دعوتُه من شمس المعارف»، وفيه نصّان حرفيّان من الكتاب: <b>وِردُ يومه بسورة يس</b>، و<b>مقطعُه من قسم «قل أوحي»</b>. قال البوني في الأوراد:</div>
+    <details class="card" style="margin-top:.8rem"><summary style="cursor:pointer"><b>دعواتُ الملوك: كيف تُقرأ</b></summary>
+      <div class="kv" style="margin-top:.5rem">لكلّ ملكٍ في بطاقته زرُّ «دعوتُه من الكتاب»، وفيه نصّان حرفيّان من الكتاب: <b>وِردُ يومه بسورة يس</b>، و<b>مقطعُه من قسم «قل أوحي»</b>. قال البوني في الأوراد:</div>
       <pre class="recite-text">${esc(kingDawat.AWRAD_INTRO)}</pre>
       <div class="kv" style="margin-top:.5rem"><b>فاتحةُ قسم «قل أوحي»</b> (تُقرأ قبل مقطع الملك):</div>
       <pre class="recite-text">${esc(kingDawat.QUL_OPEN)}</pre>
@@ -2118,10 +2118,10 @@ PANELS.taskhir = (main) => {
     $("#tout", main).innerHTML = targetWarn + taskhirOpFullHTML(op) + `
     <h2>المندل (الاستحضار بالصبيّ والمرآة)</h2><div id="mandal"></div>
     <h2>المندل النفسي — جدول التنفيذ (٤٦ يومًا: رياضة ٩ + خلوة ٢٨ + رياضة ٩)</h2><div class="grid wide" id="mandalnafsi"></div>
-    <h2>تصريف خدّام السماء الأولى — سبعة مقدَّمين (السحر العظيم)</h2>
+    <h2>تصريف خدّام السماء الأولى — سبعة مقدَّمين</h2>
     <p class="kv">طريقةٌ أخرى مستقلّةٌ عن عمليّة «${esc(op.goal.label)}» أعلاه — لا تُضاف إليها بل تُستعمَل بدلًا منها إن أردتَ الاستعانةَ بأحد هؤلاء السبعة تحديدًا. كلُّ بطاقةٍ فيها غرضُها وعملُها الخاصّ بها كاملًا.</p>
     <div class="grid" id="muqaddam"></div>
-    <h2>تصريف السماوات من الثانية إلى السابعة (السحر العظيم)</h2>
+    <h2>تصريف السماوات من الثانية إلى السابعة</h2>
     <p class="kv">استمرارٌ لنفس الطريقة أعلاه بمقدَّمين أعلى مرتبةً — كلُّ بطاقةٍ عملٌ مستقلٌّ بذاته له غرضُه، لا خطواتٌ متتابعة.</p>
     <div class="grid" id="heavens"></div>
     <h2>الأقلام السرّيّة</h2>
@@ -2251,7 +2251,7 @@ PANELS.khawass = (main) => {
       ${[...mat.incense, ...mat.herbs, ...mat.stones].map((m) => `<tr><td>${esc(m.name)}</td><td>${esc(m.use || "")}</td>
         <td>${m.toxic ? "☠ نعم" : "لا"}</td><td>${esc(m.note || "")}</td></tr>`).join("")}</table></div>
     <h2>الفتوح الرباني (النقشبندي والجيلاني) — الطريقة اليوميّة</h2><div class="grid wide" id="futuh"></div>
-    <h2>كتاب اسم الله الأعظم (القسم الثاني من السحر العظيم)</h2><div class="grid wide" id="asmazam"></div>`;
+    <h2>اسم الله الأعظم</h2><div class="grid wide" id="asmazam"></div>`;
   (() => {
     const b = abjad.bookOfNames(c.ready ? c.name : "");
     $("#asmazam", main).innerHTML = card({
@@ -2315,7 +2315,7 @@ PANELS.kaf = (main) => {
        <div id="${id}" class="chips">${opts.map((o) => `<label class="chip"><input type="checkbox" value="${esc(o.key)}"> ${esc(o.ar)}</label>`).join("")}</div></div>`;
 
   main.innerHTML = `${head('kaf', 'قراءة الكفّ')}
-    <p class="kv">المصدر: «علم قراءة اليد» — نجيب أفندي (مطبعة الهلال، ١٩٠٤، ملكيّة عامّة) + «أسرار علم الكف» — برنارد الأسطة. القراءةُ حتميّةٌ وكلُّ سطرٍ مربوطٌ بفصلِ الكتابِ وفقرتِه.</p>
+    <p class="kv">من كتب الكفّ القديمة. القراءةُ حتميّةٌ وكلُّ سطرٍ مربوطٌ بفصلِ الكتابِ وفقرتِه.</p>
     <h2>صوِّرْ كفّك</h2>
     <div class="card" id="k-photo-card">
       <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
@@ -3304,8 +3304,8 @@ PANELS.infoOnly = (main) => {
     <h2>المربّع المؤطَّر (التطريف)</h2>
     <p class="kv"><b>«مؤطَّر» = محاطٌ بإطار:</b> مربّعٌ صغيرٌ سحريٌّ في المنتصف، محاطٌ بصفٍّ إضافيٍّ من الأرقام حوله من كلّ جهة، بحيث يصير المجموعُ الكليُّ مربّعًا أكبرَ لا يزال سحريًّا. عرضٌ توضيحيٌّ لطريقة بناءٍ من الكتاب فقط — ليس وفقًا جاهزًا لغرضٍ معيّن. إذا تريد وفقًا فعليًّا تكتبه لحاجةٍ معيّنة، ${navLink("awfaq", "افتح «الأوفاق ← الأغراض»")}.</p>
     <div class="grid" id="io4"></div>
-    <h2>قدرة الخلاق: صور المثلث وتصنيف الأعداد</h2>
-    <p class="kv">«قدرة الخلاق» اسمُ فصلٍ في الكتاب يبحث في طرق بناء المربّعات السحريّة حسب نوع الرتبة — عروضٌ رياضيّةٌ توضّح المبدأ فقط، ليست وفقًا لغرضٍ تكتبه بنفسك. الوفقُ الجاهز موجودٌ في «الأوفاق ← الأغراض».</p>
+    <h2>صور المثلث وتصنيف الأعداد</h2>
+    <p class="kv">هذا البابُ من الكتاب يبحث في طرق بناء المربّعات السحريّة حسب نوع الرتبة — عروضٌ رياضيّةٌ توضّح المبدأ فقط، ليست وفقًا لغرضٍ تكتبه بنفسك. الوفقُ الجاهز موجودٌ في «الأوفاق ← الأغراض».</p>
     <div class="grid" id="io5"></div>
     <h2>تفصيلُ طالع الرمل الكامل</h2>
     <p class="kv">هذه محسوبةٌ من اسمك وسؤالك الحاليَين (زي حكم الرمل نفسه)، لكنّها تفصيلٌ داعمٌ لا جوابٌ إضافيّ — حكمُك الفعليّ موجودٌ في «علم الرمل».</p>
@@ -3317,7 +3317,7 @@ PANELS.infoOnly = (main) => {
     <p class="kv">مرجعٌ تفسيريٌّ فقط يشرح لماذا افتُتحت بعضُ السور بهذه الحروف — لا عملَ ولا استعمال، فضولٌ فقط.</p>
     <div id="io8"></div>
     <h2>الجدول الأعظم للجفر الجامع (٢٨×٢٨)</h2>
-    <p class="kv">بصراحة: جداولُ «الجفر الجامع» الأصليّة (مخطوطاتٌ قديمة) فريدةٌ وغيرُ منشورةٍ بصيغةٍ موحَّدة يمكن نسخُها هنا بدقّة — فحصنا نسخةً مصوَّرةً منها ولقيناها شبكةَ رموزَ معقَّدةً خاصّةً بتلك النسخة بالذات. الجدولُ الظاهرُ تحتُ لذلك <b>عرضٌ توضيحيٌّ</b> مبنيٌّ بقاعدةٍ رياضيّةٍ ثابتةٍ ومُعلَنة (لا نسخةٌ حرفيّةٌ عن أيّ مخطوط)، ليُبيّن شكلَ الفكرة (جدولٌ ٢٨×٢٨ حرفًا) فقط.</p>
+    <p class="kv">بصراحة: جداولُ الجفر الأصليّة (مخطوطاتٌ قديمة) فريدةٌ وغيرُ منشورةٍ بصيغةٍ موحَّدة يمكن نسخُها هنا بدقّة — فحصنا نسخةً مصوَّرةً منها ولقيناها شبكةَ رموزَ معقَّدةً خاصّةً بتلك النسخة بالذات. الجدولُ الظاهرُ تحتُ لذلك <b>عرضٌ توضيحيٌّ</b> مبنيٌّ بقاعدةٍ رياضيّةٍ ثابتةٍ ومُعلَنة (لا نسخةٌ حرفيّةٌ عن أيّ مخطوط)، ليُبيّن شكلَ الفكرة (جدولٌ ٢٨×٢٨ حرفًا) فقط.</p>
     <div id="io12"></div>
     <h2>تفصيلُ السماء الفنّيّ (من «الفلك والساعات»)</h2>
     <p class="kv">محسوبةٌ من اللحظة الحاليّة، لكنّها تغذّي «حكم المسألة» و«جودة اليوم» داخليًّا فقط — لا توجيهَ عمليًّا مباشرًا فيها هي نفسها.</p>
@@ -3353,7 +3353,7 @@ PANELS.infoOnly = (main) => {
         basis: "زوجُ الزوج (قوى ٢) / زوجُ الفرد (٦،١٠…) / زوجُ الزوج والفرد (١٢،٢٠…) / فردٌ / دائريٌّ (آخرُه يعود لذاته بالتربيع). الفرديّةُ وزوجُ الفرد تقبلان التطريف. [قدرة الخلاق ص ١٢–٥٣]" });
     })(),
     ...[4, 5, 6, 7].map((n) => { const bf = awfaq.bookFigure(n);
-      return card({ title: `صورة «قدرة الخلاق» — رتبة ${AR(n)}`, k: bf.isMagic ? `∑=${AR(bf.magic)}` : "—",
+      return card({ title: `صورة الأصل — رتبة ${AR(n)}`, k: bf.isMagic ? `∑=${AR(bf.magic)}` : "—",
         body: numGrid(bf.figure) + `<div class="gloss">${esc(bf.note)}</div>` }); }),
   ].join("");
   (() => {
@@ -3369,7 +3369,7 @@ PANELS.infoOnly = (main) => {
           <tr><th>الشاهدان</th><td colspan="2">${esc(ch.witnesses.right.ar)}</td><td colspan="2">${esc(ch.witnesses.left.ar)}</td></tr>
           <tr><th>القاضي</th><td colspan="4">${esc(ch.judge.ar)}</td></tr></table></div>
           <div class="gloss">• = فردة، •• = زوج. البنات = أعمدة الأمّهات، والمنقولات = جمع كلّ شكلين، وهكذا حتى القاضي. هذا هو التفصيلُ الذي اشتُقّ منه القاضي والشاهدان في حكمك بـ«علم الرمل».</div>` })}
-      ${card({ title: "تسكين البيوت الستّةَ عشرَ (نهاية العمل — الطوخي)",
+      ${card({ title: "تسكين البيوت الستّةَ عشرَ",
         body: `<div style="overflow-x:auto"><table class="tbl"><tr><th>#</th><th>البيت</th><th>الشكل</th><th>يخصّ</th></tr>
           ${ch.taskin16.map((h) => `<tr><td>${AR(h.pos)}</td><td>${esc(h.name)}</td><td>${esc(h.figure?.ar || "—")} ${h.figure ? figCell(h.figure) : ""}</td><td class="gloss">${esc((h.topic || "").slice(0, 60))}</td></tr>`).join("")}</table></div>
           <div class="gloss">١–١٢ بروجيّة، و١٣–١٦ للسائل والمسؤول وصافية الأمر (الميزان) والعاقبة. بيتُ الشعر الجامع:<br><span class="mono">${esc(raml.houses16().mnemonic)}</span></div>`,
@@ -3434,14 +3434,14 @@ PANELS.infoOnly = (main) => {
       ${card({ title: "سهام العرب", body: `<div class="kv">${Object.entries(sky.lots.lots).map(([n, l]) =>
         `${esc(n)}: <b>${esc(l.sign)} ${AR(l.degree.toFixed(1))}°</b> (البيت ${AR(l.house)}) — ${esc(l.topic)}`).join("<br>")}</div>
         <div class="gloss">الحساب ${esc(sky.lots.sect)}: طالع + (كوكب − كوكب).</div>` })}
-      ${sky.specialDegrees ? card({ title: "درجاتُ البروج الخاصّة (أحكام الحكيم ج١ ص ١٥٨)", body: `<div class="kv">
+      ${sky.specialDegrees ? card({ title: "درجاتُ البروج الخاصّة", body: `<div class="kv">
         الطالع في <b>${esc(sky.specialDegrees.ascendant.sign)} ${AR(sky.specialDegrees.ascendant.degree)}°</b>: ${sky.specialDegrees.ascendant.labels.length ? "<b>" + sky.specialDegrees.ascendant.labels.map(esc).join("؛ ") + "</b>" : "درجةٌ عاديّة"}${sky.specialDegrees.ascendant.temperament ? " · " + esc(sky.specialDegrees.ascendant.temperament) : ""}<br>
         القمر في <b>${esc(sky.specialDegrees.moon.sign)} ${AR(sky.specialDegrees.moon.degree)}°</b>: ${sky.specialDegrees.moon.labels.length ? "<b>" + sky.specialDegrees.moon.labels.map(esc).join("؛ ") + "</b>" : "درجةٌ عاديّة"}</div>`,
         basis: `ثلاثةُ جداولَ من «أحكام الحكيم»: الدرجُ الزائدُ في السعادة (تقوية)، ودرجُ الآبار/العَمى (خذلانٌ واحتباس)، ودرجُ الزمانات (عاهةٌ إن حلّها نحسٌ). الدرجةُ عددٌ صحيحٌ ١..٣٠. ${esc(sky.specialDegrees.note)}` }) : ""}
       ${(() => { const n = sky.lunarNodes; return card({ title: "الرأسُ والذنب", body: `<div class="kv">
         الرأسُ (الجَوزَهر الصاعد) في <b>${esc(n.head.sign)} ${AR(n.head.degree.toFixed(0))}°</b> — طبعُه الزيادة.<br>
         الذنبُ (الهابط) في <b>${esc(n.tail.sign)} ${AR(n.tail.degree.toFixed(0))}°</b> — طبعُه النقص.</div>`,
-        basis: `نقطتان متحرّكتان على أوجِ القمر (لا كوكبان). ${esc(n.note)} [أحكام الحكيم ج١ ص ١٥٤]` }); })()}
+        basis: `نقطتان متحرّكتان على أوجِ القمر (لا كوكبان). ${esc(n.note)}` }); })()}
       ${(() => { const sc = falak.signCharacter(sky.ascendant.sign); return card({ title: `طبعُ الطالع — ${esc(sky.ascendant.sign)}`, body: `<div class="kv">
         ${sc.traits.length ? "خصالُه: <b>" + sc.traits.map(esc).join("، ") + "</b>." : "لا خصلةَ مخصوصة."}<br>
         فعلُ مثلَّثته: ${esc(sc.triplicityAction || "—")}.
