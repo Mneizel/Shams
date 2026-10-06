@@ -407,6 +407,14 @@ import falak from "../engines/falak.js";
     ok(kd.KING_DAWAT.every((d, i) => d.qul.startsWith(`أقسمت عليك يا ${ANG[i]}`)), "دعوات الملوك: مقطعُ «قل أوحي» يبدأُ بملَك اليوم");
     ok(kd.QUL_OPEN.startsWith("اللهم يا خدام هذه الدعوة") && kd.QUL_CLOSE.endsWith("لو تعلمون عظيم."), "دعوات الملوك: الفاتحةُ والخاتمة كاملتان");
   }
+  // منازلُ القمر للاختيار: جدولُ الشهر ومنزلةُ المولد
+  {
+    const mz = (await import("../engines/manazil.js")).default;
+    const cal = mz.calendar(new Date("2026-10-06T12:00:00Z"));
+    eq(cal.length, 28, "المنازل: الجدولُ يغطّي الـ٢٨ كلَّها");
+    ok(cal.filter((m) => m.now).length === 1 && cal.every((m) => m.now || (m.enter && m.leave && m.leave > m.enter)), "المنازل: منزلةٌ واحدةٌ الآن، ولكلٍّ دخولٌ قبل خروجه");
+    eq(mz.natal(new Date("1991-11-09T02:35:00Z")).number, 20, "المنازل: منزلةُ مولد محمد (٩/١١/١٩٩١ ٤:٣٥) = ٢٠ النعائم");
+  }
   // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
   {
     const fs = await import("node:fs");

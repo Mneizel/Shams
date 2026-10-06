@@ -39,6 +39,7 @@ import arif from "../engines/arif.js";
 import tarkiba from "../engines/tarkiba.js";
 import spirits from "../data/spirits.data.js";
 import kingDawat from "../data/kings-dawat.data.js";
+import manazil from "../engines/manazil.js";
 import { MANUAL } from "./manual.data.js";
 import { QUESTION_GROUPS, QUESTIONS_WITH_TARGET } from "./questions.data.js";
 import { CITY_GROUPS, CITY_INDEX, tzOffsetAt } from "./cities.data.js";
@@ -52,6 +53,8 @@ function elem(html) { const d = document.createElement("div"); d.innerHTML = htm
 const AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 const AR_DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 function fmtDate(d) { return `${AR(d.getDate())} ${AR_MONTHS[d.getMonth()]} ${AR(d.getFullYear())}`; }
+// تاريخٌ قصيرٌ للجداول الضيّقة: «الجمعة ٢٣/١٠ ٢٢:٥٤»
+function shortWhen(d) { return `${AR_DAYS[d.getDay()]} ${AR(d.getDate())}/${AR(d.getMonth() + 1)} ${AR(String(d.getHours()).padStart(2, "0"))}:${AR(String(d.getMinutes()).padStart(2, "0"))}`; }
 function fmtDateTime(d) { return `${AR_DAYS[d.getDay()]} ${fmtDate(d)}، الساعة ${AR(String(d.getHours()).padStart(2, "0"))}:${AR(String(d.getMinutes()).padStart(2, "0"))}`; }
 
 function ctx() {
@@ -1525,7 +1528,8 @@ PANELS.falak = (main) => {
     <h2>حكم سؤالك الآن (على طريقة الاختيارات)</h2><div id="horaryDue"></div><div id="horary"></div>
     <h2>السماءُ الآن — اللحظة الحاليّة</h2><div id="fout"></div>
     <h2>حال القمر وجودة اليوم — قواعدُ عمليّة</h2><div id="ahkamKeep"></div>
-    <h2>جدول الساعات الكوكبية لهذا اليوم — لاختيار ساعةٍ تعمل بها</h2><div id="hours"></div>`;
+    <h2>جدول الساعات الكوكبية لهذا اليوم — لاختيار ساعةٍ تعمل بها</h2><div id="hours"></div>
+    <h2>منازلُ القمر الـ٢٨ — متى يدخلُ القمرُ كلَّ منزلة</h2><div id="manazil"></div>`;
   let sky, ph;
   try { sky = falak.snapshot(c.now, c.lat, c.lon); ph = falak.planetaryHoursForMoment(c.now, c.lat, c.lon); }
   catch (e) { $("#fout", main).innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
@@ -1538,6 +1542,13 @@ PANELS.falak = (main) => {
       تُوافق المنزلة: ${esc(sky.moonMansion.work)}</div>`,
       reveal: `شروق/غروب من SearchRiseSet ؛ الساعة = المدّة/12\nحاكم الساعة الأولى = رب اليوم ثم ترتيب الكلدانيين\nالطالع من الزمن النجميّ الموضعيّ + ميل فلك البروج\nالوجه = floor(deg/10) على دور الكلدانيين ؛ الحدّ = جدول المصريين` })}
   </div>`;
+  // منازلُ القمر: متى يدخلُ القمرُ كلَّ منزلةٍ خلال الشهر القادم (للاختيار)
+  { const cal = manazil.calendar(c.now).sort((a, b) => (a.now ? -1 : b.now ? 1 : a.enter - b.enter)), natalN = manazil.natal(c.birth, c.timeKnown).number;
+    $("#manazil", main).innerHTML = `<p class="kv">مرتّبةٌ بحسب موعد دخول القمر، تبدأُ بالتي هو فيها الآن. طريقتُها في الكتب: تختارُ المنزلةَ التي تصلحُ لعملك (أو منزلةَ مولدك)، وتبدأُ العملَ والقمرُ فيها. القمرُ يقطعُ المنازلَ كلَّها في نحو ٢٧ يومًا، ويقيمُ في كلِّ منزلةٍ قرابةَ يوم.</p>
+      <div style="overflow-x:auto"><table class="tbl"><tr><th>المنزلة</th><th>روحانيّتُها</th><th>تصلحُ لـ</th><th>يدخلُها القمر</th><th>يخرجُ منها</th></tr>
+      ${cal.map((m) => `<tr${m.now ? ' style="background:var(--gold-soft)"' : ""}><td><b>${AR(m.number)} ${esc(m.name)}</b>${m.now ? " ← <b>الآن</b>" : ""}${m.number === natalN ? " ✦ منزلةُ مولدك" : ""}</td><td>${esc(m.roohaniyya)}</td><td>${esc(m.work)}</td><td>${m.now ? "الآن" : esc(shortWhen(m.enter))}</td><td>${m.leave ? esc(shortWhen(m.leave)) : "—"}</td></tr>`).join("")}
+      </table></div>
+      <div class="gloss">الأوقاتُ بتوقيت جهازك. وصفُ المنازل من «شمس المعارف الكبرى»؛ وفي بعضها أعمالٌ مذمومةٌ ذكرها الكتاب، فاختر منها ما يصلحُ لخير.</div>`; }
   // ── طبقة الأحكام: يبقى هنا بس اللي فيه توجيهٌ عمليّ مباشر ─────────────
   const ms = sky.moon, dq = sky.dayQuality;
   $("#ahkamKeep", main).innerHTML = `<div class="grid wide">
@@ -1567,7 +1578,14 @@ PANELS.falak = (main) => {
   const fd = falak.firdaria(c.birth, c.now);
   let am = null; try { am = falak.almuten(c.birth, c.lat, c.lon); } catch {}
   const el = c.question ? falak.election(falak.classifyAstroTopic(c.question), c.now, new Date(new Date(c.now).getTime() + 3 * 864e5), c.lat, c.lon) : null;
+  const nm = manazil.natal(c.birth, c.timeKnown);
   $("#natal", main).innerHTML = `<div class="grid wide">
+    ${card({ title: "منزلةُ القمر يومَ مولدك", k: `${AR(nm.number)} ${esc(nm.name)}`,
+      body: `<div class="kv">روحانيّتُها: <b>${esc(nm.roohaniyya)}</b><br>تصلحُ لـ: ${esc(nm.work)}</div>
+        <div class="kv" style="margin-top:.4rem">قال في هذه المنزلة: ${esc(nm.sourceNote)}</div>
+        ${nm.alt ? `<div class="gloss" style="margin-top:.3rem">ساعةُ ميلادك غيرُ مدخَلة، والقمرُ انتقل في ذلك اليوم من «${esc(nm.alt[0].name)}» إلى «${esc(nm.alt[1].name)}»؛ أدخِلِ الساعةَ لتُعرَفَ منزلتُك بالضبط.</div>` : ""}
+        <div class="kv" style="margin-top:.4rem"><b>ماذا تفعل بهذا؟</b> كتبُ المنازل تجعلُ منزلةَ مولدك من «طبعك»؛ وإن أردتَ عملًا يوافقُك فابدأه حين يعودُ القمرُ إليها (موعدُه في جدول المنازل أسفل الصفحة).</div>`,
+      basis: "موضعُ القمر لحظةَ المولد ÷ ١٢°٥١′ (قوسُ المنزلة) ⇐ رقمُ المنزلة؛ وصفُها من «شمس المعارف الكبرى»." })}
     ${card({ title: "توقّع السنة (الانتهاء)", k: `عمرك ${AR(pf.age)}`,
       body: `<div class="kv">بيت السنة: <b>${AR(pf.profectedHouse)} — ${esc(pf.houseName)}</b> (${esc(pf.profectedSign)})<br>
         حاكم السنة: <b>${esc(pf.yearLord)}</b> — ${esc(pf.governs)}<br>
