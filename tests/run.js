@@ -381,6 +381,16 @@ import falak from "../engines/falak.js";
     ok(il.bari.details.some((x) => /موضعُ التعب/.test(x.text)) && il.bari.details.some((x) => /طبعُ العلّة/.test(x.text)), "المرض: العضوُ وطبعُ العلّة");
     eq(JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), JSON.stringify(falak.horary("هل أسافر", W2, 31.95, 35.93).bari), "البارع حتميّ");
   }
+  // التركيبة الغريبة (تجريبيّ): نتائجُ التجربة الأولى ثابتة
+  {
+    const tk = (await import("../engines/tarkiba.js")).default;
+    const r = tk.reading({ name: "محمد", mother: "سميرة", sex: "m", birth: new Date("1991-11-09T02:35:00Z"), lat: 31.95, lon: 35.93, now: new Date("2026-10-06") });
+    ok(r.zahir.planet === "القمر" && r.batin.planet === "القمر" && r.hiddenName.name === "الأول" && r.figure.ar === "رأس التنين", "التركيبة: نتائجُ التجربة الأولى (محمد/سميرة)");
+    ok(/^يومُك الاثنين، يومُ القمر كوكبِ اسمك: أنسبُ يومٍ تبدأُ فيه السفر/.test(r.day.text), "التركيبة: سطرُ اليوم بصيغته المتّفق عليها");
+    ok(r.pivots.some((p) => p.age === 30 && p.house === 7), "التركيبة: سنةُ ٣٠ سنةُ زواج (من الطالع)");
+    const f = tk.reading({ name: "ميس", mother: "منى", sex: "f", birth: new Date("1997-05-12T10:00:00Z"), lat: 31.95, lon: 35.93, timeUnknown: true });
+    ok(f.timingFrom === "sun" && /ظاهرُكِ|تُظهرين|بين ظاهركِ/.test(f.agreeText) && /يومُكِ/.test(f.day.text), "التركيبة: بلا ساعةٍ من برج الشمس، وبصيغة المؤنّث");
+  }
   // إصلاحاتُ الفحص الشامل (٢٠٢٦-١٠-٠٦)
   {
     const fs = await import("node:fs");

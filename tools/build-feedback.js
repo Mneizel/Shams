@@ -96,11 +96,20 @@ let prevW = null; try { prevW = JSON.parse((prevTxt.match(/export const LEARNED 
 const rejected = !!(evalRes && !evalRes.error && evalRes.answers >= 30 && evalRes.after < evalRes.before);
 const use = rejected && prevW ? { weights: prevW.weights || {}, byTopic: prevW.byTopic || {} } : { weights: W.weights, byTopic: W.byTopic };
 
+// التركيبة الغريبة: نسبةُ «صح» لكلّ سطر، ولكلّ نوعِ سنةٍ مفصليّة، وتصحيحاتُ الظاهر والباطن، والأحداثُ الحقيقيّة
+const tarkiba = { lines: {}, pivots: {}, fixes: {}, events: {} };
+for (const e of recs.filter((r) => r.kind === "tarkiba")) {
+  const it = String(e.item || ""), bump2 = (o, k) => { const x = (o[k] = o[k] || { right: 0, wrong: 0 }); e.ok ? x.right++ : x.wrong++; };
+  if (it.startsWith("event:")) bump2(tarkiba.events, it.split(":")[1]);
+  else if (it.startsWith("pivot:")) bump2(tarkiba.pivots, (String(e.said || "").match(/سنةُ ([^:،]+)/) || ["", "؟"])[1]);
+  else if (it.endsWith(":fix")) { const k = `${it} ${e.said || ""}`; tarkiba.fixes[k] = (tarkiba.fixes[k] || 0) + 1; }
+  else bump2(tarkiba.lines, it);
+}
 const LEARNED = {
   generated: new Date().toISOString(), engine: CUR, kinds, answers: recs.length, people: people.size, okRate: Math.round(rate * 100) / 100,
   weights: use.weights, byTopic: use.byTopic, marriageWeights: W.marriageWeights, lines: W.lines,
   eval: evalRes ? { ...evalRes, rejected } : null,
-  tally: L.slim(W.tally), marriage, palm,
+  tally: L.slim(W.tally), marriage, palm, tarkiba,
 };
 const out = `// data/feedback-learned.data.js — يُولَّدُ آليًّا من إجابات الناس (node tools/build-feedback.js). لا تعدّلْه يدويًّا.
 // أوزانُ العارف وحالك والزواج المتعلَّمة (٠٫٥–١٫٥)، مع تقييمِ الإصابة قبل الأوزان وبعدها.

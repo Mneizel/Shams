@@ -6,7 +6,7 @@
 //   GH_OWNER      مثلًا Mneizel
 //   GH_REPO       مثلًا shams-feedback   (Private)
 
-const KINDS = ["month", "marriage", "ask", "trait", "palm"];
+const KINDS = ["month", "marriage", "ask", "trait", "palm", "tarkiba"];
 const DAILY_MAX = 80;   // أقصى عددِ إجاباتٍ للشخص الواحد في اليوم (حمايةٌ من الإجابات الوهميّة المتكرّرة)
 const TOPICS = ["all", "work", "money", "love", "health", "study"];
 const COLS = ["at", "name", "mother", "date", "time", "city", "resCity", "kind", "ok", "topic", "month", "item", "said", "q", "score", "fams", "meths", "lines", "state", "first", "quiz", "age", "sex", "ver", "person", "sent"];
@@ -39,7 +39,7 @@ function clean_(b) {
   r.sex = b.sex === "f" ? "f" : b.sex === "m" ? "m" : "";
   r.ver = /^[0-9a-z.-]{1,20}$/i.test(b.ver || "") ? b.ver : "";
   const keys = (a) => JSON.stringify((Array.isArray(a) ? a : []).filter(function (k) { return typeof k === "string" && /^[a-z0-9_]{2,24}$/.test(k); }).slice(0, 20));
-  if (b.kind === "trait" || b.kind === "palm") {
+  if (b.kind === "trait" || b.kind === "palm" || b.kind === "tarkiba") {
     r.item = txt(b.item, 80); if (!r.item) return null;
     r.lines = keys(b.lines);
     // حالك: لكلّ كتابٍ أصاب (+١) أو أخطأ (−١) — في «أحيانًا» يُصدَّقُ كتابُ الجهة المختارة ويُكذَّبُ كتابُ الأخرى
@@ -171,6 +171,13 @@ function buildReport() {
       if (Object.keys(tv).length) Object.keys(tv).forEach(function (k) { add("line", k, tv[k] > 0, choice ? 0.5 : Y); });
       else L(r[col("lines")]).forEach(function (k) { add("line", k, ok, Y); });
     } else if (kind === "palm") add("palm", r[col("item")], ok, 0.5);
+    else if (kind === "tarkiba") {
+      // التركيبة الغريبة: كلُّ سطرٍ لحاله؛ السنواتُ المفصليّةُ بنوعها؛ والأحداثُ الحقيقيّةُ هل وقعت في سنةٍ مفصليّة
+      const it = String(r[col("item")]).replace(/^'/, "");
+      if (it.indexOf("event:") === 0) add("tk_event", it.split(":")[1] + " — " + (ok ? "في سنةٍ مفصليّة" : "خارجها"), ok, 0.5);
+      else if (it.indexOf("pivot:") === 0) add("tk_pivot", (String(r[col("said")]).match(/سنةُ ([^:،]+)/) || ["", "؟"])[1], ok, 0.5);
+      else add("tk_line", it, ok, 0.5);
+    }
   });
   // تقييمُ التعلّم من GitHub (الإصابةُ قبل الأوزان وبعدها)
   let ev = null;
@@ -205,6 +212,10 @@ function buildReport() {
   section("حالك: الكتب/الخطوط", "line", function (k) { return AR_LINE[k] || k; });
   section("حالك: الصفات", "trait", function (k) { return k; });
   section("الكفّ: الأبواب", "palm", function (k) { return k; });
+  const TK = { zahir: "الظاهر", batin: "الباطن", agree: "توافقُ الظاهر والباطن", hidden: "الاسمُ الباطن", figure: "شكلُ الرمل", day: "اليوم", "zahir:fix": "الظاهر (صُحِّح)", "batin:fix": "الباطن (صُحِّح)" };
+  section("التركيبة الغريبة: السطور", "tk_line", function (k) { return TK[k] || k; });
+  section("التركيبة الغريبة: السنواتُ المفصليّة بنوعها", "tk_pivot", function (k) { return "سنةُ " + k; });
+  section("التركيبة الغريبة: الأحداثُ الحقيقيّة", "tk_event", function (k) { return k; });
   out.push(["ملاحظة", "«فوقَ الصدفة» هو المهمّ: طريقةٌ نسبتُها ٧٥٪ والصدفةُ ٧٥٪ لا تصيبُ شيئًا. الأشهرُ العاديّةُ لا تُحتسَب، ولا يتغيّرُ وزنٌ قبل ٢٠ إجابةً من ٥ أشخاص.", "", "", "", "", ""]);
   rep.getRange(1, 1, out.length, 7).setValues(out);
   rep.getRange(1, 1).setFontWeight("bold").setFontSize(14);

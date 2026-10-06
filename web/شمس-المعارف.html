@@ -2302,7 +2302,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "a0162d433a";
+const ENGINE_VER = "ec9ef9c801";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -25673,6 +25673,92 @@ function renderAll(name) {
 __exports.default = { NAMED, list, render, renderAll };
 
 ;__exports["NAMED"]=NAMED;__exports["list"]=list;__exports["render"]=render;__exports["renderAll"]=renderAll;return __exports;})();
+__M["tarkiba"]=(function(){"use strict";const __exports={};
+// engines/tarkiba.js
+// ─────────────────────────────────────────────────────────────────────────────
+// «التركيبة الغريبة» — أداةٌ تجريبيّة (ليست من الكتب): تخلطُ أدواتٍ موجودةً في المحرّك لم تُستعمَل قبلُ،
+// وتُقاسُ إصابتُها بإجابات «صح / غلط» من الناس. جُرِّبت أوّلَ مرّةٍ على خمسة أشخاصٍ (٢٠٢٦-١٠-٠٦):
+// الطبعُ أصاب عندهم، والتوقيتُ بلا ساعة ميلادٍ لم يُصِب.
+//   ١ الظاهر  = جُمّلُ الاسم + جُمّلُ الأمّ ⇒ الجذرُ الرقميّ ⇒ كوكبُه ووصفُه (جدولُ Cheiro)
+//   ٢ الباطن  = التكسيرُ المركّب للاسم والأمّ ⇒ الجذر ⇒ كوكبُه ووصفُه
+//   ٣ التوافق = عنصرا كوكبَي الظاهر والباطن (+ عنصرُ قمر الميلاد)
+//   ٤ الاسمُ الباطن من الأسماء الحسنى = الباطن mod 99
+//   ٥ شكلُ الرمل = الباطن mod 16
+//   ٧ اليوم   = يومُ كوكب الباطن، وما يصلحُ فيه وما لا يصلح (أعمالُ الأيّام من كتب الاختيارات)
+//   ٨ السنواتُ المفصليّة = الانتهاءُ السنويّ إلى الأوتاد (بطليموس) من الطالع، أو من برج الشمس إن جُهلت الساعة
+// ─────────────────────────────────────────────────────────────────────────────
+
+const abjad=__M["abjad"].default;
+const khawass=__M["khawass"].default;
+const raml=__M["raml"].default;
+const falak=__M["falak"].default;
+const { BIRTH_NUMBER }=__M["hal-cheiro.data"];
+const { DAY_RULER_WORKS }=__M["falak-ahkam.data"];
+
+const ELEMENT = { الشمس: "نار", المريخ: "نار", المشتري: "هواء", عطارد: "هواء", أورانوس: "هواء", الزهرة: "تراب", زحل: "تراب", القمر: "ماء", نبتون: "ماء" };
+const FRIEND = (a, b) => a === b || (["نار", "هواء"].includes(a) && ["نار", "هواء"].includes(b)) || (["ماء", "تراب"].includes(a) && ["ماء", "تراب"].includes(b));
+// أورانوس ونبتون (Cheiro) لا يومَ لهما في التقليد: يُؤخَذُ نظيرُهما (الشمس للرقم ٤، القمر للرقم ٧)
+const CLASSIC = { أورانوس: "الشمس", نبتون: "القمر" };
+const WEEKDAY = { الشمس: "الأحد", القمر: "الاثنين", المريخ: "الثلاثاء", عطارد: "الأربعاء", المشتري: "الخميس", الزهرة: "الجمعة", زحل: "السبت" };
+const FLAVOR = { نار: "باندفاعٍ وجرأة", هواء: "بعقلٍ وحساب", ماء: "بعاطفةٍ وحساسيّة", تراب: "بصبرٍ وتأنٍّ" };
+const THEME = { 1: "سنةُ نفسِك: بدايةٌ جديدةٌ أو تغيّرٌ في طريقك وصحّتك", 4: "سنةُ البيت والأهل: سكنٌ أو انتقالٌ أو أمرٌ يخصّ العائلة", 7: "سنةُ الزواج والشراكة: ارتباطٌ أو شريكٌ أو خصومة", 10: "سنةُ العمل والمكانة: وظيفةٌ أو ترقيةٌ أو تغيّرٌ في المهنة" };
+const THEME_SHORT = { 1: "نفسك", 4: "البيت والأهل", 7: "الزواج والشراكة", 10: "العمل" };
+const root = (n) => abjad.digitalRoot(n) || 9;
+
+/**
+ * @param c {name, mother, sex?, birth: Date, lat, lon, timeUnknown?: boolean, now?: Date}
+ */
+function reading(c) {
+  if (!c || !c.name || !c.mother || !c.birth) throw new Error("التركيبةُ تحتاجُ الاسمَ واسمَ الأمّ وتاريخَ الميلاد");
+  const f = c.sex === "f";
+  const Z = abjad.jummal(c.name) + abjad.jummal(c.mother);
+  const B = abjad.taksirMurakkab(c.name).total + abjad.taksirMurakkab(c.mother).total;
+  const rZ = root(Z), rB = root(B);
+  const pZ = BIRTH_NUMBER[rZ]?.planet, pB = BIRTH_NUMBER[rB]?.planet, eZ = ELEMENT[pZ], eB = ELEMENT[pB];
+  const agree = pZ === pB ? "same" : eZ === eB ? "element" : FRIEND(eZ, eB) ? "friends" : "opposed";
+  const sky = falak.snapshot(c.birth, c.lat, c.lon);
+  const moonEl = sky.planets["القمر"].signInfo?.element;
+  const k_ = (m, fm) => (f ? fm : m);
+  const agreeText = ({
+    same: `${k_("ظاهرُك وباطنُك", "ظاهرُكِ وباطنُكِ")} من طبعٍ واحد`,
+    element: `${k_("ظاهرُك وباطنُك", "ظاهرُكِ وباطنُكِ")} من عنصرٍ واحد مع اختلافٍ في الأسلوب`,
+    friends: `بين ${k_("ظاهرك وباطنك", "ظاهركِ وباطنكِ")} انسجام، لكنّ الناسَ لا يرون كلَّ ما ${k_("فيك", "فيكِ")}`,
+    opposed: `${k_("تُظهرُ", "تُظهرين")} للناس غيرَ ما في ${k_("داخلك", "داخلكِ")}، وقد ${k_("يُساءُ فهمُك", "يُساءُ فهمُكِ")}`,
+  })[agree] + (moonEl && !FRIEND(moonEl, eB)
+    ? `، لكنّ ${k_("مشاعرَك", "مشاعرَكِ")} متقلّبة، فأحيانًا ${k_("تُخفي", "تُخفين")} المشاكلَ اختصارًا لها، لا لأنّ${k_("ك", "كِ")} ${k_("غامض", "غامضة")}.`
+    : `، و${k_("مشاعرُك", "مشاعرُكِ")} منسجمةٌ مع ${k_("طبعك", "طبعكِ")}.`);
+  const hidden = khawass.nameByIndex((B % 99) || 99);
+  const fig = raml.FIGURES[B % 16];
+  const dayPlanet = CLASSIC[pB] || pB, works = DAY_RULER_WORKS[dayPlanet] || {};
+  const day = { name: WEEKDAY[dayPlanet], planet: dayPlanet,
+    text: `${k_("يومُك", "يومُكِ")} ${WEEKDAY[dayPlanet]}، يومُ ${dayPlanet} كوكبِ ${k_("اسمك", "اسمكِ")}: أنسبُ يومٍ ${k_("تبدأُ", "تبدئين")} فيه ${(works.good || []).join(" و")}${works.bad?.length ? `، ولا يُستحسَنُ فيه ${works.bad.join(" و")}` : ""}.` };
+  // السنواتُ المفصليّة
+  const startLon = c.timeUnknown ? sky.planets["الشمس"].longitude : sky.ascendant.longitude;
+  const by = new Date(c.birth).getUTCFullYear(), bm = new Date(c.birth).getUTCMonth();
+  const now = c.now ? new Date(c.now) : new Date();
+  const pivots = [];
+  for (let age = 16; age <= 70; age++) {
+    const house = (age % 12) + 1;
+    if (!THEME[house]) continue;
+    const from = by + age;
+    pivots.push({ age, from, to: from + 1, house, past: new Date(Date.UTC(from + 1, bm, 1)) < now, text: `${THEME[house]}، ${k_("وتعيشُها", "وتعيشينها")} ${FLAVOR[eB] || ""}`.trim() });
+  }
+  return {
+    zahir: { n: Z, root: rZ, planet: pZ, element: eZ, text: BIRTH_NUMBER[rZ]?.text },
+    batin: { n: B, root: rB, planet: pB, element: eB, text: BIRTH_NUMBER[rB]?.text },
+    agree, agreeText,
+    hiddenName: { name: hidden.name, khassa: hidden.khassa, index: (B % 99) || 99 },
+    figure: { id: fig.id, ar: fig.ar, nature: fig.nature, meaning: fig.meaning },
+    day, pivots,
+    timingFrom: c.timeUnknown ? "sun" : "asc",
+    descriptions: Object.fromEntries(Object.entries(BIRTH_NUMBER).map(([n, v]) => [n, { planet: v.planet, text: v.text }])),
+    note: "أداةٌ تجريبيّة: تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
+  };
+}
+
+__exports.default = { reading, THEME, THEME_SHORT };
+
+;__exports["THEME"]=THEME;__exports["THEME_SHORT"]=THEME_SHORT;__exports["reading"]=reading;return __exports;})();
 __M["taskhir"]=(function(){"use strict";const __exports={};
 // engines/taskhir.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26765,6 +26851,7 @@ const kaf=__M["kaf"].default;
 const hal=__M["hal"].default;
 const qiraa=__M["qiraa"].default;
 const arif=__M["arif"].default;
+const tarkiba=__M["tarkiba"].default;
 const spirits=__M["spirits.data"].default;
 const { MANUAL }=__M["manual.data"];
 const { QUESTION_GROUPS, QUESTIONS_WITH_TARGET }=__M["questions.data"];
@@ -26785,7 +26872,7 @@ function ctx() {
   const g = (id) => ($("#" + id)?.value || "").trim();
   const sex = g("ctx-sex") === "f" ? "f" : "m";
   const name = g("ctx-name"), mother = g("ctx-mother"), date = g("ctx-date"), city = g("ctx-city");
-  const time = g("ctx-time") || "12:00";
+  const timeKnown = !!g("ctx-time"), time = g("ctx-time") || "12:00";
   // إحداثيّاتٌ يدويّة (لمدينةٍ غير مُدرَجة): تَغلِب على المدينة المختارة إن مُلئت.
   const manualLat = parseFloat(g("ctx-lat")), manualLon = parseFloat(g("ctx-lon")), manualTz = parseFloat(g("ctx-tz"));
   const hasManualCoords = Number.isFinite(manualLat) && Number.isFinite(manualLon);
@@ -26819,7 +26906,7 @@ function ctx() {
     ? `عن: ${name} (اسم الأمّ: ${mother})، مواليد ${fmtDate(new Date(date + "T00:00:00"))} الساعة ${AR(time)} في ${placeLabel}. القراءة أُجريت اليوم ${fmtDate(now)}.`
     : "";
   const resCity = g("ctx-res-city"), resLoc = resCity && CITY_INDEX[resCity] ? CITY_INDEX[resCity] : null;
-  return { resCity: resLoc ? resCity : "", resLat: resLoc ? resLoc.lat : null, resLon: resLoc ? resLoc.lon : null, name, mother, sex, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
+  return { resCity: resLoc ? resCity : "", resLat: resLoc ? resLoc.lat : null, resLon: resLoc ? resLoc.lon : null, timeKnown, name, mother, sex, question, needsTarget, targetName, targetMother, city, when: birth || now, birth, now, date, time, lat: loc.lat, lon: loc.lon, tz: loc.tz, ready, filled, nameOk, motherOk, subject };
 }
 
 // شريط «عن مَن ومتى» يتصدّر كلّ نتيجة
@@ -27026,7 +27113,7 @@ let panelCleanup = null;
 // وفألٌ ⇐ أدواتُ الحسابِ التي تُستنبَطُ منها القراءة ⇐ الفلك ⇐ التشخيص إن لزم ⇐ العملُ والعلاج
 // (الطلسمُ والاستخدامُ والاستعانة) ⇐ كشفُ الدجل (طبقةٌ نقديّةٌ أخيرة) ⇐ المرجع.
 const NAV = [
-  ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
+  ["الاستقبال والقراءة الشاملة", [["arif", "🔮 العارف بالأمر"], ["full", "📜 قراءتك الكاملة"], ["tarkiba", "🧪 التركيبة الغريبة (تجريبيّ)"], ["session", "🕯 الجلسة الكاملة"], ["reading", "🜍 القراءة الفلكيّة"], ["compat", "⚭ التوافق بين شخصين"], ["diagnosis", "🩺 تشخيص الحالة"]]],
   ["القراءة الحسّيّة والفأل", [["kaf", "🖐 قراءة الكفّ"], ["qura", "🎲 القرعة والفأل"]]],
   ["أدوات الحساب والحروف", [["jummal", "🔢 حساب الجُمّل"], ["jafr", "🜚 الجفر"], ["zairja", "◎ الزايرجة"], ["raml", "⚄ علم الرمل"], ["awfaq", "▦ الأوفاق"]]],
   ["الفلك والطالع", [["falak", "🪐 الفلك والساعات"], ["asma", "👤 الأسماء والخدّام"]]],
@@ -27059,6 +27146,7 @@ const BRIEF = {
   khawass: "كتالوجُ الأسماء الحسنى والآيات والأدعية والموادّ وخواصِّها.",
   debunk: "شرحٌ صريحٌ لحيلٍ شائعةٍ عند بعض العرّافين — طبقةٌ توعويّةٌ منفصلة.",
   corpus: "بحثٌ داخل نصّ «شمس المعارف الكبرى».",
+  tarkiba: "أداةٌ تجريبيّةٌ ليست من الكتب: تخلطُ أدواتٍ من المحرّك وتتعلّمُ من «صح / غلط» هل تصيب.",
   fihris: "أبوابُ «شمس المعارف الكبرى» بموضوعاتها، وبجانب كلِّ بابٍ الأداةُ التي تطبّقُه في الموقع.",
   manual: "دليلُ استخدامِ كلّ أداة: ما هي، وماذا تُدخِل، وكيف تقرأ الناتج.",
   infoOnly: "معلوماتٌ للاطّلاع فقط لا تدخل في الحساب.",
@@ -29542,6 +29630,72 @@ PANELS.full = (main) => {
       body: `<ul class="kv" style="margin:0;padding-inline-start:1.1rem">${[...r.life.marriage.items, ...r.life.marriage.spouse].map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`,
       basis: `${esc(r.life.src)}، ف٥: ${c.sex === "f" ? "للمرأة تُنظَرُ الشمس" : "للرجل يُنظَرُ القمر"}: ربعُها (مشرقيّ/مغربيّ)، ونوعُ برجها، والكوكبُ الذي تتّصلُ به.` })}
     </div>` : ""}`);
+};
+
+// التركيبة الغريبة (تجريبيّ) ─────────────────────────────────────────
+const TK_FB = () => arifFbKey().replace(ARIF_FB0, "smk-tk-fb");
+const TK_EVENTS = ["زواج", "ولد", "شغل جديد", "انتقال بيت", "مرض", "خسارة", "سفر", "غيره"];
+PANELS.tarkiba = (main) => {
+  main.innerHTML = `${head("tarkiba", "التركيبة الغريبة")}`;
+  if (!gate(main)) return;
+  const c = ctx(), F = c.sex === "f", k_ = (m, f) => (F ? f : m);
+  let r; try { r = tarkiba.reading({ name: c.name, mother: c.mother, sex: c.sex, birth: c.birth, lat: c.lat, lon: c.lon, timeUnknown: !c.timeKnown, now: c.now }); }
+  catch (e) { main.insertAdjacentHTML("beforeend", `<div class="warn">${esc(e.message)}</div>`); return; }
+  const fb = () => lsGet(TK_FB(), {});
+  const btns = (id) => { const x = fb()[id]; return `<div class="arif-did" data-tk="${id}"><span>هل هذا صحيح؟</span><button type="button" class="btn sm sec" data-tok="1" aria-pressed="${x?.ok === true}">✓ صح</button><button type="button" class="btn sm sec" data-tok="0" aria-pressed="${x?.ok === false}">✗ غلط</button>${x ? `<span class="saved">انحفظ ✓</span>` : ""}</div>`; };
+  // تصحيحُ الظاهر/الباطن: يختارُ الشخصُ الوصفَ الأقربَ إليه من التسعة، ويظهرُ له بدلَ المحسوب
+  const desc = (id, part) => { const fix = fb()[id]?.fix; const d = fix ? r.descriptions[fix] : { planet: part.planet, text: part.text };
+    return `<div class="kv">${esc(d.text)}</div>${fix ? `<div class="gloss">(صحّحتَه ${k_("أنت", "أنتِ")}: المحسوبُ كان ${esc(part.planet)})</div>` : ""}`; };
+  const fixedPlanet = (id, part) => { const fix = fb()[id]?.fix; return fix ? r.descriptions[fix].planet : part.planet; };
+  const fixer = (id) => `<div class="tk-fix" data-fix="${id}" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>أيُّ وصفٍ ${k_("أقربُ لك", "أقربُ لكِ")}؟</label><select style="width:100%;max-width:100%;min-width:0">${Object.entries(r.descriptions).map(([n, d]) => `<option value="${n}">${esc(d.planet)}: ${esc(d.text.slice(0, 45))}…</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`;
+  const past = r.pivots.filter((p) => p.past && p.age >= 18), future = r.pivots.filter((p) => !p.past).slice(0, 4);
+  main.insertAdjacentHTML("beforeend", subjectBar(c) + `<div id="tkWrap">
+    <div class="warn" style="background:transparent">🧪 <b>تجريبيّ:</b> ${esc(r.note)}${r.timingFrom === "sun" ? " ساعةُ ميلادك غيرُ مدخَلة، فالسنواتُ محسوبةٌ من برج الشمس." : ""} إجاباتُك «صح / غلط» تُعلّمُ الأداةَ أين تصيب.</div>
+    <div class="grid wide">
+      ${card({ title: `${k_("ظاهرُك", "ظاهرُكِ")} (${esc(fixedPlanet("zahir", r.zahir))})`, k: `${AR(r.zahir.n)} ⇐ ${AR(r.zahir.root)}`, body: desc("zahir", r.zahir) + btns("zahir") + fixer("zahir"), basis: "مجموعُ حروف الاسم واسم الأمّ بالجُمّل ⇒ الجذرُ الرقميّ ⇒ كوكبُه ووصفُه (Cheiro)." })}
+      ${card({ title: `${k_("باطنُك", "باطنُكِ")} (${esc(fixedPlanet("batin", r.batin))})`, k: `${AR(r.batin.n)} ⇐ ${AR(r.batin.root)}`, body: desc("batin", r.batin) + btns("batin") + fixer("batin"), basis: "التكسيرُ المركّب لحروف الاسم واسم الأمّ (كما في كتب الجفر لعدد «باطن» الاسم) ⇒ الجذر ⇒ كوكبُه ووصفُه." })}
+      ${card({ title: "الظاهر والباطن", body: `<div class="kv">${esc(r.agreeText)}</div>` + btns("agree"), basis: `عنصرا الكوكبين (${esc(r.zahir.element)} / ${esc(r.batin.element)}) وعنصرُ قمر الميلاد.` })}
+      ${card({ title: `${k_("اسمُك", "اسمُكِ")} الباطن: ${esc(r.hiddenName.name)}`, body: `<div class="kv">خاصّيّتُه: ${esc(r.hiddenName.khassa)}</div>` + btns("hidden"), basis: `الباطن mod ٩٩ ⇒ الاسمُ رقم ${AR(r.hiddenName.index)} من الأسماء الحسنى.` })}
+      ${card({ title: `${k_("شكلُك", "شكلُكِ")} في الرمل: ${esc(r.figure.ar)}`, k: esc(r.figure.nature), body: `<div class="kv">${esc(r.figure.meaning)}</div>` + btns("figure"), basis: "الباطن mod ١٦ ⇒ شكلٌ من الأشكال الستّةَ عشر." })}
+      ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
+    </div>
+    <h2>${k_("سنواتُك", "سنواتُكِ")} المفصليّة</h2>
+    <p class="kv">كلُّ سنةٍ تبدأُ من عيد ميلادك. ${k_("قُلْ", "قولي")} عن كلِّ سنةٍ مضت: هل صار فيها شيءٌ من نوعها؟</p>
+    <div class="grid wide">${card({ title: "سنواتٌ مضت", body: past.map((p) => { const id = `pivot:${p.age}`, x = fb()[id];
+      return `<div class="arif-did" data-tk="${id}"><span><b>${AR(p.from)}–${AR(p.to)}</b> (عمر ${AR(p.age)}): ${esc(p.text)}</span><button type="button" class="btn sm sec" data-tok="1" aria-pressed="${x?.ok === true}">✓ صار</button><button type="button" class="btn sm sec" data-tok="0" aria-pressed="${x?.ok === false}">✗ ما صار</button>${x ? `<span class="saved">✓</span>` : ""}</div>`; }).join("") || `<div class="kv">لا سنواتَ مضت بعد.</div>` })}
+      ${card({ title: "سنواتٌ قادمة", body: future.map((p) => `<div class="kv"><b>${AR(p.from)}–${AR(p.to)}</b> (عمر ${AR(p.age)}): ${esc(p.text)}</div>`).join("") })}
+      ${card({ title: `حدثٌ مهمٌّ صار ${k_("معك", "معكِ")} ولم يظهر هنا؟`, body: `<form class="form" id="tkEv" style="align-items:flex-end"><div class="fld"><label for="tkEvT">نوعُه</label><select id="tkEvT">${TK_EVENTS.map((t) => `<option>${t}</option>`).join("")}</select></div><div class="fld"><label for="tkEvY">السنة</label><input id="tkEvY" type="number" min="1930" max="${new Date().getFullYear()}" required style="width:7rem"></div><button class="btn" type="submit">أضِفْه</button></form><div id="tkEvOut" class="gloss"></div>`, basis: "الأحداثُ الحقيقيّةُ تُعلّمُ الأداةَ أيَّ طريقةِ توقيتٍ تصيب." })}
+    </div></div>`);
+  const wrap = $("#tkWrap", main);
+  const save = (id, rec) => { const all = fb(); all[id] = { ...rec, at: Date.now() }; lsSet(TK_FB(), all); };
+  wrap.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-tok]"), box = b?.closest("[data-tk]"); if (!box) return;
+    const id = box.dataset.tk, ok = b.dataset.tok === "1";
+    save(id, { ok });
+    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name })[id];
+    arifSend({ kind: "tarkiba", ok, item: id, said: String(said || "").slice(0, 300), lines: [r.timingFrom] });
+    box.querySelectorAll("[data-tok]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    if (!box.querySelector(".saved")) box.insertAdjacentHTML("beforeend", `<span class="saved">انحفظ ✓</span>`);
+    const fx = main.querySelector(`[data-fix="${id}"]`); if (fx) fx.hidden = ok;
+  });
+  main.querySelectorAll("[data-fix] button").forEach((b) => b.addEventListener("click", () => {
+    const box = b.closest("[data-fix]"), id = box.dataset.fix, n = box.querySelector("select").value;
+    save(id, { ok: false, fix: n });
+    arifSend({ kind: "tarkiba", ok: false, item: `${id}:fix`, said: `${(id === "zahir" ? r.zahir : r.batin).planet} ⇐ ${r.descriptions[n].planet}`, lines: [r.timingFrom] });
+    route("tarkiba");
+  }));
+  $("#tkEv", main).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const y = +$("#tkEvY", main).value, t = $("#tkEvT", main).value; if (!y) return;
+    // نوعُ الحدث ⇐ بيتُه: الزواج ٧، الشغل ١٠، البيت ٤، المرض ١ (والباقي لا بيتَ له بين الأوتاد)
+    const H = { "زواج": 7, "شغل جديد": 10, "انتقال بيت": 4, "مرض": 1 }[t];
+    const p = r.pivots.find((x) => y === x.from || y === x.to), hit = !!(p && H && p.house === H);
+    const said = p ? `وقع في سنة «${tarkiba.THEME_SHORT[p.house]}» (عمر ${p.age})${H ? (hit ? " — من نوعه" : " — من غير نوعه") : ""}` : "لم يقع في سنةٍ مفصليّة";
+    arifSend({ kind: "tarkiba", ok: hit, item: `event:${t}:${y}`, said, lines: [r.timingFrom] });
+    $("#tkEvOut", main).textContent = `انحفظ ✓ — «${t}» سنة ${y}: ${said}.`;
+    $("#tkEvY", main).value = "";
+  });
+  wireCards(main);
 };
 
 // فهرسُ الكتاب ─────────────────────────────────────────────────────
