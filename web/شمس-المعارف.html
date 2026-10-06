@@ -2302,7 +2302,7 @@ const DISCLAIMER =
 __M["engine-version.data"]=(function(){"use strict";const __exports={};
 // data/engine-version.data.js — يُولَّدُ آليًّا (node tools/build-version.js). لا تعدّلْه يدويًّا.
 // بصمةُ ملفّات المحرّك: تتغيّرُ وحدَها مع أيّ تعديلٍ في الحسابات.
-const ENGINE_VER = "c368f522b9";
+const ENGINE_VER = "1af8ed260e";
 
 ;__exports["ENGINE_VER"]=ENGINE_VER;return __exports;})();
 __M["falak-ahkam-src.data"]=(function(){"use strict";const __exports={};
@@ -25686,6 +25686,10 @@ __M["tarkiba"]=(function(){"use strict";const __exports={};
 //   ٥ شكلُ الرمل = الباطن mod 16
 //   ٧ اليوم   = يومُ كوكب الباطن، وما يصلحُ فيه وما لا يصلح (أعمالُ الأيّام من كتب الاختيارات)
 //   ٨ السنواتُ المفصليّة = الانتهاءُ السنويّ إلى الأوتاد (بطليموس) من الطالع، أو من برج الشمس إن جُهلت الساعة
+//   ٩ الميلُ للاكتئاب = دلائلُ السوداء من زحل: نظرُ عداوةٍ (اقترانٌ/تربيعٌ/مقابلة) للقمر أو عطارد أو الطالع،
+//      والقمرُ أو عطاردُ في بيتَي زحل، والقمرُ في هبوطه. قاعدةٌ ثُبّتت قبل النظر في الأجوبة (٢٠٢٦-١٠-٠٦)،
+//      وجُرّبت على خمسة: أصابت من عنده اكتئابٌ (بالساعة) ولم تُخطئ في سليم، وفاتها من لا ساعةَ له.
+//      لا تقولُ لأحدٍ «لا شيءَ عندك»: إن لم تجد دليلًا سكتت.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const abjad=__M["abjad"].default;
@@ -25704,6 +25708,24 @@ const FLAVOR = { نار: "باندفاعٍ وجرأة", هواء: "بعقلٍ و
 const THEME = { 1: "سنةُ نفسِك: بدايةٌ جديدةٌ أو تغيّرٌ في طريقك وصحّتك", 4: "سنةُ البيت والأهل: سكنٌ أو انتقالٌ أو أمرٌ يخصّ العائلة", 7: "سنةُ الزواج والشراكة: ارتباطٌ أو شريكٌ أو خصومة", 10: "سنةُ العمل والمكانة: وظيفةٌ أو ترقيةٌ أو تغيّرٌ في المهنة" };
 const THEME_SHORT = { 1: "نفسك", 4: "البيت والأهل", 7: "الزواج والشراكة", 10: "العمل" };
 const root = (n) => abjad.digitalRoot(n) || 9;
+// نظرُ العداوة بفلك ٨°: اقترانٌ أو تربيعٌ أو مقابلة
+const HARD = { 0: "يقارن", 90: "يربّع", 180: "يقابل" };
+const hardAspect = (a, b) => { let d = Math.abs(a - b) % 360; if (d > 180) d = 360 - d;
+  for (const x of [0, 90, 180]) if (Math.abs(d - x) <= 8) return HARD[x]; return null; };
+
+/** دلائلُ السوداء (الميلُ للاكتئاب) من زحل. يُرجِعُ null إن لم يوجد دليل. */
+function mood(sky, timeKnown, f) {
+  const P = sky.planets, sat = P["زحل"].longitude, sign = (k) => P[k].signInfo?.ar ?? P[k].sign;
+  let score = 0; const why = [];
+  for (const k of ["القمر", "عطارد"]) { const h = hardAspect(sat, P[k].longitude); if (h) { score += 2; why.push(`زحلُ ${h} ${k}`); } }
+  if (timeKnown) { const h = hardAspect(sat, sky.ascendant.longitude); if (h) { score += 2; why.push(`زحلُ ${h} الطالع`); } }
+  for (const k of ["القمر", "عطارد"]) if (["الجدي", "الدلو"].includes(sign(k))) { score += 1; why.push(`${k} في ${sign(k)} (بيتِ زحل)`); }
+  if (sign("القمر") === "العقرب") { score += 1; why.push("القمرُ في العقرب (هبوطِه)"); }
+  if (!score) return null;
+  const level = score >= 2 ? "clear" : "light", k_ = (m, fm) => (f ? fm : m);
+  return { score, level, why,
+    text: `في ${k_("خريطتك", "خريطتكِ")} دليلٌ ${level === "clear" ? "واضحٌ" : "خفيفٌ"} على ميلٍ إلى الحزن والكآبة (الاكتئاب): ثِقَلٌ في النفس، وحملُ همٍّ، وفتراتٌ ${k_("تنطفئُ", "تنطفئين")} فيها. هذا ميلٌ من الكتب وليس تشخيصًا؛ وإن ${k_("شعرتَ", "شعرتِ")} بشيءٍ منه فالطبيبُ هو المرجع.` };
+}
 
 /**
  * @param c {name, mother, sex?, birth: Date, lat, lon, timeUnknown?: boolean, now?: Date}
@@ -25750,15 +25772,16 @@ function reading(c) {
     hiddenName: { name: hidden.name, khassa: hidden.khassa, index: (B % 99) || 99 },
     figure: { id: fig.id, ar: fig.ar, nature: fig.nature, meaning: fig.meaning },
     day, pivots,
+    mood: mood(sky, !c.timeUnknown, f),
     timingFrom: c.timeUnknown ? "sun" : "asc",
     descriptions: Object.fromEntries(Object.entries(BIRTH_NUMBER).map(([n, v]) => [n, { planet: v.planet, text: v.text }])),
     note: "تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
   };
 }
 
-__exports.default = { reading, THEME, THEME_SHORT };
+__exports.default = { reading, mood, THEME, THEME_SHORT };
 
-;__exports["THEME"]=THEME;__exports["THEME_SHORT"]=THEME_SHORT;__exports["reading"]=reading;return __exports;})();
+;__exports["THEME"]=THEME;__exports["THEME_SHORT"]=THEME_SHORT;__exports["mood"]=mood;__exports["reading"]=reading;return __exports;})();
 __M["taskhir"]=(function(){"use strict";const __exports={};
 // engines/taskhir.js
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29634,6 +29657,8 @@ PANELS.full = (main) => {
 
 // التركيبة الغريبة ─────────────────────────────────────────
 const TK_FB = () => arifFbKey().replace(ARIF_FB0, "smk-tk-fb");
+// تصحيحُ «الميل للاكتئاب» اختياريّ: كثيرون لا يعرفون إن كان عندهم شيء
+const TK_MOOD_FIX = ["ما عندي شي من هيك", "عندي اكتئاب أقوى من هيك", "قلق", "وسواس قهري (OCD)", "ADHD", "ثنائي القطب", "غيره", "مش متأكّد"];
 const TK_EVENTS = ["زواج", "ولد", "شغل جديد", "انتقال بيت", "مرض", "خسارة", "سفر", "غيره"];
 PANELS.tarkiba = (main) => {
   main.innerHTML = `${head("tarkiba", "التركيبة الغريبة")}`;
@@ -29648,6 +29673,8 @@ PANELS.tarkiba = (main) => {
     return `<div class="kv">${esc(d.text)}</div>${fix ? `<div class="gloss">(صحّحتَه ${k_("أنت", "أنتِ")}: المحسوبُ كان ${esc(part.planet)})</div>` : ""}`; };
   const fixedPlanet = (id, part) => { const fix = fb()[id]?.fix; return fix ? r.descriptions[fix].planet : part.planet; };
   const fixer = (id) => `<div class="tk-fix" data-fix="${id}" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>أيُّ وصفٍ ${k_("أقربُ لك", "أقربُ لكِ")}؟</label><select style="width:100%;max-width:100%;min-width:0">${Object.entries(r.descriptions).map(([n, d]) => `<option value="${n}">${esc(d.planet)}: ${esc(d.text.slice(0, 45))}…</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`;
+  const moodFixer = () => { const fix = fb().mood?.fix;
+    return `${fix ? `<div class="gloss">(${k_("قلتَ", "قلتِ")}: ${esc(fix)})</div>` : ""}<div class="tk-fix" data-fix="mood" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>${k_("إن كنتَ تعرف", "إن كنتِ تعرفين")}: شو الصحيح؟ (اختياريّ)</label><select style="width:100%;max-width:100%;min-width:0">${TK_MOOD_FIX.map((t) => `<option${t === fix ? " selected" : ""}>${esc(t)}</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`; };
   const past = r.pivots.filter((p) => p.past && p.age >= 18), future = r.pivots.filter((p) => !p.past).slice(0, 4);
   main.insertAdjacentHTML("beforeend", subjectBar(c) + `<div id="tkWrap">
     <div class="warn" style="background:transparent">${esc(r.note)}${r.timingFrom === "sun" ? " ساعةُ ميلادك غيرُ مدخَلة، فالسنواتُ محسوبةٌ من برج الشمس." : ""} إجاباتُك «صح / غلط» تُعلّمُ الأداةَ أين تصيب.</div>
@@ -29658,6 +29685,7 @@ PANELS.tarkiba = (main) => {
       ${card({ title: `${k_("اسمُك", "اسمُكِ")} الباطن: ${esc(r.hiddenName.name)}`, body: `<div class="kv">خاصّيّتُه: ${esc(r.hiddenName.khassa)}</div>` + btns("hidden"), basis: `الباطن mod ٩٩ ⇒ الاسمُ رقم ${AR(r.hiddenName.index)} من الأسماء الحسنى.` })}
       ${card({ title: `${k_("شكلُك", "شكلُكِ")} في الرمل: ${esc(r.figure.ar)}`, k: esc(r.figure.nature), body: `<div class="kv">${esc(r.figure.meaning)}</div>` + btns("figure"), basis: "الباطن mod ١٦ ⇒ شكلٌ من الأشكال الستّةَ عشر." })}
       ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
+      ${r.mood ? card({ title: "الميلُ للاكتئاب", k: r.mood.level === "clear" ? "دليلٌ واضح" : "دليلٌ خفيف", body: `<div class="kv">${esc(r.mood.text)}</div><div class="gloss">الدليل: ${esc(r.mood.why.join("، "))}.</div>` + btns("mood") + moodFixer(), basis: `دلائلُ «السوداء» من زحل: نظرُ عداوةٍ للقمر أو عطارد${c.timeKnown ? " أو الطالع" : ""}، والقمرُ أو عطاردُ في بيتَي زحل.${c.timeKnown ? "" : " بلا ساعة ميلادٍ لا يُنظرُ إلى الطالع فقد يفوتُ الدليل."}` }) : ""}
     </div>
     <h2>${k_("سنواتُك", "سنواتُكِ")} المفصليّة</h2>
     <p class="kv">كلُّ سنةٍ تبدأُ من عيد ميلادك. ${k_("قُلْ", "قولي")} عن كلِّ سنةٍ مضت: هل صار فيها شيءٌ من نوعها؟</p>
@@ -29672,7 +29700,7 @@ PANELS.tarkiba = (main) => {
     const b = ev.target.closest("[data-tok]"), box = b?.closest("[data-tk]"); if (!box) return;
     const id = box.dataset.tk, ok = b.dataset.tok === "1";
     save(id, { ok });
-    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name })[id];
+    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name, mood: r.mood && `ميلٌ ${r.mood.level === "clear" ? "واضح" : "خفيف"} (${r.mood.why.join("، ")})` })[id];
     arifSend({ kind: "tarkiba", ok, item: id, said: String(said || "").slice(0, 300), lines: [r.timingFrom] });
     box.querySelectorAll("[data-tok]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     if (!box.querySelector(".saved")) box.insertAdjacentHTML("beforeend", `<span class="saved">انحفظ ✓</span>`);
@@ -29681,7 +29709,8 @@ PANELS.tarkiba = (main) => {
   main.querySelectorAll("[data-fix] button").forEach((b) => b.addEventListener("click", () => {
     const box = b.closest("[data-fix]"), id = box.dataset.fix, n = box.querySelector("select").value;
     save(id, { ok: false, fix: n });
-    arifSend({ kind: "tarkiba", ok: false, item: `${id}:fix`, said: `${(id === "zahir" ? r.zahir : r.batin).planet} ⇐ ${r.descriptions[n].planet}`, lines: [r.timingFrom] });
+    const said = id === "mood" ? `${r.mood.level === "clear" ? "واضح" : "خفيف"} ⇐ ${n}` : `${(id === "zahir" ? r.zahir : r.batin).planet} ⇐ ${r.descriptions[n].planet}`;
+    arifSend({ kind: "tarkiba", ok: false, item: `${id}:fix`, said, lines: [r.timingFrom] });
     route("tarkiba");
   }));
   $("#tkEv", main).addEventListener("submit", (e) => {

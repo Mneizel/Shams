@@ -176,6 +176,8 @@ function buildReport() {
       const it = String(r[col("item")]).replace(/^'/, "");
       if (it.indexOf("event:") === 0) add("tk_event", it.split(":")[1] + " — " + (ok ? "في سنةٍ مفصليّة" : "خارجها"), ok, 0.5);
       else if (it.indexOf("pivot:") === 0) add("tk_pivot", (String(r[col("said")]).match(/سنةُ ([^:،]+)/) || ["", "؟"])[1], ok, 0.5);
+      else if (it === "mood") add("tk_mood", String(r[col("said")]).indexOf("واضح") >= 0 ? "دليلٌ واضح" : "دليلٌ خفيف", ok, 0.5);
+      else if (it === "mood:fix") add("tk_moodfix", String(r[col("said")]).split("⇐ ")[1] || "؟", false, 0.5);
       else add("tk_line", it, ok, 0.5);
     }
   });
@@ -214,6 +216,8 @@ function buildReport() {
   section("الكفّ: الأبواب", "palm", function (k) { return k; });
   const TK = { zahir: "الظاهر", batin: "الباطن", agree: "توافقُ الظاهر والباطن", hidden: "الاسمُ الباطن", figure: "شكلُ الرمل", day: "اليوم", "zahir:fix": "الظاهر (صُحِّح)", "batin:fix": "الباطن (صُحِّح)" };
   section("التركيبة الغريبة: السطور", "tk_line", function (k) { return TK[k] || k; });
+  section("التركيبة الغريبة: الميلُ للاكتئاب", "tk_mood", function (k) { return k; });
+  section("التركيبة الغريبة: الصحيحُ عند من قال «غلط» في الاكتئاب (العدد في عمود غلط)", "tk_moodfix", function (k) { return k; });
   section("التركيبة الغريبة: السنواتُ المفصليّة بنوعها", "tk_pivot", function (k) { return "سنةُ " + k; });
   section("التركيبة الغريبة: الأحداثُ الحقيقيّة", "tk_event", function (k) { return k; });
   out.push(["ملاحظة", "«فوقَ الصدفة» هو المهمّ: طريقةٌ نسبتُها ٧٥٪ والصدفةُ ٧٥٪ لا تصيبُ شيئًا. الأشهرُ العاديّةُ لا تُحتسَب، ولا يتغيّرُ وزنٌ قبل ٢٠ إجابةً من ٥ أشخاص.", "", "", "", "", ""]);

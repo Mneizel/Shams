@@ -10,6 +10,10 @@
 //   ٥ شكلُ الرمل = الباطن mod 16
 //   ٧ اليوم   = يومُ كوكب الباطن، وما يصلحُ فيه وما لا يصلح (أعمالُ الأيّام من كتب الاختيارات)
 //   ٨ السنواتُ المفصليّة = الانتهاءُ السنويّ إلى الأوتاد (بطليموس) من الطالع، أو من برج الشمس إن جُهلت الساعة
+//   ٩ الميلُ للاكتئاب = دلائلُ السوداء من زحل: نظرُ عداوةٍ (اقترانٌ/تربيعٌ/مقابلة) للقمر أو عطارد أو الطالع،
+//      والقمرُ أو عطاردُ في بيتَي زحل، والقمرُ في هبوطه. قاعدةٌ ثُبّتت قبل النظر في الأجوبة (٢٠٢٦-١٠-٠٦)،
+//      وجُرّبت على خمسة: أصابت من عنده اكتئابٌ (بالساعة) ولم تُخطئ في سليم، وفاتها من لا ساعةَ له.
+//      لا تقولُ لأحدٍ «لا شيءَ عندك»: إن لم تجد دليلًا سكتت.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import abjad from "./abjad.js";
@@ -28,6 +32,24 @@ const FLAVOR = { نار: "باندفاعٍ وجرأة", هواء: "بعقلٍ و
 export const THEME = { 1: "سنةُ نفسِك: بدايةٌ جديدةٌ أو تغيّرٌ في طريقك وصحّتك", 4: "سنةُ البيت والأهل: سكنٌ أو انتقالٌ أو أمرٌ يخصّ العائلة", 7: "سنةُ الزواج والشراكة: ارتباطٌ أو شريكٌ أو خصومة", 10: "سنةُ العمل والمكانة: وظيفةٌ أو ترقيةٌ أو تغيّرٌ في المهنة" };
 export const THEME_SHORT = { 1: "نفسك", 4: "البيت والأهل", 7: "الزواج والشراكة", 10: "العمل" };
 const root = (n) => abjad.digitalRoot(n) || 9;
+// نظرُ العداوة بفلك ٨°: اقترانٌ أو تربيعٌ أو مقابلة
+const HARD = { 0: "يقارن", 90: "يربّع", 180: "يقابل" };
+const hardAspect = (a, b) => { let d = Math.abs(a - b) % 360; if (d > 180) d = 360 - d;
+  for (const x of [0, 90, 180]) if (Math.abs(d - x) <= 8) return HARD[x]; return null; };
+
+/** دلائلُ السوداء (الميلُ للاكتئاب) من زحل. يُرجِعُ null إن لم يوجد دليل. */
+export function mood(sky, timeKnown, f) {
+  const P = sky.planets, sat = P["زحل"].longitude, sign = (k) => P[k].signInfo?.ar ?? P[k].sign;
+  let score = 0; const why = [];
+  for (const k of ["القمر", "عطارد"]) { const h = hardAspect(sat, P[k].longitude); if (h) { score += 2; why.push(`زحلُ ${h} ${k}`); } }
+  if (timeKnown) { const h = hardAspect(sat, sky.ascendant.longitude); if (h) { score += 2; why.push(`زحلُ ${h} الطالع`); } }
+  for (const k of ["القمر", "عطارد"]) if (["الجدي", "الدلو"].includes(sign(k))) { score += 1; why.push(`${k} في ${sign(k)} (بيتِ زحل)`); }
+  if (sign("القمر") === "العقرب") { score += 1; why.push("القمرُ في العقرب (هبوطِه)"); }
+  if (!score) return null;
+  const level = score >= 2 ? "clear" : "light", k_ = (m, fm) => (f ? fm : m);
+  return { score, level, why,
+    text: `في ${k_("خريطتك", "خريطتكِ")} دليلٌ ${level === "clear" ? "واضحٌ" : "خفيفٌ"} على ميلٍ إلى الحزن والكآبة (الاكتئاب): ثِقَلٌ في النفس، وحملُ همٍّ، وفتراتٌ ${k_("تنطفئُ", "تنطفئين")} فيها. هذا ميلٌ من الكتب وليس تشخيصًا؛ وإن ${k_("شعرتَ", "شعرتِ")} بشيءٍ منه فالطبيبُ هو المرجع.` };
+}
 
 /**
  * @param c {name, mother, sex?, birth: Date, lat, lon, timeUnknown?: boolean, now?: Date}
@@ -74,10 +96,11 @@ export function reading(c) {
     hiddenName: { name: hidden.name, khassa: hidden.khassa, index: (B % 99) || 99 },
     figure: { id: fig.id, ar: fig.ar, nature: fig.nature, meaning: fig.meaning },
     day, pivots,
+    mood: mood(sky, !c.timeUnknown, f),
     timingFrom: c.timeUnknown ? "sun" : "asc",
     descriptions: Object.fromEntries(Object.entries(BIRTH_NUMBER).map(([n, v]) => [n, { planet: v.planet, text: v.text }])),
     note: "تركيبةٌ من أدواتِ المحرّك، ليست من كتابٍ بعينه. التوقيتُ بلا ساعة ميلادٍ ضعيف.",
   };
 }
 
-export default { reading, THEME, THEME_SHORT };
+export default { reading, mood, THEME, THEME_SHORT };

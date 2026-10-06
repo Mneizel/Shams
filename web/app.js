@@ -2819,6 +2819,8 @@ PANELS.full = (main) => {
 
 // التركيبة الغريبة ─────────────────────────────────────────
 const TK_FB = () => arifFbKey().replace(ARIF_FB0, "smk-tk-fb");
+// تصحيحُ «الميل للاكتئاب» اختياريّ: كثيرون لا يعرفون إن كان عندهم شيء
+const TK_MOOD_FIX = ["ما عندي شي من هيك", "عندي اكتئاب أقوى من هيك", "قلق", "وسواس قهري (OCD)", "ADHD", "ثنائي القطب", "غيره", "مش متأكّد"];
 const TK_EVENTS = ["زواج", "ولد", "شغل جديد", "انتقال بيت", "مرض", "خسارة", "سفر", "غيره"];
 PANELS.tarkiba = (main) => {
   main.innerHTML = `${head("tarkiba", "التركيبة الغريبة")}`;
@@ -2833,6 +2835,8 @@ PANELS.tarkiba = (main) => {
     return `<div class="kv">${esc(d.text)}</div>${fix ? `<div class="gloss">(صحّحتَه ${k_("أنت", "أنتِ")}: المحسوبُ كان ${esc(part.planet)})</div>` : ""}`; };
   const fixedPlanet = (id, part) => { const fix = fb()[id]?.fix; return fix ? r.descriptions[fix].planet : part.planet; };
   const fixer = (id) => `<div class="tk-fix" data-fix="${id}" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>أيُّ وصفٍ ${k_("أقربُ لك", "أقربُ لكِ")}؟</label><select style="width:100%;max-width:100%;min-width:0">${Object.entries(r.descriptions).map(([n, d]) => `<option value="${n}">${esc(d.planet)}: ${esc(d.text.slice(0, 45))}…</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`;
+  const moodFixer = () => { const fix = fb().mood?.fix;
+    return `${fix ? `<div class="gloss">(${k_("قلتَ", "قلتِ")}: ${esc(fix)})</div>` : ""}<div class="tk-fix" data-fix="mood" hidden style="display:flex;flex-direction:column;gap:.4rem;margin-top:.5rem;max-width:100%"><label>${k_("إن كنتَ تعرف", "إن كنتِ تعرفين")}: شو الصحيح؟ (اختياريّ)</label><select style="width:100%;max-width:100%;min-width:0">${TK_MOOD_FIX.map((t) => `<option${t === fix ? " selected" : ""}>${esc(t)}</option>`).join("")}</select><button type="button" class="btn sm" style="align-self:flex-start">احفظ</button></div>`; };
   const past = r.pivots.filter((p) => p.past && p.age >= 18), future = r.pivots.filter((p) => !p.past).slice(0, 4);
   main.insertAdjacentHTML("beforeend", subjectBar(c) + `<div id="tkWrap">
     <div class="warn" style="background:transparent">${esc(r.note)}${r.timingFrom === "sun" ? " ساعةُ ميلادك غيرُ مدخَلة، فالسنواتُ محسوبةٌ من برج الشمس." : ""} إجاباتُك «صح / غلط» تُعلّمُ الأداةَ أين تصيب.</div>
@@ -2843,6 +2847,7 @@ PANELS.tarkiba = (main) => {
       ${card({ title: `${k_("اسمُك", "اسمُكِ")} الباطن: ${esc(r.hiddenName.name)}`, body: `<div class="kv">خاصّيّتُه: ${esc(r.hiddenName.khassa)}</div>` + btns("hidden"), basis: `الباطن mod ٩٩ ⇒ الاسمُ رقم ${AR(r.hiddenName.index)} من الأسماء الحسنى.` })}
       ${card({ title: `${k_("شكلُك", "شكلُكِ")} في الرمل: ${esc(r.figure.ar)}`, k: esc(r.figure.nature), body: `<div class="kv">${esc(r.figure.meaning)}</div>` + btns("figure"), basis: "الباطن mod ١٦ ⇒ شكلٌ من الأشكال الستّةَ عشر." })}
       ${card({ title: k_("يومُك", "يومُكِ"), k: esc(r.day.name), body: `<div class="kv">${esc(r.day.text)}</div>` + btns("day"), basis: "يومُ كوكب الباطن؛ وما يصلحُ فيه وما لا يصلحُ من كتب الاختيارات." })}
+      ${r.mood ? card({ title: "الميلُ للاكتئاب", k: r.mood.level === "clear" ? "دليلٌ واضح" : "دليلٌ خفيف", body: `<div class="kv">${esc(r.mood.text)}</div><div class="gloss">الدليل: ${esc(r.mood.why.join("، "))}.</div>` + btns("mood") + moodFixer(), basis: `دلائلُ «السوداء» من زحل: نظرُ عداوةٍ للقمر أو عطارد${c.timeKnown ? " أو الطالع" : ""}، والقمرُ أو عطاردُ في بيتَي زحل.${c.timeKnown ? "" : " بلا ساعة ميلادٍ لا يُنظرُ إلى الطالع فقد يفوتُ الدليل."}` }) : ""}
     </div>
     <h2>${k_("سنواتُك", "سنواتُكِ")} المفصليّة</h2>
     <p class="kv">كلُّ سنةٍ تبدأُ من عيد ميلادك. ${k_("قُلْ", "قولي")} عن كلِّ سنةٍ مضت: هل صار فيها شيءٌ من نوعها؟</p>
@@ -2857,7 +2862,7 @@ PANELS.tarkiba = (main) => {
     const b = ev.target.closest("[data-tok]"), box = b?.closest("[data-tk]"); if (!box) return;
     const id = box.dataset.tk, ok = b.dataset.tok === "1";
     save(id, { ok });
-    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name })[id];
+    const said = id.startsWith("pivot:") ? box.querySelector("span").textContent : ({ zahir: r.zahir.planet, batin: r.batin.planet, agree: r.agree, hidden: r.hiddenName.name, figure: r.figure.ar, day: r.day.name, mood: r.mood && `ميلٌ ${r.mood.level === "clear" ? "واضح" : "خفيف"} (${r.mood.why.join("، ")})` })[id];
     arifSend({ kind: "tarkiba", ok, item: id, said: String(said || "").slice(0, 300), lines: [r.timingFrom] });
     box.querySelectorAll("[data-tok]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     if (!box.querySelector(".saved")) box.insertAdjacentHTML("beforeend", `<span class="saved">انحفظ ✓</span>`);
@@ -2866,7 +2871,8 @@ PANELS.tarkiba = (main) => {
   main.querySelectorAll("[data-fix] button").forEach((b) => b.addEventListener("click", () => {
     const box = b.closest("[data-fix]"), id = box.dataset.fix, n = box.querySelector("select").value;
     save(id, { ok: false, fix: n });
-    arifSend({ kind: "tarkiba", ok: false, item: `${id}:fix`, said: `${(id === "zahir" ? r.zahir : r.batin).planet} ⇐ ${r.descriptions[n].planet}`, lines: [r.timingFrom] });
+    const said = id === "mood" ? `${r.mood.level === "clear" ? "واضح" : "خفيف"} ⇐ ${n}` : `${(id === "zahir" ? r.zahir : r.batin).planet} ⇐ ${r.descriptions[n].planet}`;
+    arifSend({ kind: "tarkiba", ok: false, item: `${id}:fix`, said, lines: [r.timingFrom] });
     route("tarkiba");
   }));
   $("#tkEv", main).addEventListener("submit", (e) => {

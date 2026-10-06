@@ -97,11 +97,12 @@ const rejected = !!(evalRes && !evalRes.error && evalRes.answers >= 30 && evalRe
 const use = rejected && prevW ? { weights: prevW.weights || {}, byTopic: prevW.byTopic || {} } : { weights: W.weights, byTopic: W.byTopic };
 
 // التركيبة الغريبة: نسبةُ «صح» لكلّ سطر، ولكلّ نوعِ سنةٍ مفصليّة، وتصحيحاتُ الظاهر والباطن، والأحداثُ الحقيقيّة
-const tarkiba = { lines: {}, pivots: {}, fixes: {}, events: {} };
+const tarkiba = { lines: {}, pivots: {}, fixes: {}, events: {}, mood: {} };
 for (const e of recs.filter((r) => r.kind === "tarkiba")) {
   const it = String(e.item || ""), bump2 = (o, k) => { const x = (o[k] = o[k] || { right: 0, wrong: 0 }); e.ok ? x.right++ : x.wrong++; };
   if (it.startsWith("event:")) bump2(tarkiba.events, it.split(":")[1]);
   else if (it.startsWith("pivot:")) bump2(tarkiba.pivots, (String(e.said || "").match(/سنةُ ([^:،]+)/) || ["", "؟"])[1]);
+  else if (it === "mood") bump2(tarkiba.mood, /واضح/.test(String(e.said || "")) ? "clear" : "light");
   else if (it.endsWith(":fix")) { const k = `${it} ${e.said || ""}`; tarkiba.fixes[k] = (tarkiba.fixes[k] || 0) + 1; }
   else bump2(tarkiba.lines, it);
 }
